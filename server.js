@@ -71,15 +71,26 @@ const app = express();
 const server = http.createServer(app);
 
 // Allowed origin — configure in .env for production
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+const rawAllowedOrigins = process.env.ALLOWED_ORIGIN || process.env.ALLOWED_ORIGINS || '';
+const allowedOrigins = rawAllowedOrigins
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
 
-if (process.env.NODE_ENV === 'production' && !ALLOWED_ORIGIN) {
-    console.warn('WARNING: ALLOWED_ORIGIN not set - CORS will deny all cross-origin requests');
+const ALLOWED_ORIGIN = allowedOrigins.length === 1
+    ? allowedOrigins[0]
+    : (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3000');
+
+const CORS_ORIGIN = allowedOrigins.length > 1 ? allowedOrigins : ALLOWED_ORIGIN;
+const COOKIE_SAME_SITE = process.env.COOKIE_SAME_SITE || (process.env.NODE_ENV === 'production' ? 'None' : 'Strict');
+
+if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
+    console.warn('WARNING: ALLOWED_ORIGIN / ALLOWED_ORIGINS not set - CORS will deny all cross-origin requests');
 }
 
 const io = socketIO(server, {
     cors: {
-        origin: ALLOWED_ORIGIN,
+        origin: CORS_ORIGIN,
         methods: ['GET', 'POST'],
         credentials: true
     }
@@ -102,7 +113,15 @@ app.use(helmet({
             styleSrc: ['\'self\'', '\'unsafe-inline\'', 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
             fontSrc: ['\'self\'', 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
             imgSrc: ['\'self\'', 'data:', 'blob:'],
-            connectSrc: ['\'self\'', 'ws:', 'wss:', ALLOWED_ORIGIN, ALLOWED_ORIGIN.replace(/^https?/, match => match === 'https' ? 'wss' : 'ws'), 'https://cdn.jsdelivr.net', 'https://unpkg.com'],
+            connectSrc: [
+                '\'self\'',
+                'ws:',
+                'wss:',
+                ...(allowedOrigins.length ? allowedOrigins : [ALLOWED_ORIGIN]),
+                ...(allowedOrigins.length ? allowedOrigins : [ALLOWED_ORIGIN]).map(origin => origin.replace(/^https?/, scheme => scheme === 'https' ? 'wss' : 'ws')),
+                'https://cdn.jsdelivr.net',
+                'https://unpkg.com'
+            ],
             objectSrc: ['\'none\''],
             frameSrc: ['\'none\'']
         }

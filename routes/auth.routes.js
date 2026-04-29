@@ -11,12 +11,13 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 const IS_PROD = process.env.NODE_ENV === 'production';
+const COOKIE_SAME_SITE = process.env.COOKIE_SAME_SITE || (IS_PROD ? 'None' : 'Strict');
 
 // Cookie options — HttpOnly prevents JS access (XSS protection)
-// SameSite: Strict prevents CSRF; secure: true enforced in production
+// SameSite: None is required in production for cross-site auth requests
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    sameSite: 'Strict',
+    sameSite: COOKIE_SAME_SITE,
     secure: IS_PROD,
     maxAge: 8 * 60 * 60 * 1000 // 8 hours in ms (matches JWT_EXPIRY)
 };
@@ -113,7 +114,7 @@ router.post('/logout', authenticate, (req, res) => {
 
     res.clearCookie('authToken', {
         httpOnly: true,
-        sameSite: 'Strict',
+        sameSite: COOKIE_SAME_SITE,
         secure: IS_PROD
     });
     res.json(successResponse(null, 'Logged out successfully'));
