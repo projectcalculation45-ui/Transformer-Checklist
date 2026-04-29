@@ -1,5 +1,5 @@
 -- ============================================
--- TRANSFORMER MANUFACTURING SYSTEM
+-- TRANSFORMER CHECKLIST SYSTEM
 -- Database Schema - Production Grade
 -- ============================================
 

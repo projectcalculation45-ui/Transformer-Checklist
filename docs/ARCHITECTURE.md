@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Transformer Manufacturing System is a full-stack Node.js application for transformer engineering, manufacturing workflow management, checklist control, analytics, document handling, audit logging, and training/exam flows.
+The Transformer Checklist System is a full-stack Node.js application for transformer engineering, manufacturing workflow management, checklist control, analytics, document handling, audit logging, and training/exam flows.
 
 The application uses:
 

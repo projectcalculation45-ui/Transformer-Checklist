@@ -463,7 +463,7 @@ exports.exportChecklistPDF = (req, res) => {
         doc.rect(0, 0, doc.page.width, 70).fill('#1a3a5c');
         doc.fillColor('white')
             .font('Helvetica-Bold').fontSize(18)
-            .text('TRANSFORMER MANUFACTURING SYSTEM', 36, 14);
+            .text('TRANSFORMER CHECKLIST SYSTEM', 36, 14);
         doc.font('Helvetica').fontSize(11)
             .text(`3-Tier Quality Checklist  •  Stage: ${stage.toUpperCase()}  •  W.O.: ${wo}`, 36, 38);
         doc.fillColor('white').fontSize(9)

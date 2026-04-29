@@ -1,7 +1,7 @@
-# Copilot Instructions for Transformer Manufacturing PMS
+# Copilot Instructions for Transformer Checklist System
 
 ## Project Overview
-This is a **Transformer Manufacturing Project Management System** (Express.js + Vanilla JS) that tracks engineering workflows through manufacturing stages with enforced sequential completion. It uses file-based JSON storage with role-based access control.
+This is a **Transformer Checklist System** (Express.js + Vanilla JS) that tracks engineering workflows through manufacturing stages with enforced sequential completion. It uses file-based JSON storage with role-based access control.
 
 **Key architectural patterns:**
 - **Express backend** with modular routes (one file per entity: transformers, checklists, documents, BOMs, calculations, designs, audit logs, stage control)

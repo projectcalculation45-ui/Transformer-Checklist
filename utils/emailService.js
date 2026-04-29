@@ -71,7 +71,7 @@ async function sendQAReviewAlert(item, qaEmail = 'qa@company.com') {
                             <a href="http://localhost:3000" class="button">View Checklist</a>
                         </div>
                         <div class="footer">
-                            <p>This is an automated notification from the Transformer Manufacturing System</p>
+                            <p>This is an automated notification from the Transformer Checklist System</p>
                         </div>
                     </div>
                 </body>

@@ -20,7 +20,7 @@ window.generateEngineeringReport = function (transformer) {
     const addHeader = () => {
         doc.setFontSize(22);
         doc.setTextColor(44, 62, 80);
-        doc.text('TRANSFORMER MFG SYSTEM', 14, 20);
+        doc.text('TRANSFORMER CHECKLIST SYSTEM', 14, 20);
 
         doc.setFontSize(10);
         doc.setTextColor(100);
