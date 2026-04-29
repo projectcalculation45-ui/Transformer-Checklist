@@ -36,7 +36,7 @@ router.post('/login', [
             console.log(`🔐 [AUTH] Login attempt for user: "${userId}"`);
         }
 
-        const user = userService.findByUserIdWithPassword(userId);
+        const user = await userService.findByUserIdWithPassword(userId);
 
         if (!user) {
             logger.warn(`Login attempt for non-existent user: "${userId}"`);
