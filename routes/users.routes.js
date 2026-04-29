@@ -26,9 +26,9 @@ function sanitizeUser(u) {
 }
 
 /* ─── GET /api/users ──────────────────────────────────────── */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     try {
-        const users = userService.findAll();
+        const users = await userService.findAll();
         res.json(successResponse(users.map(sanitizeUser), `${users.length} users loaded`));
     } catch (err) {
         logger.error('GET /users error', err);
@@ -53,13 +53,13 @@ router.post('/',
             const { userId, name, role, password, email, department, customerId, customerName } = req.body;
 
             // Check duplicate
-            const existing = userService.findByUserId(userId);
+            const existing = await userService.findByUserId(userId);
             if (existing) {
                 return res.status(409).json({ success: false, error: 'User ID already exists' });
             }
 
             const hashed = await bcrypt.hash(password, 10);
-            const created = userService.create({ userId, password: hashed, name, email, role, department, customerId, customerName });
+            const created = await userService.create({ userId, password: hashed, name, email, role, department, customerId, customerName });
 
             logAudit(req.user.id, req.user.username, req.user.role, 'CREATE', 'user', userId, { name, role, department });
             res.status(201).json(successResponse(sanitizeUser(created), 'User created successfully'));
@@ -84,7 +84,7 @@ router.put('/:id',
     async (req, res) => {
         try {
             const { id } = req.params;
-            const user = userService.findByUserId(id);
+            const user = await userService.findByUserId(id);
             if (!user) {
                 return res.status(404).json({ success: false, error: 'User not found' });
             }
@@ -107,10 +107,10 @@ router.put('/:id',
             // Password change handled separately via dedicated service method
             if (req.body.password) {
                 const hashed = await bcrypt.hash(req.body.password, 10);
-                userService.changePassword(id, hashed);
+                await userService.updatePassword(id, hashed);
             }
 
-            const updated = userService.update(id, updates);
+            const updated = await userService.update(id, updates);
             logAudit(req.user.id, req.user.username, req.user.role, 'UPDATE', 'user', id, updates);
             res.json(successResponse(sanitizeUser(updated), 'User updated'));
         } catch (err) {
@@ -121,18 +121,18 @@ router.put('/:id',
 );
 
 /* ─── DELETE /api/users/:id ───────────────────────────────── */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params;
         if (id === req.user.id) {
             return res.status(403).json({ success: false, error: 'Cannot delete your own account' });
         }
-        const user = userService.findByUserId(id);
+        const user = await userService.findByUserId(id);
         if (!user) {
             return res.status(404).json({ success: false, error: 'User not found' });
         }
 
-        userService.delete(id);
+        await userService.delete(id);
         logAudit(req.user.id, req.user.username, req.user.role, 'DELETE', 'user', id, { name: user.name, role: user.role });
         res.json(successResponse(null, 'User deleted'));
     } catch (err) {

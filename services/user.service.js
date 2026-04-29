@@ -1,78 +1,138 @@
-const db = require('../config/database');
+const { getDatabase } = require('../config/database');
 
 class UserService {
+    constructor() {
+        this.db = null;
+        this.collection = null;
+    }
+
+    _getCollection() {
+        if (!this.collection) {
+            this.db = getDatabase();
+            this.collection = this.db.collection('users');
+        }
+        return this.collection;
+    }
+
     /**
      * Get all users (password hash excluded)
      */
-    findAll() {
-        const users = db.prepare('SELECT userId, name, email, role, department, customerId, customerName, permissions, createdAt FROM users').all();
+    async findAll() {
+        const collection = this._getCollection();
+        const users = await collection.find({}, {
+            projection: { password: 0 }
+        }).toArray();
+
         return users.map(user => ({
             ...user,
-            permissions: user.permissions ? JSON.parse(user.permissions) : []
+            permissions: user.permissions || []
         }));
     }
 
     /**
      * Find user by userId (password hash excluded)
      */
-    findByUserId(userId) {
-        const user = db.prepare('SELECT userId, name, email, role, department, customerId, customerName, permissions, createdAt FROM users WHERE userId = ?').get(userId);
+    async findByUserId(userId) {
+        const collection = this._getCollection();
+        const user = await collection.findOne({ userId }, {
+            projection: { password: 0 }
+        });
+
         if (!user) {
             return null;
         }
 
         return {
             ...user,
-            permissions: user.permissions ? JSON.parse(user.permissions) : []
+            permissions: user.permissions || []
         };
     }
 
     /**
      * Find user with password hash (for auth only)
      */
-    findByUserIdWithPassword(userId) {
-        const user = db.prepare('SELECT * FROM users WHERE userId = ?').get(userId);
+    async findByUserIdWithPassword(userId) {
+        const collection = this._getCollection();
+        const user = await collection.findOne({ userId });
+
         if (!user) {
             return null;
         }
+
         return {
             ...user,
-            permissions: user.permissions ? JSON.parse(user.permissions) : []
+            permissions: user.permissions || []
         };
     }
 
     /**
      * Create new user
      */
-    create(userData) {
-        const stmt = db.prepare(`
-            INSERT INTO users (userId, password, name, email, role, department, customerId, customerName, permissions)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
+    async create(userData) {
+        const collection = this._getCollection();
+        const doc = {
+            userId: userData.userId,
+            password: userData.password,
+            name: userData.name,
+            email: userData.email,
+            role: userData.role,
+            department: userData.department,
+            customerId: userData.customerId,
+            customerName: userData.customerName,
+            permissions: userData.permissions || [],
+            createdAt: new Date()
+        };
 
-        stmt.run(
-            userData.userId,
-            userData.password,
-            userData.name,
-            userData.email || null,
-            userData.role,
-            userData.department || null,
-            userData.customerId || null,
-            userData.customerName || null,
-            userData.permissions ? JSON.stringify(userData.permissions) : null
-        );
-
+        await collection.insertOne(doc);
         return this.findByUserId(userData.userId);
     }
 
     /**
      * Update user
      */
-    update(userId, userData) {
-        const stmt = db.prepare(`
-            UPDATE users 
-            SET name = ?, email = ?, role = ?, department = ?, customerId = ?, customerName = ?, permissions = ?
-            WHERE userId = ?
+    async update(userId, userData) {
+        const collection = this._getCollection();
+        const updateDoc = {
+            updatedAt: new Date()
+        };
+
+        if (userData.name !== undefined) updateDoc.name = userData.name;
+        if (userData.email !== undefined) updateDoc.email = userData.email;
+        if (userData.role !== undefined) updateDoc.role = userData.role;
+        if (userData.department !== undefined) updateDoc.department = userData.department;
+        if (userData.customerId !== undefined) updateDoc.customerId = userData.customerId;
+        if (userData.customerName !== undefined) updateDoc.customerName = userData.customerName;
+        if (userData.permissions !== undefined) updateDoc.permissions = userData.permissions;
+
+        await collection.updateOne({ userId }, { $set: updateDoc });
+        return this.findByUserId(userId);
+    }
+
+    /**
+     * Update user password
+     */
+    async updatePassword(userId, newPassword) {
+        const collection = this._getCollection();
+        await collection.updateOne({ userId }, {
+            $set: {
+                password: newPassword,
+                updatedAt: new Date()
+            }
+        });
+        return true;
+    }
+
+    /**
+     * Delete user
+     */
+    async delete(userId) {
+        const collection = this._getCollection();
+        const result = await collection.deleteOne({ userId });
+        return result.deletedCount > 0;
+    }
+}
+
+module.exports = new UserService();
         `);
 
         stmt.run(
