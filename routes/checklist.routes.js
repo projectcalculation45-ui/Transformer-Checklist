@@ -190,14 +190,31 @@ router.get('/pending-supervisor', checkPermission('production'), (req, res) => {
  * SAVE CHECKLIST ITEM  (POST /checklist/save)
  * Called for each row save from the frontend checklist form.
  * ───────────────────────────────────────────────────────────────────────── */
+// Row types that have no single actualValue input — exempt from the
+// actualValue-required check on both front-end and back-end.
+const NO_ACTUAL_VALUE_TYPES = new Set([
+    // Structural / display-only rows
+    'section-header', 'stop-stage', 'jack-diagram',
+    // Complex sub-table rows that embed their own sign-off cells
+    'cooling-nomex-table', 'lead-assembly-table', 'observation-table',
+    'shield-preparation-table', 'drum-details-table',
+    'brazed-joints-table', 'dof-washer-table', 'sr-strip-wrap-full',
+    // Multi-field rows: their values arrive as a JSON string (already validated client-side)
+    'tcb-blocks', 'wlt-blocks', 'sr-disc-height',
+    'tmb-measurements', 'ok-notok', 'ok-notok-limbs',
+    'text-phases', 'text-per-phase', 'phase-ok-notok', 'ok-notok-stacked',
+    // Heuristic type stamped by the frontend fallback
+    'multi-field',
+]);
+
 router.post('/save',
     [
         body('wo').trim().notEmpty().withMessage('W.O. number required'),
         body('stage').notEmpty().isIn([
             'winding1', 'winding2', 'winding3', 'winding4', 'winding5',
-            'vpd', 'coreCoil', 'tanking', 'tankFilling', 'spa', 'coreBuilding'
+            'vpd', 'coreCoil', 'tanking', 'tankFilling', 'spa', 'coreBuilding',
+            'fos_annexure', 'dismantling', 'shunt_reactor', 'dispatch'
         ]).withMessage('Invalid stage'),
-        body('actualValue').trim().notEmpty().withMessage('Actual value required'),
         body('technician').trim().notEmpty().withMessage('Technician selection required'),
         body('itemNumber').isInt({ min: 1 }).withMessage('Valid item number required')
     ],
@@ -210,8 +227,24 @@ router.post('/save',
             const {
                 wo, stage, customerId, customer, itemNumber, rowId,
                 actualValue, technician, shopSupervisor, qaSupervisor,
-                remark, timestamp, userId, userName, userRole, updatedAt
+                remark, timestamp, userId, userName, userRole, updatedAt, workflowState,
+                rowType
             } = req.body;
+
+            // Row-type-aware actualValue validation:
+            // 1. Exempt rows that never carry a plain actualValue (structural/multi-field).
+            // 2. For standard rows, require a non-empty actualValue.
+            // 3. If actualValue is a JSON object string (from multi-field collection), always allow it.
+            const isMultiFieldJSON = actualValue && typeof actualValue === 'string' && actualValue.trimStart().startsWith('{');
+            const requiresValue = !rowType || !NO_ACTUAL_VALUE_TYPES.has(rowType);
+            if (requiresValue && !isMultiFieldJSON && (!actualValue || String(actualValue).trim() === '')) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Actual value required for this row',
+                    field: 'actualValue'
+                });
+            }
+
 
             if (!wo || !stage || !itemNumber || !rowId) {
                 return res.status(400).json({ success: false, error: 'Missing required fields' });
@@ -238,6 +271,8 @@ router.post('/save',
                         shopSupervisor: shopSupervisor || '',
                         qaSupervisor: qaSupervisor || '',
                         remark: remark || '',
+                        rowType: rowType || 'standard',
+                        workflowState: workflowState || 'pending',
                         timestamp: timestamp || new Date().toLocaleString('en-IN'),
                         userId: userId || req.user?.id || 'unknown',
                         userName: userName || req.user?.name || 'Unknown',
@@ -349,6 +384,43 @@ router.post('/production/save', checkPermission('production'), requireWOAccess, 
 
         res.json({ success: true, message: `Production work completed for Item ${itemNumber}` });
     } catch (error) {
+        res.status(500).json(errorResponse(error));
+    }
+});
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * PER-STAGE SUMMARY  (GET /checklist/:stage/:wo/summary)
+ * Sidebar fallback: returns techDone / supervisorDone / qaDone for one stage.
+ * Must be declared BEFORE /:stage/:wo so Express doesn't swallow 'summary' as wo.
+ * ───────────────────────────────────────────────────────────────────────── */
+router.get('/:stage/:wo/summary', (req, res) => {
+    try {
+        const { stage, wo } = req.params;
+
+        const transformer = checklistService.findTransformer(wo);
+        if (!transformer) {
+            return res.status(404).json({ success: false, error: `Work Order '${wo}' not found` });
+        }
+        if (req.user?.role === 'customer' && !transformer.customerVisible) {
+            return res.status(403).json({ success: false, error: 'Access denied to this Work Order' });
+        }
+
+        let items = getItems(wo, stage);
+        if (req.user?.role === 'customer' && req.user?.customerId) {
+            items = items.filter(i => i.customerId === req.user.customerId);
+        }
+
+        res.json({
+            success: true,
+            data: {
+                total:          items.length,
+                techDone:       items.filter(i => i.technician).length,
+                supervisorDone: items.filter(i => i.shopSupervisor).length,
+                qaDone:         items.filter(i => i.qaSupervisor).length
+            }
+        });
+    } catch (error) {
+        console.error('❌ Error fetching stage summary:', error);
         res.status(500).json(errorResponse(error));
     }
 });

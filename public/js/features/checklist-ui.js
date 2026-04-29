@@ -1,3 +1,6 @@
+window.checklistMasterData = null; // Global storage for master data
+window.isEditMode = false; // Toggle for admin structural changes
+
 /* ===============================
    UI NAVIGATION & DISPLAY LOGIC
    Sidebar, tabs, stage navigation, checklist rendering
@@ -50,6 +53,7 @@ function toggleSubmenu(element) {
         }
     }
 }
+
 /* ===============================
    CHECKLIST STAGE NAVIGATION
 ================================ */
@@ -66,9 +70,14 @@ function showChecklistStage(stage, element) {
     const stageTitles = {
         'winding': 'Winding Checklist',
         'coreCoil': 'Core Coil Assembly',
-        'tanking': 'Repacking and Tanking',
+        'tanking': 'Repacking & Tanking Checklist',
         'spa': 'SPA Checklist',
-        'coreBuilding': 'Core Building Checklist'
+        'fos_annexure': 'FOS Annexure',
+        'coreBuilding': 'Core Building Checklist',
+        'vpd': 'VPD Checklist',
+        'dismantling': 'Dismantling Checklist',
+        'shunt_reactor': 'Shunt Reactor Checklist',
+        'dispatch': 'Dispatch Checklist'
     };
 
     const viewTitle = document.getElementById('viewTitle');
@@ -89,6 +98,11 @@ function showChecklistStage(stage, element) {
         if (windingSubNav) windingSubNav.style.display = 'none';
         window.currentStage = 'spa';
         loadStageContent('spa');
+    } else if (stage === 'fos_annexure') {
+        if (mainStageButtons[1]) mainStageButtons[1].classList.add('active');
+        if (windingSubNav) windingSubNav.style.display = 'none';
+        window.currentStage = 'fos_annexure';
+        loadStageContent('fos_annexure');
     } else if (stage === 'coreCoil') {
         if (mainStageButtons[2]) mainStageButtons[2].classList.add('active');
         if (windingSubNav) windingSubNav.style.display = 'none';
@@ -104,6 +118,27 @@ function showChecklistStage(stage, element) {
         if (windingSubNav) windingSubNav.style.display = 'none';
         window.currentStage = 'coreBuilding';
         loadStageContent('coreBuilding');
+    } else if (stage === 'vpd') {
+        if (mainStageButtons[5]) mainStageButtons[5].classList.add('active');
+        if (windingSubNav) windingSubNav.style.display = 'none';
+        window.currentStage = 'vpd';
+        loadStageContent('vpd');
+    } else if (stage === 'dismantling') {
+        if (mainStageButtons[6]) mainStageButtons[6].classList.add('active');
+        if (windingSubNav) windingSubNav.style.display = 'none';
+        window.currentStage = 'dismantling';
+        loadStageContent('dismantling');
+    } else if (stage === 'dispatch') {
+        if (mainStageButtons[7]) mainStageButtons[7].classList.add('active');
+        if (windingSubNav) windingSubNav.style.display = 'none';
+        window.currentStage = 'dispatch';
+        loadStageContent('dispatch');
+    } else if (stage === 'shunt_reactor') {
+        // Set as coreCoil-like for sidebar mapping if needed
+        if (mainStageButtons[2]) mainStageButtons[2].classList.add('active');
+        if (windingSubNav) windingSubNav.style.display = 'none';
+        window.currentStage = 'shunt_reactor';
+        loadStageContent('shunt_reactor');
     }
 
     setTimeout(() => {
@@ -155,16 +190,12 @@ function switchStage(stage, button) {
         if (typeof updateProgress === 'function') updateProgress();
     }, 100);
 }
-/* ===============================
-   GET STAGE DATA STRUCTURE
-   FETCHES FROM MASTER CHECKLIST
-================================ */
+
 function getStageData() {
-    // Use master checklist data from masterChecklist.js
-    if (typeof getMasterStageData === 'function') {
-        return getMasterStageData();
+    // If master data is loaded from server, use it. Otherwise fallback to hardcoded (empty or old)
+    if (window.checklistMasterData) {
+        return window.checklistMasterData;
     }
-    // Fallback if master checklist not loaded (should not happen)
     return {
         winding1: {
             title: 'INSPECTION RECORD FOR EHV & UHV - WINDING CHECKLIST',
@@ -174,14 +205,14 @@ function getStageData() {
                     name: 'B - Type of winding (Continuous Disc/Layer/Multi Start Helical/Contrashield)',
                     items: [
                         { point: 'Physical condition of the former, Visual check', specifiedValue: 'No Sharp surface, No damage, Cleanliness' },
-                        { point: 'Former diameter (ID of the cylinder) Tol. +2/-0mm (by Measuring Tape)', specifiedValue: 'TOP / Centre / Bottom' },
+                        { point: 'Former diameter (ID of the cylinder) Tol. +2/-0mm (by Measuring Tape)', specifiedValue: 'TOP<br>Centre<br>Bottom', type: 'tcb-blocks' },
                         { point: 'Height and Thickness of cylinder (By Measuring Tape & Vernier)', specifiedValue: 'As per drawing' },
                         { point: 'Inspection of cylinder passing (Visual) Overlap =120 x thk+50mm', specifiedValue: 'No air voids in joints, No Wariness' },
-                        { point: 'Cylinder O.D. (Tol.-0 to +2 mm) (By Measuring Tape)', specifiedValue: 'TOP / Centre / Bottom' },
+                        { point: 'Cylinder O.D. (Tol.-0 to +2 mm) (By Measuring Tape)', specifiedValue: 'TOP<br>Centre<br>Bottom', type: 'tcb-blocks' },
                         { point: 'Keyed strip thickness & length (By Vernier caliper & Measuring Tape)', specifiedValue: 'As per drawing' },
                         { point: 'Keyed strip alignment (Visual) by Laser', specifiedValue: 'To be Done' },
                         { point: 'No. of dovetail blocks as per circle & width (Visual & Measuring tape)', specifiedValue: 'As per drawing' },
-                        { point: 'Dimension of Dovetail block (LxWxT)', specifiedValue: 'Width / Length / Thickness' }
+                        { point: 'Dimension of Dovetail block (LxWxT)', specifiedValue: 'Width<br>Length<br>Thickness', type: 'wlt-blocks' }
                     ]
                 },
                 {
@@ -299,15 +330,15 @@ function getStageData() {
                 name: 'Core Coil Assembly (Coil Lowering, Top yoke, Connections)',
                 items: [
                     {
-                        point: 'Coil support BCS blocks & insulation.(visual)<br>-Alignment <br>-Grain orientation<br>-Leveling to be checked with spirit level.(-0,+2mm)',
+                        point: 'Coil support BCS blocks & Insulation.(Visual).<br>-Alignment <br>-Grain orientation<br>-Leveling to be checked with spirit level. (-0, + 2 mm)',
                         specifiedValue: 'Should be in aligned & perpendicular condition.',
-                        type: 'ok-notok',
+                        type: 'ok-notok-stacked',
                         phases: ['U Phase', 'V Phase', 'W Phase']
                     },
                     {
                         point: 'BCS hole are free from any type of blockage / Oil passege of BCS holes are clear.',
                         specifiedValue: 'Visual',
-                        type: 'ok-notok'
+                        type: 'ok-notok',
 
                     },
                     {
@@ -357,9 +388,8 @@ function getStageData() {
                         type: 'stop-stage'
                     },
                     {
-                        point: 'Deflection & Damage in bottom ring if any. (Visual)',
-                        specifiedValue: 'Ok / Not Ok',
-                        type: 'ok-notok',
+                        point: 'Deflection & Damage in bottom ring if any.(Visual)',
+                        type: 'phase-ok-notok',
                         phases: ['U Phase', 'V Phase', 'W Phase']
                     },
                     {
@@ -375,7 +405,379 @@ function getStageData() {
                         point: 'Electrical Tests at <strong>10%</strong> of yoke filling:-<br>1) Ratio Test<br>2) Cross Current Checking.<br>3) Magnetic balance test.',
                         specifiedValue: '',
                         editableSpecifiedValue: true
+                    },
+                    {
+                        point: 'Position of cooling duct &amp; Nomex',
+                        specifiedValue: '',
+                        type: 'cooling-nomex-table'
+                    },
+                    {
+                        point: 'Insulation arrangement at Top <strong>LV</strong> frame.',
+                        specifiedValue: 'Thickness (mm)',
+                        editableSpecifiedValue: true
+                    },
+                    {
+                        point: 'Insulation arrangement at Top <strong>HV</strong> frame.',
+                        specifiedValue: 'Thickness (mm)',
+                        editableSpecifiedValue: true
+                    },
+                    {
+                        point: 'Insulation arrangement at flitch plates.',
+                        specifiedValue: 'Thickness (mm)',
+                        editableSpecifiedValue: true
+                    },
+                    {
+                        point: 'Distance between top &amp; bottom yoke clamp <strong>HV Side</strong> (To be measured by Measuring tape)',
+                        specifiedValue: 'HV (mm)',
+                        editableSpecifiedValue: true
+                    },
+                    {
+                        point: 'Distance between top &amp; bottom yoke clamp <strong>LV Side</strong> (To be measured by Measuring tape)',
+                        specifiedValue: 'LV (mm)',
+                        editableSpecifiedValue: true
+                    },
+                    {
+                        point: 'Cleaning of Top Yoke before step block fixing.',
+                        specifiedValue: 'Should be clean',
+                        type: 'ok-notok'
+                    },
+                    {
+                        point: 'Step block arrangement.<br>(As Per Drawing).',
+                        type: 'phase-ok-notok',
+                        phases: ['U Phase', 'V Phase', 'W Phase', 'Aux. Limb.1', 'Aux. Limb.2']
+                    },
+                    {
+                        point: 'Isolation arrangement at Steel Bands.<br>As Per Drawing.',
+                        type: 'phase-ok-notok',
+                        phases: ['F-1', 'F-2', 'F-3', 'F-4']
+                    },
+                    {
+                        point: 'Insulation Araangement between steel bands<br>& yoke.',
+                        type: 'phase-ok-notok',
+                        phases: ['U Phase', 'V Phase', 'W Phase', 'Aux. Limb.1', 'Aux. Limb.2']
+                    },
+                    {
+                        point: 'T.G. Assembly, Insulation arrangement &amp; Connections',
+                        specifiedValue: '',
+                        type: 'section-header'
+                    },
+                    {
+                        point: 'Phase barrier assembly.<br>As per drawing.<br>(No Damage or No holes at centre<br>Locking at both ends).',
+                        type: 'phase-ok-notok',
+                        phases: ['U Phase', 'V Phase', 'W Phase']
+                    },
+                    {
+                        point: 'Core Earthing Arrangement.',
+                        specifiedValue: 'As Per Drg.',
+                        type: 'ok-notok'
+                    },
+                    {
+                        point: 'Radial paper covering &amp; insulation at HV main lead.',
+                        specifiedValue: '......... mm',
+                        type: 'mm-per-phase',
+                        phases: ['U Phase', 'V Phase', 'W Phase']
+                    },
+                    {
+                        point: 'Radial paper covering &amp; insulation at LV lead.',
+                        specifiedValue: '......... mm',
+                        type: 'mm-per-phase',
+                        phases: ['U Phase', 'V Phase', 'W Phase']
+                    },
+                    {
+                        point: 'Radial paper covering at LV / Tert. Lead/busbar.',
+                        specifiedValue: '......... mm',
+                        type: 'mm-per-phase',
+                        phases: ['U Phase', 'V Phase', 'W Phase']
+                    },
+                    {
+                        point: 'Radial paper covering at LV / Tert. Lead/busbar/tube.',
+                        specifiedValue: '......... mm',
+                        type: 'mm-per-phase',
+                        phases: ['U Phase', 'V Phase', 'W Phase']
+                    },
+                    {
+                        point: 'Radial paper covering at TAP Lead/Tubes.',
+                        specifiedValue: '......... mm',
+                        editableSpecifiedValue: true
+                    },
+                    {
+                        point: 'Radial paper covering at N busbar / Lead.',
+                        specifiedValue: '......... mm',
+                        type: 'mm-per-phase',
+                        phases: ['HV', 'LV']
+                    },
+                    {
+                        point: 'Radial paper covering at N tube / lead.',
+                        specifiedValue: '......... mm',
+                        type: 'mm-per-phase',
+                        phases: ['HV', 'LV']
+                    },
+                    {
+                        point: 'Support assembly &amp; dimension of HV main lead',
+                        phase: 'U Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at main lead', unit: 'sq mm' },
+                            { label: 'Crimping at main lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    {
+                        point: 'Support assembly &amp; dimension of HV main lead',
+                        phase: 'V Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at main lead', unit: 'sq mm' },
+                            { label: 'Crimping at main lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    {
+                        point: 'Support assembly &amp; dimension of HV main lead',
+                        phase: 'W Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at main lead', unit: 'sq mm' },
+                            { label: 'Crimping at main lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    {
+                        point: 'Support assembly &amp; dimension of IV lead',
+                        phase: 'U Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at IV lead', unit: 'sq mm' },
+                            { label: 'Crimping at IV lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    {
+                        point: 'Support assembly &amp; dimension of IV lead',
+                        phase: 'V Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at IV lead', unit: 'sq mm' },
+                            { label: 'Crimping at IV lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    // Row 39: IV lead W Phase
+                    {
+                        point: 'Support assembly &amp; dimension of IV lead',
+                        phase: 'W Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at IV lead', unit: 'sq mm' },
+                            { label: 'Crimping at IV lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    // Row 40: LV lead U Phase
+                    {
+                        point: 'Support assembly &amp; dimension of LV lead',
+                        phase: 'U Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at LV lead', unit: 'sq mm' },
+                            { label: 'Crimping at LV lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    // Row 41: LV lead V Phase
+                    {
+                        point: 'Support assembly &amp; dimension of LV lead',
+                        phase: 'V Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at LV lead', unit: 'sq mm' },
+                            { label: 'Crimping at LV lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    // Row 42: LV lead Busbar W Phase
+                    {
+                        point: 'Support assembly &amp; dimension of LV lead / Busbar',
+                        phase: 'W Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at LV lead', unit: 'sq mm' },
+                            { label: 'Crimping at LV lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    // Row 43: N lead / Busbar
+                    {
+                        point: 'Support assembly &amp; dimension of N lead / Busbar',
+                        phase: '',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Cable size used at LV lead', unit: 'sq mm' },
+                            { label: 'Crimping at LV lead. (Connector size)', unit: 'sq mm' },
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    // Row 44: Make & Sr.No. of OCTC / OLTC
+                    {
+                        point: 'Make &amp; Sr. No. of OCTC / OLTC',
+                        specifiedValue: '',
+                        type: 'make-srno-table',
+                        phases: ['U Phase', 'V Phase', 'W Phase']
+                    },
+                    // Rows 45-47: OLTC/OCTC support assembly per phase
+                    {
+                        point: 'Support assembly &amp; dimension of OLTC / OCTC',
+                        phase: 'U Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    {
+                        point: 'Support assembly &amp; dimension of OLTC / OCTC',
+                        phase: 'V Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    {
+                        point: 'Support assembly &amp; dimension of OLTC / OCTC',
+                        phase: 'W Phase',
+                        type: 'lead-assembly-table',
+                        rows: [
+                            { label: 'Dimension from leg center.', unit: 'mm' },
+                            { label: 'Dimension from core center.', unit: 'mm' },
+                            { label: 'Height from ground.', unit: 'mm' }
+                        ]
+                    },
+                    // Row 48: Shaft alignment of OCTC
+                    {
+                        point: 'Shaft alignment of OCTC (+/- 2 mm)',
+                        specifiedValue: 'With Spirit Level',
+                        editableSpecifiedValue: false
+                    },
+                    // Row 49: Tightness verification (Nm per phase) + steel bands torque
+                    {
+                        point: 'Tightness verification at OLTC / OCTC Connections &amp; Torque at steel bands',
+                        specifiedValue: '',
+                        type: 'nm-torque-table'
+                    },
+                    // Row 50: Torque at Top bridge
+                    {
+                        point: 'Torque Application at Top bridge.',
+                        specifiedValue: '......... Nm',
+                        editableSpecifiedValue: true
+                    },
+                    // Row 51: Torque Application at Flitch Plate Hardware
+                    {
+                        point: 'Torque Application at Flitch Plate Hardware.',
+                        specifiedValue: '',
+                        type: 'flitch-torque'
+                    },
+                    // Row 52: Core Shield lead arrangement
+                    {
+                        point: 'Core Shield lead arrangement.',
+                        specifiedValue: 'As Per Drg.',
+                        type: 'ok-notok'
+                    },
+                    // Row 52: DOF pipe arrangement
+                    {
+                        point: 'DOF pipe arrangement.<br>1-Np gap at joints.<br>2-Check for material M.S. &S.S With magnet ',
+                        specifiedValue: '',
+
+                    },
+                    // Rows 53-59: Electrical Tests
+                    {
+                        point: 'Electrical Tests:-<br><small>1) Resistance / Current Balance Test.<br>2) Ratio Test <br>3) Resistance Test.<br>4) Ratio &amp; Magnetic Current / Vector Group Test.<br>5) Step (at initial coil to core shield).</small>',
+                        specifiedValue: '',
+                        type: 'elec-test-table'
+                    },
+                    {
+                        point: '2.5 Kv DC Megger Test between Core &amp; Frame.',
+                        specifiedValue: '',
+                        type: 'mm-per-phase',
+                        phases: ['U Phase', 'V Phase', 'W Phase']
+                    },
+                    {
+                        point: '2 Kv AC Test for core shield between Core &amp; Frame.',
+                        specifiedValue: '',
+                        type: 'mm-per-phase',
+                        phases: ['CS-1', 'CS-2']
+                    },
+                    {
+                        point: '2 Kv AC Test for core shield between Core shield &amp; Frame.',
+                        specifiedValue: '',
+                        type: 'mm-per-phase',
+                        phases: ['CS-1', 'CS-2']
+                    },
+                    {
+                        point: '2 Kv AC Test for core shield between Core shield &amp; Core.',
+                        specifiedValue: '',
+                        type: 'mm-per-phase',
+                        phases: ['CS-1', 'CS-2']
+                    },
+                    {
+                        point: 'Overall Cleaning of Active Part.',
+                        specifiedValue: 'Should be clean',
+                    },
+                    {
+                        point: 'Continuity test for all hardwares of active part.<br><small>(By continuity tester).</small>',
+                        specifiedValue: '',
+                        type: 'text'
                     }
+                ]
+            }, {
+                name: 'Electrical Clearances',
+                items: [
+                    { point: 'HV Main Lead to Earth', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'HV Main Lead to Neutral', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'HV Main Lead to Tap Leads.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'HV Main Lead to WInding OD.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'HV Main Lead to LV.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'lV Lead to Earth.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'lV Lead to Neutral.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'lV Lead to Tap Leads.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'lV Lead to Winding OD.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'IV Lead to LV.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'Tap Lead to Earth.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'Tap Lead to Winding OD.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'Tap Lead to LV .', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'Between Tap leads of different Phases.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U-V Phase', 'V-W Phase'] },
+                    { point: 'Tap lead to Neutral.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'Tap leads with 2 step, 3 Step difference.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'LV to Earth (MS).', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'LV busbar to Winding OD.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'LV tube to Winding OD.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'LV busbar / lead to Neutral.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U Phase', 'V Phase', 'W Phase'] },
+                    { point: 'Between LV leads of different Phases.', specifiedValue: '......... mm', type: 'mm-per-phase', phases: ['U-V Phase', 'V-W Phase'] },
+                    { point: 'HV Neutral to Earth.', specifiedValue: '......... mm', editableSpecifiedValue: true },
+                    { point: 'LV Neutral to Earth.', specifiedValue: '......... mm', editableSpecifiedValue: true },
+                    { point: 'Any Other Clearance.', specifiedValue: '......... mm', editableSpecifiedValue: true }
                 ]
             }]
         },
@@ -551,7 +953,7 @@ function getStageData() {
             sections: [{
                 name: '2 - First coil (LV/TER)',
                 items: [
-                    { point: 'Bottom platform/ring', specifiedValue: 'Leveling (T/mm), Make, No Damage/Deformation' },
+                    { point: 'Bottom platform/ring', specifiedValue: 'Leveling (+/-1mm), Make, No Damage/Deformation' },
                     { point: 'Segment marking and numbering on bottom platform/ring', specifiedValue: 'Equally spaced Numbering' },
                     { point: 'ID of cylinder in mm', specifiedValue: '', specifiedValueInput: true },
                     { point: 'Check winding cylinder joint and bulging', specifiedValue: 'Visual check to be done' },
@@ -622,80 +1024,22 @@ function getStageData() {
                     { point: 'Final Height from top ring top to Bottom ring bottom at four location and window zone (By measuring tape)', specifiedValue: '' },
                     { point: 'Final cleanliness of coil stack assembly', specifiedValue: 'To be cleaned' }
                 ]
-            }, {
+            }]
+        },
+        fos_annexure: {
+            title: 'FOS (FIBER OPTIC SENSOR) ANNEXURE',
+            subtitle: 'Annexure - FOS_A',
+            sections: [{
                 name: 'FOS (Fiber Optic Sensor) Annexure - FOS_A',
                 items: [
                     { point: 'FOS Annexure table', type: 'fos-annexure-table' }
                 ]
             }]
         },
-        winding4: {
-            title: 'WINDING - Additional Inspections',
-            subtitle: 'Page 4 of 6',
-            sections: [{
-                name: 'D - General Inspections',
-                items: [
-                    { point: 'Brazed joints quality (Visual)', specifiedValue: 'No sharp edges, full penetration' },
-                    { point: 'Insulation of brazed joints', specifiedValue: 'As per approved drawing' },
-                    { point: 'Winding resistance at room temperature', specifiedValue: 'Record values per phase', editableSpecifiedValue: true },
-                    { point: 'Verification of dimensional tolerances', specifiedValue: 'Within +/- 2mm' }
-                ]
-            }]
-        },
-        winding5: {
-            title: 'WINDING - Final Clearance & Sign-off',
-            subtitle: 'Page 5 of 6',
-            sections: [{
-                name: 'E - Final Checks Checklist',
-                items: [
-                    { point: 'Foreign material check / Cleanliness (Visual)', specifiedValue: 'No debris, dust and metal chips' },
-                    { point: 'Spacers and block tightness', specifiedValue: 'Manually verified tight' },
-                    { point: 'Final photographic evidence captured', specifiedValue: 'Photos saved to system' },
-                    { point: 'Approval for next stage (Core Coil) readiness', specifiedValue: 'Cleared' }
-                ]
-            }]
-        },
-        vpd: {
-            title: 'VPD (Vapour Phase Drying) Checklist',
-            subtitle: 'VPD Process Monitoring',
-            sections: [{
-                name: '1 - Pre-Drying Phase',
-                items: [
-                    { point: 'Chamber cleanliness and vacuum leak test', specifiedValue: 'Leak rate < acceptable limit' },
-                    { point: 'Loading of active part & thermocouple placement', specifiedValue: 'Checked and recorded' }
-                ]
-            }, {
-                name: '2 - Heating & Drying Phase',
-                items: [
-                    { point: 'Maximum temperature achieved', specifiedValue: 'As per process chart', editableSpecifiedValue: true },
-                    { point: 'Heating duration', specifiedValue: 'Completed as per process', editableSpecifiedValue: true },
-                    { point: 'Final vacuum pressure achieved', specifiedValue: 'Specify in mbar', editableSpecifiedValue: true }
-                ]
-            }]
-        },
-        tankFilling: {
-            title: 'OIL FILLING CHECKLIST',
-            subtitle: 'Tank Filling Operations',
-            sections: [{
-                name: '1 - Oil Filling Readiness',
-                items: [
-                    { point: 'Vacuum level before oil filling starts', specifiedValue: '< 1 Torr', editableSpecifiedValue: true },
-                    { point: 'Oil BDV (Breakdown Voltage) test before filling', specifiedValue: '> 60 kV', editableSpecifiedValue: true },
-                    { point: 'Oil Moisture content (PPM) before filling', specifiedValue: '< 10 ppm', editableSpecifiedValue: true }
-                ]
-            }, {
-                name: '2 - Filling Operations',
-                items: [
-                    { point: 'Oil filling completed under vacuum', specifiedValue: 'Verified' },
-                    { point: 'Oil level indicator (MOG) check', specifiedValue: 'At normal mark' },
-                    { point: 'Air release from all venting points (Bushings, radiators, etc.)', specifiedValue: 'Bleeded properly' }
-                ]
-            }]
-        },
 
         coreBuilding: {
             title: 'INSPECTION RECORD FOR EHV & UHV (Transformer)',
-            subtitle: 'Core Building - Form No: F/QAS/ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â  | Issue No: 00 | Issue Dt: 17/11/2025 | Rev No: 00 | Rev Dt: 17/11/2025',
+            subtitle: 'Core Building - Form No: F/QAS | Issue No: 00 | Issue Dt: 17/11/2025 | Rev No: 00 | Rev Dt: 17/11/2025',
             sections: [
                 {
                     name: 'Core Building of Transformer (Core Table)',
@@ -704,6 +1048,187 @@ function getStageData() {
                     ]
                 }
             ]
+        },
+
+        vpd: {
+            title: 'INSPECTION RECORD FOR EHV & UHV TRANSFORMER',
+            subtitle: 'Active Part Drying – VPD | Form No: F/QAS/13',
+            sections: [{
+                name: 'VPD – Section 1: T-G Assembly & Chamber Cleaning Check',
+                items: [
+                    { point: 'All T-G assembly points completed', type: 'vpd-shop-qa', specifiedValue: 'Visual Check' },
+                    { point: 'Ensure VPD chamber cleaning before job loading:\na) No visible material\nb) No plastic\nc) No Rusted wall\nd) No Residual oil\ne) No dust\nf) No metallic contamination', type: 'vpd-shop-qa', specifiedValue: 'Visual Check' }
+                ]
+            }, {
+                name: 'VPD – Section 2: Loading Parameters & Sensor Placement',
+                items: [
+                    { point: 'No foreign material left on active part', specifiedValue: 'No foreign material on job.', type: 'vpd-oknotok' },
+                    { point: 'Insulation weight', specifiedValue: '', type: 'vpd-measure-merged', unit: 'Ton' },
+                    { point: 'VPD Capacity', specifiedValue: '', type: 'vpd-measure-merged', unit: 'kw' },
+                    { point: 'Total Number of Sensors / Location to be marked in below diagram\n(Min 3 upto 765 kV)', specifiedValue: 'Min 3 upto 765 kV', type: 'vpd-sensor-diagram' }
+                ]
+            }, {
+                name: 'VPD – Section 3: Solvent & Process Check',
+                items: [
+                    { point: 'Last empty distillation cycle Date', specifiedValue: 'Quarterly or after each Oily distillation cycle', type: 'vpd-yesno', hasDescInput: true },
+                    { point: 'Last Oily job distillation cycle Date', specifiedValue: '', type: 'vpd-yesno', hasDescInput: true },
+                    { point: 'Date of solvent testing', specifiedValue: 'Half Yearly', type: 'vpd-yesno', hasDescInput: true },
+                    { point: 'Ensure proper functionality of VPD oven', specifiedValue: 'OK / Not OK', type: 'vpd-oknotok' },
+                    { point: 'Quality of the solvent', specifiedValue: 'As per specifications', type: 'vpd-measure', unit: '' },
+                    { point: 'Filter in the VPD Oven', specifiedValue: '< 10 Microns after the solvent pump before the evaporator', type: 'vpd-measure', unit: '' },
+                    { point: 'Process Start (Time & date)', specifiedValue: '', type: 'vpd-measure', unit: '' },
+                    { point: 'Vacuum achieved during preparation phase', specifiedValue: '< 7.0 mbar', type: 'vpd-measure', unit: 'mbar' },
+                    { point: 'Set Oven temperature', specifiedValue: '135 deg.', type: 'vpd-measure', unit: '°C' },
+                    { point: 'Rate of rise of oven wall (°C / h)', specifiedValue: '± 7°C /h', type: 'vpd-measure', unit: '°C/h' },
+                    { point: 'First Heating duration', specifiedValue: '', type: 'vpd-measure', unit: '', hasDescInput: true },
+                    { point: 'Total No. of IPRs', specifiedValue: 'Min 4 IPR upto 765 kV', type: 'vpd-measure', unit: '' }
+                ]
+            }, {
+                name: 'VPD – Section 4: Drying Process Parameters',
+                items: [
+                    { point: 'Core temp during drying procedure', specifiedValue: 'Min 100', type: 'vpd-measure', unit: '°C' },
+                    { point: 'Heating duration after last IPR', specifiedValue: 'Min 6 Hrs upto 765 kV', type: 'vpd-measure', unit: '' },
+                    { point: 'Core temp after completing above step', specifiedValue: 'Min 100', type: 'vpd-measure', unit: '°C' },
+                    { point: 'Vacuum during Final pressure Reduction', specifiedValue: '< 25.0 mbar upto 765kV', type: 'vpd-measure', unit: 'mbar' },
+                    { point: 'Period of Fine Vacuum (after achieving 0.2 mbar upto 765 kV) in Hrs', specifiedValue: '24 hr 400 kv | 05 for 765 kv', type: 'vpd-measure', unit: 'Hrs' },
+                    { point: 'Water Extraction rate at end of fine vacuum', specifiedValue: '< 5 g/h for 400 kV\n< 5 g/h for 765 kV', type: 'vpd-measure', unit: 'g/h' },
+                    { point: 'Final vacuum **', specifiedValue: '≤0.30 mbar upto 400kV\n≤0.20 mbar upto 765 kV', type: 'vpd-measure', unit: 'mbar' },
+                    { point: 'Final winding temp **', specifiedValue: '> 110°C; Should not more than 130°C', type: 'vpd-measure', unit: '°C' },
+                    { point: 'Final core temp **', specifiedValue: '> 100°C; Should not more than 130°C', type: 'vpd-measure', unit: '°C' },
+                    { point: 'Final Dew Point **', specifiedValue: '≤ (-55°C) upto 765 kV', type: 'vpd-measure', unit: '°C' },
+                    { point: 'Total operation time', specifiedValue: '', type: 'vpd-measure', unit: '' },
+                    { point: 'Dew point of dry air feeded before opening VPD door', specifiedValue: '≤ -40°C', type: 'vpd-dual-measure' },
+                    { point: 'Finish date & time', specifiedValue: '', type: 'vpd-measure', unit: '' }
+                ]
+            }]
+        },
+        dismantling: {
+            title: 'INSPECTION RECORD FOR EHV & UHV (Transformer)',
+            subtitle: 'Dismantling | Form No: F/QAS/17 | Issue No: 03 | Issue Dt: 18-11-25 | Rev No: 00 | Rev Dt: 18-11-25',
+            formNo: 'F/QAS/17',
+            sections: [
+                // ── PAGE 1 ──────────────────────────────────────────────────────────────
+                {
+                    name: 'Name and Signature',
+                    isDismantlingSignTable: true,
+                    items: []
+                },
+                {
+                    name: 'Dismantling – Main Inspection Record (Page 1 of 5)',
+                    items: [
+                        { point: 'Oil drain start Date & time', specifiedValue: '', type: 'dismantling-standard' },
+                        { point: 'Oil drain stop Date & time', specifiedValue: '', type: 'dismantling-standard' },
+                        { point: 'Before window open Dry air application date & time', specifiedValue: 'Dew Point of dry air ≤ -55°C', type: 'dismantling-standard' },
+                        { point: 'Time at which location of window Opened', specifiedValue: '', type: 'dismantling-window-row' },
+                        { point: 'Time at which location of window Closed', specifiedValue: '', type: 'dismantling-window-row' },
+                        { point: 'Details of work done (Section A)', specifiedValue: '', type: 'dismantling-workdone' },
+                        { point: 'Time at which location of window Opened', specifiedValue: '', type: 'dismantling-window-row' },
+                        { point: 'Time at which location of window Closed', specifiedValue: '', type: 'dismantling-window-row' },
+                        { point: 'Details of work done (Section B)', specifiedValue: '', type: 'dismantling-workdone' },
+                        { point: 'Time at which location of window Opened', specifiedValue: '', type: 'dismantling-window-row' },
+                        { point: 'Time at which location of window Closed', specifiedValue: '', type: 'dismantling-window-row' },
+                        { point: 'Details of work done (Section C)', specifiedValue: '', type: 'dismantling-workdone' }
+                    ]
+                },
+                // ── PAGE 2 ──────────────────────────────────────────────────────────────
+                {
+                    name: 'Dismantling – Visual Checks & Final Tests (Page 2 of 5)',
+                    items: [
+                        { point: 'Details of Visual checks / work done HV Side', specifiedValue: '', type: 'dismantling-hv-visual' },
+                        { point: 'Time at which window Opened', specifiedValue: '', type: 'dismantling-window-row' },
+                        { point: 'Time at which window Closed', specifiedValue: '', type: 'dismantling-window-row' },
+                        { point: 'Details of Visual checks / work done LV Side', specifiedValue: '', type: 'dismantling-lv-visual' },
+                        { point: 'Final Cleanliness at HV side', specifiedValue: '', type: 'dismantling-standard' },
+                        { point: 'Final Cleanliness at LV side', specifiedValue: '', type: 'dismantling-standard' },
+                        { point: 'IR (Megger) Test', specifiedValue: '', type: 'dismantling-ir-test' },
+                        { point: 'Dry air application time & date', specifiedValue: 'Dew Point ≤ -55°C', type: 'dismantling-standard' }
+                    ]
+                },
+                // ── PAGE 3 ──────────────────────────────────────────────────────────────
+                {
+                    name: 'Vacuum Monitoring Record (Page 3 of 5)',
+                    items: [
+                        { point: 'Vacuum Monitoring Record Table', type: 'dismantling-vacuum-table' }
+                    ]
+                },
+                // ── PAGE 4 ──────────────────────────────────────────────────────────────
+                {
+                    name: 'Oil Filling Record (Page 4 of 5)',
+                    items: [
+                        { point: 'Oil Filling Record Table', type: 'dismantling-oilfill-table' }
+                    ]
+                },
+                // ── PAGE 5 ──────────────────────────────────────────────────────────────
+                {
+                    name: 'Dry Air Pressure Monitoring Record (Page 5 of 5)',
+                    items: [
+                        { point: 'Dry Air Pressure Monitoring Table', type: 'dismantling-dryair-table' }
+                    ]
+                }
+            ]
+        },
+        shunt_reactor: {
+            title: "INSPECTION RECORD FOR EHV & UHV (Shunt Reactor)",
+            subtitle: "Core Coil Assembly",
+            sections: [
+                {
+                    name: "Core Coil Assembly (Coil Lowering, Top yoke, Connections)",
+                    items: [
+                        { sr: 1, point: "Magnetic disc Make", specifiedValue: "" },
+                        { sr: 2, point: "Bottom yoke Levelling with Optical Level/Dumpy Level. At 4 locations (1 Phase)", specifiedValue: "HV Side: 1, 2<br>LV Side: 3, 4", type: "sr-locations-4" },
+                        { sr: 3, point: "Alignment of limbs (+/- 1 mm)", specifiedValue: "With Plumb Level" },
+                        { sr: 4, point: "Positoning of Gauge Mark Alignment of Gauge Mark & line marking on core as per Drg.", specifiedValue: "", type: "sr-digital-image" },
+                        { sr: 5, point: "Position of Isolation disc (Fiberglass washer) or bottom yoke as per Drawing", specifiedValue: "Required" },
+                        { sr: 6, point: "Positoin of Isolation tubes shall be interchanged at adjacent portion on each isolation disc", specifiedValue: "No isolation tubes shall be adjacent sides of isolation washer" },
+                        { sr: 7, point: "Positioning of tocido (Resin Sheet) between bottom yoke and magnetic disc (As per Drawing)", specifiedValue: "Required" },
+                        { sr: 8, point: "<div style=\"text-align:center; font-weight:bold; border-bottom:1px solid #ddd; padding-bottom:5px; margin-bottom:5px;\">Disc Assembly</div>Disc Part-A", specifiedValue: "Specified Height at Location", type: "sr-disc-height" },
+                        { sr: 9, point: "Araldite application before fixing 2nd half on magnetic disc assembly (Curing time: 6:00 hours at Room temp.)", specifiedValue: "" },
+                        { sr: 10, point: "<div style=\"text-align:center; font-weight:bold; border-bottom:1px solid #ddd; padding-bottom:5px; margin-bottom:5px;\">Disc Assembly</div>Disc Part-B", specifiedValue: "Specified Height at Location", type: "sr-disc-height" },
+                        { sr: 11, point: "Magnetic disc assembly stack height to be measured (+/- 2.0 mm)", specifiedValue: "" },
+                        { sr: 12, point: "Arrangment of Pre-dried & oil impregnated bottom ring / segment, support blocks & screw rods (As per Drg.)<br>-Grain Orientation<br>-Leveling with spirit level (-0/+2 mm)<br>-Alignment of magnetic disc (-0/+2 mm)", specifiedValue: "Ok/Not Ok", type: "ok-notok" },
+                        { sr: 13, point: "Bottom Shunt & Insulation Fitting (As per Drg.)", specifiedValue: "" },
+                        { sr: 14, point: "Alignment of Strips on main limb and Wrap thickness to be record as below.", specifiedValue: "", type: "sr-strip-wrap-full" },
+                        { sr: 15, point: "Assembly of core shield on magnetic disc assembly", specifiedValue: "Digital Image", type: "sr-digital-image" },
+                        { sr: 16, point: "Core shield overlapping length", specifiedValue: "As per Drg." },
+                        { sr: 17, point: "Core shield lead position (Lead takeout should be inside of overlap)", specifiedValue: "As per Drg." },
+                        { sr: 18, point: "Pressboard protection at core shield end", specifiedValue: "As per Drg." }
+                    ]
+                }
+            ]
+        },
+        dispatch: {
+            title: 'INSPECTION RECORD FOR EHV & UHV Transformer',
+            subtitle: 'Dispatch – Form No: F/GAS/28',
+            formNo: 'F/GAS/28',
+            sections: [{
+                name: 'Dispatch Inspection Checklist',
+                isDispatch: true,
+                items: [
+                    { point: 'Test released note issued / not issued', specifiedValue: 'TRN issued by testing' },
+                    { point: 'Terminal Marking plate / Tag fitting<br><small>1) Earthing pad<br>2) OTI, WTI &amp; TP pockets<br>3) Haulage, lashing lugs &amp; lifting bollards<br>4) Valves &amp; Jacking Pad<br>5) Any Other</small>', specifiedValue: 'The labels are provided as per approve GA drg' },
+                    { point: 'Valve locking arrangement and protection Guard if required', specifiedValue: 'Locking Rod fitted with split pin/ hardwares' },
+                    { point: 'Protection hood for fiber optic sensor plate', specifiedValue: 'Fitted with suitable hardware' },
+                    { point: 'Protection hood for OLTC &amp; OCTC', specifiedValue: 'As per Drawing' },
+                    { point: 'Turret Blanking plate', specifiedValue: 'All hardwares are tightened' },
+                    { point: 'Center line marking on the job', specifiedValue: 'Marked with hard punch and identified by RED' },
+                    { point: 'Earthing pads on bottom tank', specifiedValue: 'Duly fitted with SS hardwares' },
+                    { point: 'Paint touch up', specifiedValue: 'If required' },
+                    { point: 'Bracing support / Transport disk for active part', specifiedValue: 'As provided by design' },
+                    { point: 'Protection cover placed under the lashing chains', specifiedValue: 'As Per Required' },
+                    { point: 'Torque tightening of curb bolts after placement of transformer on trailer', specifiedValue: 'Torque as per drawing' },
+                    { point: 'Core - Frame - Tank earthing terminal', specifiedValue: 'Permanent marking / Tag' },
+                    { point: 'All hardware same length fitted', specifiedValue: 'Torque to be applied' },
+                    { point: 'Dew Point Measurement', specifiedValue: '', type: 'dispatch-dew-point' },
+                    { point: 'IR Test (Megger)', specifiedValue: '', type: 'dispatch-ir-test' },
+                    { point: 'Impact Recorder', specifiedValue: '', type: 'dispatch-impact' },
+                    { point: 'Main Tank Dispatched with -<br><small>(Mark ✓ which ever is applicable)</small>', specifiedValue: '', type: 'dispatch-main-tank' },
+                    { point: 'Pressure Observation for 12 Hrs. (Minimum)', specifiedValue: '', type: 'dispatch-pressure-obs' },
+                    { point: 'Remarks per Shortage if any:-', specifiedValue: '', type: 'dispatch-remarks-row' },
+                    { point: 'Transformer Dispatch Clearance<br><small>(Mark ✓ which ever is applicable)</small>', specifiedValue: '', type: 'dispatch-clearance' },
+                    { point: 'Date of Dispatch', specifiedValue: '', type: 'dispatch-date-row' },
+                    { point: 'Name of Production engineer &amp; Name of Quality engineer', specifiedValue: '', type: 'dispatch-sign-row' }
+                ]
+            }]
         }
     };
 }
@@ -715,16 +1240,37 @@ function loadStageContent(stage) {
     const content = document.getElementById('stageContent');
     if (!content) return;
 
+    const isAdmin = window.currentUserRole === 'admin';
+    const isEditMode = window.isEditMode && isAdmin;
     const isCustomer = window.currentUserRole === 'customer';
     const isQuality = window.currentUserRole === 'quality';
     const isProduction = window.currentUserRole === 'production';
-    const isAdmin = window.currentUserRole === 'admin';
+    const isShopSupervisor = window.currentUserRole === 'shop_supervisor';
     const disabledAttr = isCustomer ? 'disabled' : '';
-    const stageData = getStageData();
-    const stageInfo = stageData[stage];
+    const shopSupervisorAutoSign = isShopSupervisor ? (window.currentUserName || '') : '';
+    const qualityAutoSign = isQuality ? (window.currentUserName || '') : '';
+    const todayStr = new Date().toLocaleDateString('en-GB');
+    const autoSSVal = shopSupervisorAutoSign ? `${shopSupervisorAutoSign} | ${todayStr}` : '';
+    const autoQAVal = qualityAutoSign ? `${qualityAutoSign} | ${todayStr}` : '';
+
+    // Check if we have master data, otherwise fallback to local getStageData()
+    const allStages = window.checklistMasterData || getStageData();
+    let stageInfo = allStages[stage];
+
+    // If master data is incomplete and missing a specific stage, fallback to local getStageData for that specific stage
+    if (!stageInfo && window.checklistMasterData) {
+        console.warn(`Stage "${stage}" not found in master data. Falling back to local data.`);
+        const fallbackStages = getStageData();
+        stageInfo = fallbackStages[stage];
+
+        // Optionally inject it back to master data so it's not requested again
+        if (stageInfo) {
+            window.checklistMasterData[stage] = stageInfo;
+        }
+    }
 
     if (!stageInfo) {
-        content.innerHTML = '<p style="padding: 20px; color: #e74c3c;">ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Stage data not found.</p>';
+        content.innerHTML = '<p style="padding: 20px; color: #e74c3c;">Stage data not found.</p>';
         return;
     }
 
@@ -732,17 +1278,41 @@ function loadStageContent(stage) {
     let checklistHTML = '';
 
     // Render all sections
-    stageInfo.sections.forEach((section) => {
+    stageInfo.sections.forEach((section, sectionIndex) => {
         // Special header for tanking stage with split Observed Value columns
         const isTankingStage = stage === 'tanking';
 
         checklistHTML += `
-            <h4 style="background: #ecf0f1; padding: 10px; margin-top: 20px; border-left: 4px solid var(--blue);">
+            ${stage === 'shunt_reactor' ? '' : `
+            <h4 style="background: #ecf0f1; padding: 10px; margin-top: 20px; border-left: 4px solid var(--blue);" 
+                ${isAdmin ? `contenteditable="true" onblur="updateMasterData('${stage}', 'section', ${sectionIndex}, this.innerText)"` : ''}>
                 ${section.name}
             </h4>
+            `}
             <table class="form-table">
                 <thead>
-                    ${stage === 'coreBuilding' ? '' : isTankingStage ? `
+                    ${stage === 'coreBuilding' ? '' : stage === 'vpd' && section.items.some(i => i.type === 'vpd-shop-qa') ? `
+                    <tr>
+                        <th style="width:40px;">Sr.no</th>
+                        <th style="width:300px;">Inspection Points</th>
+                        <th style="width:270px;" colspan="2">Observations</th>
+                        <th style="width:130px;">Shop Supervisor</th>
+                        <th style="width:130px;">Quality Supervisor</th>
+                        <th style="width:120px;">Remarks</th>
+                        <th style="width:80px;">Action</th>
+                    </tr>
+                    ` : stage === 'vpd' && !section.items.some(i => i.type === 'vpd-shop-qa') ? `
+                    <tr>
+                        <th style="width:40px;">Sr.no</th>
+                        <th style="width:240px;">Description</th>
+                        <th style="width:160px;">Specified value</th>
+                        <th style="width:120px;">Measure</th>
+                        <th style="width:110px;">Operator</th>
+                        <th style="width:110px;">Shop Supervisor</th>
+                        <th style="width:120px;">Remarks</th>
+                        <th style="width:80px;">Action</th>
+                    </tr>
+                    ` : isTankingStage ? `
                     <tr>
                         <th style="width:40px;" rowspan="2">Sr.no</th>
                         <th style="width:300px;" rowspan="2">Inspection Points</th>
@@ -756,7 +1326,39 @@ function loadStageContent(stage) {
                         <th style="width:100px;">Value 1</th>
                         <th style="width:100px;">Value 2</th>
                     </tr>
-                    ` : `
+                    ` : stage === 'dispatch' ? `
+                    <tr>
+                        <th style="width:40px;">Sr. No.</th>
+                        <th style="width:300px;">Description</th>
+                        <th style="width:180px;">Requirements</th>
+                        <th style="width:110px;">Findings</th>
+                        <th style="width:220px;">Checked by (Sign &amp; date)<br><small style="font-weight:normal;">Operator &nbsp;|&nbsp; Shop Supervisor</small></th>
+                        <th style="width:120px;">Remark</th>
+                        <th style="width:80px;">Action</th>
+                    </tr>
+                    ` : stage === 'dismantling' && !section.isDismantlingSignTable && section.items.some(i => i.type !== 'dismantling-vacuum-table' && i.type !== 'dismantling-oilfill-table' && i.type !== 'dismantling-dryair-table') ? `
+                    <tr>
+                        <th style="width:40px;">Sr. no.</th>
+                        <th style="width:260px;">Description</th>
+                        <th style="width:130px;">Specified Value<br><small style="font-weight:normal;">(if required)</small></th>
+                        <th style="width:120px;">Method of Check<br><small style="font-weight:normal;">Visual / Measure</small></th>
+                        <th style="width:100px;">Operator</th>
+                        <th style="width:100px;">Shop Supervisor</th>
+                        <th style="width:110px;">Remark</th>
+                        <th style="width:70px;">Action</th>
+                    </tr>
+                    ` : stage === 'shunt_reactor' ? `
+                    <tr>
+                        <th style="width:40px;">Sr. No.</th>
+                        <th style="width:280px;">Description</th>
+                        <th style="width:140px;">Specified Value</th>
+                        <th style="width:120px;">Actual Value</th>
+                        <th style="width:130px;">Operator (Sign & Date)</th>
+                        <th style="width:130px;">Shop Supervisor (Sign & Date)</th>
+                        <th style="width:130px;">Quality Inspector (Sign & Date)</th>
+                        <th style="width:80px;">Action</th>
+                    </tr>
+                    ` : stage === 'dismantling' ? '' : `
                     <tr>
                         <th style="width:40px;">Sr.no</th>
                         <th style="width:300px;">Inspection Points</th>
@@ -770,8 +1372,64 @@ function loadStageContent(stage) {
                 </thead>
                 <tbody>
         `;
-        section.items.forEach((item) => {
-            itemCounter++;
+
+        if (isAdmin && sectionIndex === 0) {
+            checklistHTML = `
+                <div style="background: #fff3e0; padding: 10px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ffe0b2;">
+                    <div>
+                        <b style="color: #e65100; font-size: 14px;">🛠️ Checklist Structure Management</b>
+                        <p style="font-size: 11px; margin: 3px 0 0 0; color: #666;">Turn on Edit Mode to add/delete rows or change input types. All structural changes must be saved.</p>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-primary" onclick="toggleEditMode('${stage}')" 
+                                style="padding: 6px 15px; font-size: 12px; background: ${window.isEditMode ? '#e67e22' : '#3498db'};">
+                            ${window.isEditMode ? '🔒 Lock Structure' : '✏️ Edit Structure'}
+                        </button>
+                        <button class="btn btn-primary" onclick="saveMasterLayout(true)" 
+                                style="padding: 6px 15px; font-size: 12px; background: #27ae60;">💾 Save Master Layout</button>
+                    </div>
+                </div>
+            ` + checklistHTML;
+        }
+        // Keep dismantling row numbers continuous across sections after the Name & Signature section
+        if (stage === 'dismantling') {
+            if (sectionIndex === 0) itemCounter = 0;
+        } else if (stage !== 'vpd' || sectionIndex < 2) {
+            itemCounter = 0;
+        }
+
+        // ── DISMANTLING: Name & Signature special section ──
+        if (stage === 'dismantling' && section.isDismantlingSignTable) {
+            checklistHTML = checklistHTML.replace(/<h4[^>]*>[\s\S]*?<\/h4>\s*<table[^>]*>[\s\S]*?<thead>[\s\S]*?$/, '');
+            checklistHTML += `
+                <h4 style="background: #ecf0f1; padding: 10px; margin-top: 20px; border-left: 4px solid var(--blue);">NAME AND SIGNATURE</h4>
+                <table class="form-table" style="width:100%;">
+                    <thead><tr>
+                        <th style="width:40px;">S NO</th>
+                        <th style="width:180px;">NAME</th>
+                        <th style="width:100px;">SIGN</th>
+                        <th style="width:40px;">S NO</th>
+                        <th style="width:180px;">NAME</th>
+                        <th style="width:100px;">SIGN</th>
+                    </tr></thead>
+                    <tbody>
+                        ${[1, 2, 3, 4].map(n => `
+                        <tr style="height:36px;">
+                            <td style="padding:4px 8px;text-align:center;border-right:1px solid #ccc;">${n}</td>
+                            <td style="padding:4px;border-right:1px solid #ccc;"><input type="text" id="dis_name_${n}a" ${disabledAttr} style="width:100%;border:none;padding:3px;font-size:11px;"></td>
+                            <td style="padding:4px;border-right:1px solid #ccc;"><input type="text" id="dis_sign_${n}a" ${disabledAttr} style="width:100%;border:none;padding:3px;font-size:11px;"></td>
+                            <td style="padding:4px 8px;text-align:center;border-right:1px solid #ccc;">${n + 4}</td>
+                            <td style="padding:4px;border-right:1px solid #ccc;"><input type="text" id="dis_name_${n}b" ${disabledAttr} style="width:100%;border:none;padding:3px;font-size:11px;"></td>
+                            <td style="padding:4px;"><input type="text" id="dis_sign_${n}b" ${disabledAttr} style="width:100%;border:none;padding:3px;font-size:11px;"></td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            `;
+            return; // skip normal table render for this section
+        }
+
+        section.items.forEach((item, itemIndex) => {
+            if (item.type !== 'section-header') itemCounter++;
             const rowId = `row_${stage}_${itemCounter}`;
 
             // Determine what type of input to render based on item.type
@@ -782,6 +1440,20 @@ function loadStageContent(stage) {
             let remarkCell = null;
             let actualValueCell = '';
             let specifiedValueCell = item.specifiedValue;
+
+            // Apply dynamic input type for Specified Value
+            if (item.specifiedInputType === 'dropdown') {
+                specifiedValueCell = `
+                    <select id="specifiedValue_${rowId}" ${disabledAttr} style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
+                        <option value="${item.specifiedValue || ''}">${item.specifiedValue || '-- Select --'}</option>
+                        <option value="Ok">Ok</option>
+                        <option value="Not Ok">Not Ok</option>
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                        <option value="N/A">N/A</option>
+                    </select>
+                `;
+            }
             let customRowHTML = null;
 
             // Check if specified value should be editable (for rows 10-12, 14-20 in winding checklist, or specifiedValueInput flag)
@@ -796,9 +1468,68 @@ function loadStageContent(stage) {
                 `;
             }
 
+            const dismantlingSpecifiedValueRows = new Set([1, 2, 4, 5, 7, 8, 10, 11, 14, 15, 17, 18]);
+            if (stage === 'dismantling' && dismantlingSpecifiedValueRows.has(itemCounter)) {
+                specifiedValueCell = `
+                    <input type="text" 
+                           id="specifiedValue_${rowId}" 
+                           ${disabledAttr}
+                           value="${item.specifiedValue || ''}"
+                           placeholder="${item.specifiedValue || 'Enter value'}"
+                           style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
+                `;
+            }
 
-            // Special handling for tanking stage with split Observed Value columns
-            if (stage === 'tanking') {
+            // ── Shunt Reactor Row 2: 4-location merged layout ──
+            if (item.type === 'sr-locations-4') {
+                const cs = 'border:1px solid #aaa; padding:5px 8px; font-size:11px; vertical-align:middle;';
+                const inpS = 'width:100%; border:none; padding:3px 5px; font-size:11px; background:transparent; box-sizing:border-box; outline:none;';
+                customRowHTML = `
+                    <tr>
+                        <td rowspan="4" style="${cs} text-align:center; font-weight:bold; background:#f8f8f8;">${itemCounter}</td>
+                        <td rowspan="4" style="${cs} text-align:left; vertical-align:middle;">${item.point}</td>
+                        <td rowspan="2" style="${cs} text-align:center; background:#f5f5f5; font-weight:600;">HV Side</td>
+                        <td style="${cs} vertical-align:middle;">
+                            <span style="font-weight:600; margin-right:6px;">1-</span>
+                            <input type="text" id="loc1_${rowId}" ${disabledAttr} placeholder="........mm" style="${inpS} width:calc(100% - 30px);">
+                        </td>
+                        <td style="${cs} padding:2px;"><input type="text" id="op1_${rowId}" ${disabledAttr} placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td style="${cs} padding:2px;"><input type="text" id="ss1_${rowId}" ${disabledAttr} value="${autoSSVal}" placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td style="${cs} padding:2px;"><input type="text" id="qa1_${rowId}" ${disabledAttr} value="${autoQAVal}" placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td rowspan="4" style="${cs} text-align:center; background:#fafafa;"></td>
+                    </tr>
+                    <tr>
+                        <td style="${cs} vertical-align:middle;">
+                            <span style="font-weight:600; margin-right:6px;">2-</span>
+                            <input type="text" id="loc2_${rowId}" ${disabledAttr} placeholder="........mm" style="${inpS} width:calc(100% - 30px);">
+                        </td>
+                        <td style="${cs} padding:2px;"><input type="text" id="op2_${rowId}" ${disabledAttr} placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td style="${cs} padding:2px;"><input type="text" id="ss2_${rowId}" ${disabledAttr} value="${autoSSVal}" placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td style="${cs} padding:2px;"><input type="text" id="qa2_${rowId}" ${disabledAttr} value="${autoQAVal}" placeholder="Sign &amp; Date" style="${inpS}"></td>
+                    </tr>
+                    <tr>
+                        <td rowspan="2" style="${cs} text-align:center; background:#f5f5f5; font-weight:600;">LV Side</td>
+                        <td style="${cs} vertical-align:middle;">
+                            <span style="font-weight:600; margin-right:6px;">3-</span>
+                            <input type="text" id="loc3_${rowId}" ${disabledAttr} placeholder="........mm" style="${inpS} width:calc(100% - 30px);">
+                        </td>
+                        <td style="${cs} padding:2px;"><input type="text" id="op3_${rowId}" ${disabledAttr} placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td style="${cs} padding:2px;"><input type="text" id="ss3_${rowId}" ${disabledAttr} value="${autoSSVal}" placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td style="${cs} padding:2px;"><input type="text" id="qa3_${rowId}" ${disabledAttr} value="${autoQAVal}" placeholder="Sign &amp; Date" style="${inpS}"></td>
+                    </tr>
+                    <tr>
+                        <td style="${cs} vertical-align:middle;">
+                            <span style="font-weight:600; margin-right:6px;">4-</span>
+                            <input type="text" id="loc4_${rowId}" ${disabledAttr} placeholder="........mm" style="${inpS} width:calc(100% - 30px);">
+                        </td>
+                        <td style="${cs} padding:2px;"><input type="text" id="op4_${rowId}" ${disabledAttr} placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td style="${cs} padding:2px;"><input type="text" id="ss4_${rowId}" ${disabledAttr} value="${autoSSVal}" placeholder="Sign &amp; Date" style="${inpS}"></td>
+                        <td style="${cs} padding:2px;"><input type="text" id="qa4_${rowId}" ${disabledAttr} value="${autoQAVal}" placeholder="Sign &amp; Date" style="${inpS}"></td>
+                    </tr>
+                `;
+
+                // Special handling for tanking / shunt_reactor stages with split Observed Value columns
+            } else if (stage === 'tanking' || stage === 'shunt_reactor') {
                 if (item.type === 'single-merged') {
                     // Rows 1-2: Single input spanning both Value 1 and Value 2 columns
                     actualValueCell = `
@@ -827,6 +1558,217 @@ function loadStageContent(stage) {
                                    placeholder="Value 2"
                                    style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
                         </td>
+                    `;
+                } else if (item.type === 'sr-disc-height') {
+                    // Shunt Reactor Row 8/10: Single-row mirror of physical form
+                    // Description column: inner table with Disc Assembly header + Disc Part-A merged + admin-editable sub-row labels
+                    const dhCs = 'border:1px solid #aaa; padding:5px 8px; font-size:11px; vertical-align:middle;';
+                    const dhInp = 'width:100%; border:none; padding:3px 5px; font-size:11px; background:transparent; box-sizing:border-box; outline:none;';
+                    const partLabel = (item.point || '').replace(/<[^>]*>/g, '').replace('Disc Assembly', '').trim() || 'Disc Part';
+                    // Sub-row labels: saved in item.subRows array; default 3 empty slots
+                    const savedSubRows = (item.subRows && item.subRows.length) ? item.subRows : ['', '', ''];
+                    const numSubRows = savedSubRows.length;
+                    const slInp = 'width:calc(100% - 22px); border:none; border-bottom:1px dashed #bbb; padding:2px 4px; font-size:11px; background:transparent; box-sizing:border-box; outline:none;';
+                    const buildSubCell = (n, lbl, borderBottom) => isAdmin
+                        ? `<td class="disc-sublabel-cell" style="position:relative; padding:3px 5px; height:26px;${borderBottom ? ' border-bottom:1px solid #ddd;' : ''}">
+                               <input class="disc-sublabel-inp" type="text" id="sublabel_${rowId}_${n}" value="${lbl}" placeholder="e.g. Compartment ${n + 1}" style="${slInp}">
+                               <button onclick="srRemoveSubRow(this,'${rowId}')" title="Remove row" style="position:absolute;right:2px;top:50%;transform:translateY(-50%);border:none;background:none;color:#c00;cursor:pointer;font-size:13px;line-height:1;padding:0 2px;">×</button>
+                           </td>`
+                        : `<td class="disc-sublabel-cell" style="padding:4px 6px; height:26px; font-size:11px; color:#333;${borderBottom ? ' border-bottom:1px solid #ddd;' : ''}">${lbl || ''}</td>`;
+                    customRowHTML = `
+                        <tr id="${rowId}">
+                            <td style="${dhCs} text-align:center; font-weight:bold; background:#f8f8f8;">${itemCounter}</td>
+                            <td style="padding:0; border:1px solid #aaa; vertical-align:top;">
+                                <table id="desc_table_${rowId}" style="width:100%; border-collapse:collapse; font-size:11px; height:100%;">
+                                    <tr>
+                                        <td colspan="2" style="border-bottom:1px solid #aaa; padding:5px 8px; text-align:center; font-weight:bold; background:#f5f5f5; letter-spacing:0.3px;">Disc Assembly</td>
+                                    </tr>
+                                    <tr class="disc-part-first-row">
+                                        <td id="disc_part_cell_${rowId}" rowspan="${numSubRows}" style="border-right:1px solid #aaa; padding:6px 8px; text-align:center; vertical-align:middle; width:45%;">
+                                            ${partLabel}
+                                            ${isAdmin ? `<br><button onclick="srAddSubRow('${rowId}')" title="Add sub-row" style="margin-top:6px; font-size:10px; border:1px dashed #888; background:#f9f9f9; color:#444; cursor:pointer; padding:2px 6px; border-radius:3px;">+ Row</button>` : ''}
+                                        </td>
+                                        ${buildSubCell(0, savedSubRows[0], savedSubRows.length > 1)}
+                                    </tr>
+                                    ${savedSubRows.slice(1).map((lbl, i) => `<tr class="disc-sub-row">${buildSubCell(i + 1, lbl, i + 1 < savedSubRows.length - 1)}</tr>`).join('')}
+                                </table>
+                            </td>
+                            <td style="${dhCs} vertical-align:top;">
+                                <div style="font-size:10px; font-weight:bold; border-bottom:1px solid #ddd; padding-bottom:3px; margin-bottom:5px; text-align:center;">Specified Height at Location</div>
+                                <div style="display:flex; align-items:center; margin-bottom:3px;">
+                                    <span style="font-size:10px; margin-right:4px; white-space:nowrap;">1.</span>
+                                    <input type="text" id="sh1_${rowId}" ${disabledAttr} placeholder="........." style="${dhInp}">
+                                </div>
+                            </td>
+                            <td style="${dhCs} vertical-align:top;">
+                                <div style="font-size:10px; font-weight:bold; border-bottom:1px solid #ddd; padding-bottom:3px; margin-bottom:5px; text-align:center;">Actual Height at Location</div>
+                                ${[1, 2, 3, 4].map(n => `<div style="display:flex; align-items:center; margin-bottom:3px;"><span style="font-size:10px; margin-right:4px; white-space:nowrap;">${n}.</span><input type="text" id="ah${n}_${rowId}" ${disabledAttr} placeholder="........." style="${dhInp}"></div>`).join('')}
+                            </td>
+                            <td style="${dhCs} padding:2px;"><input type="text" id="op_${rowId}" ${disabledAttr} placeholder="Sign &amp; Date" style="${dhInp}"></td>
+                            <td style="${dhCs} padding:2px;"><input type="text" id="ss_${rowId}" ${disabledAttr} value="${autoSSVal}" placeholder="Sign &amp; Date" style="${dhInp}"></td>
+                            <td style="${dhCs} padding:2px;"><input type="text" id="qa_${rowId}" ${disabledAttr} value="${autoQAVal}" placeholder="Sign &amp; Date" style="${dhInp}"></td>
+                            <td style="${dhCs} text-align:center; vertical-align:middle; padding:6px;">
+                                ${!isCustomer ? `<button class="btn-login" id="save_${rowId}" style="width:auto; padding:6px 10px; font-size:11px; background:var(--green);" onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}')">🔄 Update</button>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                    checklistHTML += customRowHTML;
+                    return;
+                } else if (item.type === 'sr-strip-wrap') {
+                    // Shunt Reactor Row 14: Strip/Wrap thk table
+                    actualValueCell = `
+                        <td style="padding:0;">
+                            <table style="width:100%; border-collapse:collapse; font-size:9px;">
+                                <tr style="background:#f9f9f9;">
+                                    <th style="border-bottom:1px solid #ddd; border-right:1px solid #ddd; padding:2px;">Part/BOM</th>
+                                    <th style="border-bottom:1px solid #ddd; border-right:1px solid #ddd; padding:2px;">Strip/Wrap thk.</th>
+                                    <th style="border-bottom:1px solid #ddd; padding:2px;">Measured Dia</th>
+                                </tr>
+                                <tr>
+                                    <td style="border-right:1px solid #ddd; padding:0;"><input type="text" id="part_${rowId}" ${disabledAttr} style="width:100%; border:none; padding:4px;"></td>
+                                    <td style="border-right:1px solid #ddd; padding:0;"><input type="text" id="thk_${rowId}" ${disabledAttr} style="width:100%; border:none; padding:4px;"></td>
+                                    <td style="padding:0;"><input type="text" id="dia_${rowId}" ${disabledAttr} style="width:100%; border:none; padding:4px;"></td>
+                                </tr>
+                            </table>
+                        </td>
+                    `;
+                } else if (item.type === 'sr-digital-image') {
+                    // Shunt Reactor Row 4/15/19: Digital Image
+                    actualValueCell = `
+                        <td style="padding:8px; text-align:center;">
+                            <div class="digital-image-upload" data-row-id="${rowId}">
+                                <button class="btn" ${disabledAttr} style="font-size:10px; padding:2px 8px; border:1px solid #ccc;"><i class="fas fa-camera"></i> Capture / Upload</button>
+                                <span style="display:block; font-size:9px; color:#888; margin-top:4px;">Digital Image Required</span>
+                            </div>
+                        </td>
+                    `;
+                } else if (item.type === 'sr-impression-check') {
+                    // Shunt Reactor Row 30: Impression Check (U, V, W circular diagrams)
+                    actualValueCell = `
+                        <td style="padding:5px;">
+                            <div style="display:flex; justify-content:space-around; align-items:center;">
+                                <div style="text-align:center;">
+                                    <div style="width:40px; height:40px; border:2px solid var(--blue); border-radius:50%; margin:0 auto; position:relative; cursor:pointer;" onclick="toggleImpression('${rowId}', 'U')">
+                                        <div id="u_diag_${rowId}" style="width:100%; height:100%; display:flex; flex-wrap:wrap; align-content:center; justify-content:center; color:var(--blue); font-weight:bold; font-size:16px;">U</div>
+                                    </div>
+                                    <span style="font-size:9px;">U Phase</span>
+                                </div>
+                                <div style="text-align:center;">
+                                    <div style="width:40px; height:40px; border:2px solid var(--blue); border-radius:50%; margin:0 auto; position:relative; cursor:pointer;" onclick="toggleImpression('${rowId}', 'V')">
+                                        <div id="v_diag_${rowId}" style="width:100%; height:100%; display:flex; flex-wrap:wrap; align-content:center; justify-content:center; color:var(--blue); font-weight:bold; font-size:16px;">V</div>
+                                    </div>
+                                    <span style="font-size:9px;">V Phase</span>
+                                </div>
+                                <div style="text-align:center;">
+                                    <div style="width:40px; height:40px; border:2px solid var(--blue); border-radius:50%; margin:0 auto; position:relative; cursor:pointer;" onclick="toggleImpression('${rowId}', 'W')">
+                                        <div id="w_diag_${rowId}" style="width:100%; height:100%; display:flex; flex-wrap:wrap; align-content:center; justify-content:center; color:var(--blue); font-weight:bold; font-size:16px;">W</div>
+                                    </div>
+                                    <span style="font-size:9px;">W Phase</span>
+                                </div>
+                            </div>
+                        </td>
+                    `;
+                } else if (item.type === 'sr-strip-wrap-full') {
+                    // Shunt Reactor Row 14: Full 8-row strip/wrap measurement sub-table
+                    const swCs = 'border:1px solid #aaa; padding:4px; font-size:10px; vertical-align:middle;';
+                    const swInp = 'width:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;';
+                    customRowHTML = `
+                        <tr id="${rowId}">
+                            <td style="${swCs} text-align:center; font-weight:bold; background:#f8f8f8;">${itemCounter}</td>
+                            <td colspan="${stage === 'shunt_reactor' ? 6 : 5}" style="${swCs} padding:0;">
+                                <div style="padding:6px 8px; font-size:11px; border-bottom:1px solid #aaa; background:#f9f9f9; font-weight:600;">
+                                    ${item.point}
+                                </div>
+                                <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                                    <thead>
+                                        <tr style="background:#eee;">
+                                            <th style="${swCs} text-align:center; width:40px;" rowspan="2">Sr. No.</th>
+                                            <th style="${swCs} text-align:center; width:100px;" rowspan="2">Part no./BOM</th>
+                                            <th style="${swCs} text-align:center;" colspan="2">Strip/Wrap thk.</th>
+                                            <th style="${swCs} text-align:center;" rowspan="2">As per Drg.<br>Dia.</th>
+                                            <th style="${swCs} text-align:center;" rowspan="2">Diameter<br>Measured</th>
+                                        </tr>
+                                        <tr style="background:#eee;">
+                                            <th style="${swCs} text-align:center;">As per Drg.</th>
+                                            <th style="${swCs} text-align:center;">Actual</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${[1, 2, 3, 4, 5, 6, 7, 8].map(n => `
+                                        <tr>
+                                            <td style="${swCs} text-align:center;">${n}</td>
+                                            <td style="${swCs} padding:0;"><input type="text" id="sw_part_${rowId}_${n}" ${disabledAttr} style="${swInp}"></td>
+                                            <td style="${swCs} padding:0;"><input type="text" id="sw_drg_${rowId}_${n}" ${disabledAttr} style="${swInp}"></td>
+                                            <td style="${swCs} padding:0;"><input type="text" id="sw_act_${rowId}_${n}" ${disabledAttr} style="${swInp}"></td>
+                                            <td style="${swCs} padding:0;"><input type="text" id="sw_dia_drg_${rowId}_${n}" ${disabledAttr} style="${swInp}"></td>
+                                            <td style="${swCs} padding:0;"><input type="text" id="sw_dia_meas_${rowId}_${n}" ${disabledAttr} style="${swInp}"></td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td style="${swCs} text-align:center; vertical-align:top; padding:6px;">
+                                ${!isCustomer ? `
+                                    <button class="btn-login" id="save_${rowId}"
+                                            style="width:auto; padding:6px 10px; font-size:11px; background: var(--green); margin-bottom: 5px;"
+                                            onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}')">
+                                        🔄 Update
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'sr-subrow-test') {
+                    // Shunt Reactor Rows 33, 34, 69: Grouped test sub-rows under one Sr. No.
+                    const stCs = 'border:1px solid #aaa; padding:5px 8px; font-size:11px; vertical-align:middle;';
+                    const stInp = 'width:100%; border:none; padding:3px 5px; font-size:11px; background:transparent; box-sizing:border-box; outline:none;';
+                    const subs = item.subItems || [];
+                    customRowHTML = subs.map((sub, si) => `
+                        <tr id="${si === 0 ? rowId : rowId + '_sub' + si}">
+                            ${si === 0 ? `<td rowspan="${subs.length}" style="${stCs} text-align:center; font-weight:bold; background:#f8f8f8;">${itemCounter}</td>` : ''}
+                            <td style="${stCs}">${sub}</td>
+                            <td style="${stCs} background:linear-gradient(135deg, #f0f0f0 25%, #e0e0e0 25%, #e0e0e0 50%, #f0f0f0 50%, #f0f0f0 75%, #e0e0e0 75%); background-size:6px 6px;"></td>
+                            <td style="${stCs} padding:0;"><input type="text" id="actualValue_${rowId}_sub${si}" ${disabledAttr} placeholder="" style="${stInp}"></td>
+                            <td style="${stCs} padding:0;"><input type="text" id="op_${rowId}_sub${si}" ${disabledAttr} placeholder="Sign & Date" style="${stInp}"></td>
+                            <td style="${stCs} padding:0;"><input type="text" id="ss_${rowId}_sub${si}" ${disabledAttr} value="${autoSSVal}" placeholder="Sign & Date" style="${stInp}"></td>
+                            <td style="${stCs} padding:0;"><input type="text" id="qa_${rowId}_sub${si}" ${disabledAttr} value="${autoQAVal}" placeholder="Sign & Date" style="${stInp}"></td>
+                            ${si === 0 ? `<td rowspan="${subs.length}" style="${stCs} text-align:center; vertical-align:top; padding:6px;">
+                                ${!isCustomer ? `
+                                    <button class="btn-login" id="save_${rowId}"
+                                            style="width:auto; padding:6px 10px; font-size:11px; background: var(--green); margin-bottom: 5px;"
+                                            onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}')">
+                                        🔄 Update
+                                    </button>
+                                ` : ''}
+                            </td>` : ''}
+                        </tr>
+                    `).join('');
+                } else if (item.type === 'sr-split-row') {
+                    // Shunt Reactor Row 45: Two sub-descriptions within one Sr. No.
+                    const spCs = 'border:1px solid #aaa; padding:5px 8px; font-size:11px; vertical-align:middle;';
+                    const spInp = 'width:100%; border:none; padding:3px 5px; font-size:11px; background:transparent; box-sizing:border-box; outline:none;';
+                    customRowHTML = `
+                        <tr id="${rowId}">
+                            <td rowspan="2" style="${spCs} text-align:center; font-weight:bold; background:#f8f8f8;">${itemCounter}</td>
+                            <td style="${spCs} border-bottom:1px dashed #ccc;">${item.point}</td>
+                            <td style="${spCs} border-bottom:1px dashed #ccc;" rowspan="2"></td>
+                            <td style="${spCs} padding:0; border-bottom:1px dashed #ccc;"><input type="text" id="actualValue_${rowId}_a" ${disabledAttr} placeholder="" style="${spInp}"></td>
+                            <td style="${spCs} padding:0;" rowspan="2"><input type="text" id="op_${rowId}" ${disabledAttr} placeholder="Sign & Date" style="${spInp}"></td>
+                            <td style="${spCs} padding:0;" rowspan="2"><input type="text" id="ss_${rowId}" ${disabledAttr} value="${autoSSVal}" placeholder="Sign & Date" style="${spInp}"></td>
+                            <td style="${spCs} padding:0;" rowspan="2"><input type="text" id="qa_${rowId}" ${disabledAttr} value="${autoQAVal}" placeholder="Sign & Date" style="${spInp}"></td>
+                            <td rowspan="2" style="${spCs} text-align:center; vertical-align:top; padding:6px;">
+                                ${!isCustomer ? `
+                                    <button class="btn-login" id="save_${rowId}"
+                                            style="width:auto; padding:6px 10px; font-size:11px; background: var(--green); margin-bottom: 5px;"
+                                            onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}')">
+                                        🔄 Update
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="${spCs}">${item.subPoint || ''}</td>
+                            <td style="${spCs} padding:0;"><input type="text" id="actualValue_${rowId}_b" ${disabledAttr} placeholder="" style="${spInp}"></td>
+                        </tr>
                     `;
                 } else if (item.type === 'dropdown-merged') {
                     // Rows 6-7: Dropdown spanning both columns
@@ -872,8 +1814,8 @@ function loadStageContent(stage) {
                                         <input type="text" id="timing_dt_${rowId}" ${disabledAttr} placeholder="DD/MM/YYYY HH:MM" style="width:100%;border:none;padding:3px 4px;font-size:10px;background:transparent;box-sizing:border-box;">
                                     </td>
                                     <td style="padding:0; width:40%;">
-                                        <div style="font-size:9px; text-align:center; padding:2px; border-bottom:1px solid #ddd; color:#555;">Temp........°C</div>
-                                        <input type="text" id="timing_temp_${rowId}" ${disabledAttr} placeholder="°C" style="width:100%;border:none;padding:3px 4px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                        <div style="font-size:9px; text-align:center; padding:2px; border-bottom:1px solid #ddd; color:#555;">Temp........Ãƒâ€šÃ‚Â°C</div>
+                                        <input type="text" id="timing_temp_${rowId}" ${disabledAttr} placeholder="Ãƒâ€šÃ‚Â°C" style="width:100%;border:none;padding:3px 4px;font-size:10px;background:transparent;box-sizing:border-box;">
                                     </td>
                                 </tr>
                             </table>
@@ -897,141 +1839,393 @@ function loadStageContent(stage) {
                             </table>
                         </td>
                     `;
-                } else if (item.type === 'tanking-dual-hv-lv') {
-                    // Two sub-rows: HV Side & LV Side each with same specifiedValue (e.g. 'Should be tight')
-                    actualValueCell = `
-                        <td style="border-right:1px solid #ddd; padding:3px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle; white-space:pre-line; width:30%;">${item.specifiedValue}</td>
-                        <td style="padding: 0;">
-                            <table style="width:100%; border-collapse:collapse; font-size:10px; height:100%;">
-                                <tr>
-                                    <td style="border-bottom:1px solid #ddd; padding:3px 5px; font-size:9px; color:#555; width:50%;">HV Side</td>
-                                    <td style="border-left:1px solid #ddd; border-bottom:1px solid #ddd; padding:0;">
-                                        <input type="text" id="dual_hv_${rowId}" ${disabledAttr} placeholder="Value"
-                                            style="width:100%;border:none;padding:3px 4px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td style="padding:3px 5px; font-size:9px; color:#555;">LV Side</td>
-                                    <td style="border-left:1px solid #ddd; padding:0;">
-                                        <input type="text" id="dual_lv_${rowId}" ${disabledAttr} placeholder="Value"
-                                            style="width:100%;border:none;padding:3px 4px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>`;
-                } else if (item.type === 'coil-uvw-diagram') {
-                    // Item 8: U/V/W HV Side coil circle diagram with measurement lines
-                    actualValueCell = `
-                        <td colspan="2" style="padding:8px 4px;">
-                            <div style="font-size:10px;font-weight:600;color:#333;margin-bottom:6px;">Height measurement <strong>before</strong> coil pressing</div>
-                            <svg viewBox="0 0 340 130" xmlns="http://www.w3.org/2000/svg"
-                                style="width:100%;max-width:380px;border:1px solid #ccc;background:#fff;display:block;">
-                                <!-- Top measurement lines for U -->
-                                <line x1="30" y1="18" x2="110" y2="18" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <line x1="30" y1="28" x2="110" y2="28" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <line x1="30" y1="38" x2="110" y2="38" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <!-- Top measurement lines for V -->
-                                <line x1="130" y1="18" x2="210" y2="18" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <line x1="130" y1="28" x2="210" y2="28" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <line x1="130" y1="38" x2="210" y2="38" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <!-- Top measurement lines for W -->
-                                <line x1="230" y1="18" x2="310" y2="18" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <line x1="230" y1="28" x2="310" y2="28" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <line x1="230" y1="38" x2="310" y2="38" stroke="#999" stroke-width="0.8" stroke-dasharray="4,3"/>
-                                <!-- U coil circle -->
-                                <circle cx="70" cy="82" r="38" fill="white" stroke="#333" stroke-width="1.5"/>
-                                <text x="70" y="87" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">U</text>
-                                <!-- V coil circle -->
-                                <circle cx="170" cy="82" r="38" fill="white" stroke="#333" stroke-width="1.5"/>
-                                <text x="170" y="87" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">V</text>
-                                <!-- W coil circle -->
-                                <circle cx="270" cy="82" r="38" fill="white" stroke="#333" stroke-width="1.5"/>
-                                <text x="270" y="87" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">W</text>
-                                <!-- HV SIDE label -->
-                                <text x="170" y="124" text-anchor="middle" font-size="11" font-weight="bold" fill="#333">HV SIDE</text>
-                                <!-- Sign line -->
-                                <text x="310" y="128" text-anchor="end" font-size="9" fill="#555">Sign.</text>
-                            </svg>
-                        </td>`;
-                } else if (item.type === 'humidity-monitoring-table') {
-                    // ═══════════════════════════════════════════════════════════
-                    // HUMIDITY & TEMPERATURE HOURLY MONITORING TABLE
-                    // Paper form: Date | (Time · RH% · Temp°C) × 4  = 13 cols
-                    // ═══════════════════════════════════════════════════════════
-                    const hRows = 6;
-
-                    // Style constants
-                    const TH_GRP = 'border:1px solid #8eadc4;border-left:2px solid #5b8db8;padding:5px 4px;font-size:11.5px;font-weight:700;text-align:center;background:#bbdaf2;color:#0d2d4a;white-space:nowrap;';
-                    const TH_SUB = 'border:1px solid #9ab9cf;padding:4px 3px;font-size:10.5px;font-weight:600;text-align:center;background:#daeef9;color:#0d2d4a;white-space:nowrap;';
-                    const TH_DATE = 'border:1px solid #8eadc4;padding:5px 4px;font-size:11.5px;font-weight:700;text-align:center;background:#bbdaf2;color:#0d2d4a;vertical-align:middle;';
-                    const TD_DATE = 'border:1px solid #b0cee3;padding:4px 3px;text-align:center;min-width:90px;';
-                    const TD_TIME = 'border:1px solid #b0cee3;border-left:2.5px solid #5b8db8;padding:4px 3px;text-align:center;min-width:60px;';
-                    const TD_VAL = 'border:1px solid #b0cee3;padding:4px 3px;text-align:center;min-width:48px;';
-                    const INP = 'width:100%;border:none;font-size:11.5px;background:transparent;box-sizing:border-box;text-align:center;';
-
-                    // Build 6 data rows
-                    let hBody = '';
-                    for (let r = 0; r < hRows; r++) {
-                        const bg = r % 2 === 1 ? 'background:#f4f9fd;' : '';
-                        const rdCells = [1, 2, 3, 4].map(g => `
-                            <td style="${TD_TIME}${bg}">
-                                <input type="text" id="hum_t${g}_${rowId}_${r}" ${disabledAttr}
-                                    placeholder="HH:MM" style="${INP}">
-                            </td>
-                            <td style="${TD_VAL}${bg}">
-                                <input type="number" id="hum_rh${g}_${rowId}_${r}" ${disabledAttr}
-                                    placeholder="—" min="0" max="100" step="0.1" style="${INP}">
-                            </td>
-                            <td style="${TD_VAL}${bg}">
-                                <input type="number" id="hum_tmp${g}_${rowId}_${r}" ${disabledAttr}
-                                    placeholder="—" step="0.1" style="${INP}">
-                            </td>`).join('');
-
-                        hBody += `
-                            <tr>
-                                <td style="${TD_DATE}${bg}">
-                                    <input type="text" id="hum_date_${rowId}_${r}" ${disabledAttr}
-                                        placeholder="DD/MM/YYYY" style="${INP}">
-                                </td>
-                                ${rdCells}
-                            </tr>`;
-                    }
-
-                    // Sub-header row ×4 (Time · RH% · Temp)
-                    const subH = [1, 2, 3, 4].map(() => `
-                        <th style="${TH_SUB}border-left:2.5px solid #5b8db8;">Time</th>
-                        <th style="${TH_SUB}">Humidity<br>RH %</th>
-                        <th style="${TH_SUB}">Temp<br>°C</th>`).join('');
-
-                    actualValueCell = `
-                        <td colspan="3" style="padding:10px 6px 12px 6px;">
-                            <div style="font-weight:700;font-size:12px;color:#0d2d4a;margin-bottom:8px;text-align:center;letter-spacing:0.4px;">
-                                🌡️&nbsp;Humidity &amp; Temperature Hourly Monitoring — Climate Chamber
-                            </div>
-                            <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">
-                            <table style="border-collapse:collapse;font-size:11.5px;min-width:700px;width:100%;">
-                                <colgroup>
-                                    <col style="width:100px;">
-                                    <col style="width:68px;"><col style="width:56px;"><col style="width:56px;">
-                                    <col style="width:68px;"><col style="width:56px;"><col style="width:56px;">
-                                    <col style="width:68px;"><col style="width:56px;"><col style="width:56px;">
-                                    <col style="width:68px;"><col style="width:56px;"><col style="width:56px;">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th rowspan="2" style="${TH_DATE}">Date</th>
-                                        <th colspan="3" style="${TH_GRP}">Reading 1</th>
-                                        <th colspan="3" style="${TH_GRP}">Reading 2</th>
-                                        <th colspan="3" style="${TH_GRP}">Reading 3</th>
-                                        <th colspan="3" style="${TH_GRP}">Reading 4</th>
-                                    </tr>
-                                    <tr>${subH}</tr>
-                                </thead>
-                                <tbody>${hBody}</tbody>
-                            </table>
-                            </div>
-                        </td>`;
                 }
+            } else if (stage === 'dispatch') {
+                // ── DISPATCH: custom row renderers (mirror of physical form F/GAS/28) ──
+                if (item.type === 'dispatch-dew-point') {
+                    // Row 15: Dew Point – sub-rows Td, T, RH
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:4px 6px;text-align:center;font-weight:bold;border-right:1px solid #ccc;vertical-align:top;">${itemCounter}</td>
+                            <td style="padding:4px 6px;border-right:1px solid #ccc;vertical-align:top;font-size:11px;">Dew Point Measurement</td>
+                            <td style="padding:0;border-right:1px solid #ccc;">
+                                <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                                    <tr style="background:#f5f5f5;"><th style="border-bottom:1px solid #ccc;border-right:1px solid #ccc;padding:3px 5px;width:50%;">Measure</th><th style="border-bottom:1px solid #ccc;padding:3px 5px;">Value</th></tr>
+                                    <tr style="border-bottom:1px solid #eee;"><td style="border-right:1px solid #ccc;padding:3px 5px;">Td &nbsp; °C</td><td style="padding:0;"><input type="text" id="dew_td_${rowId}" ${disabledAttr} placeholder="°C" style="width:100%;border:none;padding:4px 5px;font-size:10px;"></td></tr>
+                                    <tr style="border-bottom:1px solid #eee;"><td style="border-right:1px solid #ccc;padding:3px 5px;">T &nbsp;&nbsp; °C</td><td style="padding:0;"><input type="text" id="dew_t_${rowId}" ${disabledAttr} placeholder="°C" style="width:100%;border:none;padding:4px 5px;font-size:10px;"></td></tr>
+                                    <tr><td style="border-right:1px solid #ccc;padding:3px 5px;">RH &nbsp; %</td><td style="padding:0;"><input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="%" style="width:100%;border:none;padding:4px 5px;font-size:10px;"></td></tr>
+                                </table>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ccc;vertical-align:top;"><input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Finding" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;border-right:1px solid #ccc;vertical-align:top;"><input type="text" id="shopSup_${rowId}" readonly value="${shopSupervisorAutoSign}" placeholder="Shop Supervisor" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;background:#f5f5f5;color:#333;cursor:default;"></td>
+                            <td style="padding:4px;border-right:1px solid #ccc;vertical-align:top;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;text-align:center;vertical-align:top;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'dispatch-ir-test') {
+                    // Row 16: IR Test – sub-rows Core-Frame, Core-Tank, Frame-Tank
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:4px 6px;text-align:center;font-weight:bold;border-right:1px solid #ccc;vertical-align:top;">${itemCounter}</td>
+                            <td style="padding:4px 6px;border-right:1px solid #ccc;vertical-align:top;font-size:11px;">
+                                IR Test<br><small style="color:#555;">(Megger)</small>
+                            </td>
+                            <td style="padding:0;border-right:1px solid #ccc;">
+                                <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                                    <tr style="background:#f5f5f5;"><th style="border-bottom:1px solid #ccc;border-right:1px solid #ccc;padding:3px 5px;width:50%;">Test</th><th style="border-bottom:1px solid #ccc;padding:3px 5px;">Value</th></tr>
+                                    <tr style="border-bottom:1px solid #eee;"><td style="border-right:1px solid #ccc;padding:3px 5px;">Core - Frame</td><td style="padding:0;"><input type="text" id="ir_cf_${rowId}" ${disabledAttr} style="width:100%;border:none;padding:4px 5px;font-size:10px;"></td></tr>
+                                    <tr style="border-bottom:1px solid #eee;"><td style="border-right:1px solid #ccc;padding:3px 5px;">Core - Tank</td><td style="padding:0;"><input type="text" id="ir_ct_${rowId}" ${disabledAttr} style="width:100%;border:none;padding:4px 5px;font-size:10px;"></td></tr>
+                                    <tr><td style="border-right:1px solid #ccc;padding:3px 5px;">Frame - Tank</td><td style="padding:0;"><input type="text" id="actualValue_${rowId}" ${disabledAttr} style="width:100%;border:none;padding:4px 5px;font-size:10px;"></td></tr>
+                                </table>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ccc;vertical-align:top;"><input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Finding" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;border-right:1px solid #ccc;vertical-align:top;"><input type="text" id="shopSup_${rowId}" readonly value="${shopSupervisorAutoSign}" placeholder="Shop Supervisor" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;background:#f5f5f5;color:#333;cursor:default;"></td>
+                            <td style="padding:4px;border-right:1px solid #ccc;vertical-align:top;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;text-align:center;vertical-align:top;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'dispatch-impact') {
+                    // Row 17: Impact Recorder – 4 specified value sub-items with measure inputs
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:4px 6px;text-align:center;font-weight:bold;border-right:1px solid #ccc;vertical-align:top;">${itemCounter}</td>
+                            <td style="padding:4px 6px;border-right:1px solid #ccc;vertical-align:top;font-size:11px;">Impact Recorder</td>
+                            <td style="padding:0;border-right:1px solid #ccc;">
+                                <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                                    <tr style="background:#f5f5f5;"><th style="border-bottom:1px solid #ccc;border-right:1px solid #ccc;padding:3px 5px;width:60%;">Specified Value</th><th style="border-bottom:1px solid #ccc;padding:3px 5px;">Measure</th></tr>
+                                    <tr style="border-bottom:1px solid #eee;"><td style="border-right:1px solid #ccc;padding:3px 5px;">Fitting of as per transport drawing</td><td style="padding:0;"><input type="text" id="imp_fit_${rowId}" ${disabledAttr} style="width:100%;border:none;padding:4px 5px;font-size:10px;"></td></tr>
+                                    <tr style="border-bottom:1px solid #eee;"><td style="border-right:1px solid #ccc;padding:3px 5px;">Quantity as per transport drawing</td><td style="padding:0;"><input type="text" id="imp_qty_${rowId}" ${disabledAttr} style="width:100%;border:none;padding:4px 5px;font-size:10px;"></td></tr>
+                                    <tr style="border-bottom:1px solid #eee;"><td style="border-right:1px solid #ccc;padding:3px 5px;">Password to operate</td><td style="padding:4px 5px;font-size:10px;font-weight:bold;color:#333;">If Required</td></tr>
+                                    <tr><td style="border-right:1px solid #ccc;padding:3px 5px;">Switching ON after loading transformer on trailer (if applicable)</td><td style="padding:0;"><select id="actualValue_${rowId}" ${disabledAttr} style="width:100%;border:none;padding:4px 5px;font-size:10px;"><option value="">--</option><option>Auto</option><option>Manual</option></select></td></tr>
+                                </table>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ccc;vertical-align:top;"><input type="text" id="shopSup_${rowId}" readonly value="${shopSupervisorAutoSign}" placeholder="Shop Supervisor" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;background:#f5f5f5;color:#333;cursor:default;"></td>
+                            <td style="padding:4px;border-right:1px solid #ccc;vertical-align:top;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;text-align:center;vertical-align:top;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'dispatch-main-tank') {
+                    // Row 18: Main Tank Dispatched with – Dry Air / N2 / Oil checkboxes
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ccc;vertical-align:middle;">${itemCounter}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">${item.point}</td>
+                            <td colspan="2" style="padding:8px 12px;border-right:1px solid #ccc;font-size:11px;">
+                                <label style="margin-right:20px;cursor:pointer;"><input type="checkbox" id="tank_dryair_${rowId}" ${disabledAttr} style="margin-right:5px;">Dry Air</label>
+                                <label style="margin-right:20px;cursor:pointer;"><input type="checkbox" id="tank_n2_${rowId}" ${disabledAttr} style="margin-right:5px;">N2</label>
+                                <label style="cursor:pointer;"><input type="checkbox" id="actualValue_${rowId}" ${disabledAttr} style="margin-right:5px;">Oil</label>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ccc;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'dispatch-pressure-obs') {
+                    // Row 19: Pressure Observation 12 hrs – table with Date/Time/Pressure Applied/Pressure Observed/Leakages
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ccc;vertical-align:top;">${itemCounter}</td>
+                            <td colspan="5" style="padding:0;border-right:1px solid #ccc;">
+                                <div style="padding:6px 8px;font-weight:bold;font-size:11px;border-bottom:1px solid #ccc;background:#fafafa;">Pressure Observation for 12 Hrs. (Minimum)</div>
+                                <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                                    <thead>
+                                        <tr style="background:#f0f0f0;text-align:center;">
+                                            <th style="border:1px solid #ccc;padding:4px;width:14%;">Date</th>
+                                            <th style="border:1px solid #ccc;padding:4px;width:12%;">Time</th>
+                                            <th style="border:1px solid #ccc;padding:4px;width:22%;">Pressure Applied</th>
+                                            <th style="border:1px solid #ccc;padding:4px;width:24%;">Pressure Observed</th>
+                                            <th style="border:1px solid #ccc;padding:4px;">Leakages (if any)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${[1, 2, 3, 4, 5, 6, 7, 8].map(r => `
+                                        <tr>
+                                            <td style="border:1px solid #ccc;padding:0;"><input type="date" id="pobs_date_${rowId}_${r}" ${disabledAttr} style="width:100%;border:none;padding:3px;font-size:9px;"></td>
+                                            <td style="border:1px solid #ccc;padding:0;"><input type="text" id="pobs_time_${rowId}_${r}" ${disabledAttr} placeholder="HH:MM" style="width:100%;border:none;padding:3px;font-size:9px;"></td>
+                                            <td style="border:1px solid #ccc;padding:0;"><input type="text" id="pobs_applied_${rowId}_${r}" ${disabledAttr} placeholder="mbar" style="width:100%;border:none;padding:3px;font-size:9px;"></td>
+                                            <td style="border:1px solid #ccc;padding:0;"><input type="text" id="pobs_observed_${rowId}_${r}" ${disabledAttr} placeholder="mbar" style="width:100%;border:none;padding:3px;font-size:9px;"></td>
+                                            <td style="border:1px solid #ccc;padding:0;"><input type="text" id="pobs_leak_${rowId}_${r}" ${disabledAttr} placeholder="—" style="width:100%;border:none;padding:3px;font-size:9px;"></td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td style="padding:4px;text-align:center;vertical-align:top;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'dispatch-remarks-row') {
+                    // Row 20: Remarks per Shortage – textarea
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ccc;vertical-align:top;">${itemCounter}</td>
+                            <td colspan="5" style="padding:8px;border-right:1px solid #ccc;">
+                                <b style="font-size:11px;">Remarks per Shortage if any:-</b><br>
+                                <textarea id="actualValue_${rowId}" ${disabledAttr} rows="4" placeholder="Enter shortage remarks here..." style="width:100%;padding:6px;border:1px solid #ddd;font-size:11px;margin-top:4px;resize:vertical;"></textarea>
+                            </td>
+                            <td style="padding:4px;text-align:center;vertical-align:top;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'dispatch-clearance') {
+                    // Row 21: Transformer Dispatch Clearance – YES / No checkboxes
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ccc;">${itemCounter}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">Transformer Dispatch Clearance<br><small style="color:#666;">(Mark ✓ which ever is applicable)</small></td>
+                            <td colspan="2" style="padding:10px 16px;border-right:1px solid #ccc;font-size:12px;">
+                                <label style="margin-right:30px;cursor:pointer;"><input type="checkbox" id="clearance_yes_${rowId}" ${disabledAttr} style="margin-right:6px;width:14px;height:14px;"> YES</label>
+                                <label style="cursor:pointer;"><input type="checkbox" id="actualValue_${rowId}" ${disabledAttr} style="margin-right:6px;width:14px;height:14px;"> No</label>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ccc;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'dispatch-date-row') {
+                    // Row 22: Date of Dispatch + Time of Dispatch
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ccc;">${itemCounter}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">Date of Dispatch</td>
+                            <td style="padding:8px;border-right:1px solid #ccc;">
+                                <input type="date" id="actualValue_${rowId}" ${disabledAttr} style="padding:4px;border:1px solid #ddd;font-size:11px;width:100%;">
+                            </td>
+                            <td style="padding:8px;border-right:1px solid #ccc;font-size:11px;">
+                                <b>Time of Dispatch:</b><br>
+                                <input type="text" id="dispatch_time_${rowId}" ${disabledAttr} placeholder="HH:MM" style="padding:4px;border:1px solid #ddd;font-size:11px;width:90px;margin-top:4px;">
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ccc;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else if (item.type === 'dispatch-sign-row') {
+                    // Row 23: Name of Production Engineer & Quality Engineer – two sign lines combined
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ccc;vertical-align:top;">${itemCounter}</td>
+                            <td colspan="5" style="padding:0;border-right:1px solid #ccc;">
+                                <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                                    <tr style="border-bottom:1px solid #eee;">
+                                        <td style="padding:8px;width:50%;border-right:1px solid #eee;">Name of Production engineer</td>
+                                        <td style="padding:8px;">
+                                            <b>Sign:</b> <input type="text" id="prod_sign_${rowId}" ${disabledAttr} placeholder="Signature" style="padding:4px;border:1px solid #ddd;font-size:11px;width:calc(100% - 50px);">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding:8px;border-right:1px solid #eee;">Name of Quality engineer</td>
+                                        <td style="padding:8px;">
+                                            <b>Sign:</b> <input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Signature" style="padding:4px;border:1px solid #ddd;font-size:11px;width:calc(100% - 50px);">
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="padding:4px;text-align:center;vertical-align:middle;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Save</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    // Standard dispatch rows (1-14): text input in Findings column (not dropdown)
+                    customRowHTML = `
+                        <tr style="border-bottom:1px solid #ccc;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ccc;">${itemCounter}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ccc;font-size:11px;">${item.point}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ccc;font-size:10px;color:#555;">${item.specifiedValue}</td>
+                            <td style="padding:4px;border-right:1px solid #ccc;">
+                                <input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;">
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ccc;"><input type="text" id="shopSup_${rowId}" readonly value="${shopSupervisorAutoSign}" placeholder="Shop Supervisor" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;background:#f5f5f5;color:#333;cursor:default;"></td>
+                            <td style="padding:4px;border-right:1px solid #ccc;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:6px 4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">&#128190; Update</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            } else if (item.type === 'ok-notok' && item.phases) {
+                customRowHTML = `
+                        <tr style="border-bottom:1px solid #ddd;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ddd;">${itemCounter}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ddd;">${item.point}</td>
+                            <td style="padding:0;border-right:1px solid #ddd;">
+                                <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                                    <tr><th style="border-bottom:1px solid #ddd;border-right:1px solid #ddd;padding:2px 4px;">Td</th><th style="border-bottom:1px solid #ddd;padding:2px 4px;">Rh</th></tr>
+                                    <tr>
+                                        <td style="border-right:1px solid #ddd;"><input type="text" id="dispatch_dew_td_${rowId}" ${disabledAttr} placeholder="\u00b0C" style="width:100%;border:none;padding:4px;font-size:10px;"></td>
+                                        <td><input type="text" id="dispatch_dew_rh_${rowId}" ${disabledAttr} placeholder="%" style="width:100%;border:none;padding:4px;font-size:10px;"></td>
+                                    </tr>
+                                </table>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;"><input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Finding" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;border-right:1px solid #ddd;">
+                                <div style="font-size:10px;margin-bottom:3px;"><b>Operator:</b> <input type="text" id="operator_${rowId}" ${disabledAttr} placeholder="Sign" style="width:78%;padding:3px;border:1px solid #ddd;"></div>
+                                <div style="font-size:10px;"><b>Shop Sup.:</b> <input type="text" id="shopSup_${rowId}" readonly value="${shopSupervisorAutoSign}" placeholder="Shop Supervisor" style="width:74%;padding:3px;border:1px solid #ddd;background:#f5f5f5;color:#333;cursor:default;"></div>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:6px 4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">\ud83d\udcbe Update</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+            } else if (item.type === 'dispatch-ir-test') {
+                customRowHTML = `
+                        <tr style="border-bottom:1px solid #ddd;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ddd;">${itemCounter}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ddd;">
+                                ${item.point}
+                                <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:4px;">
+                                    <tr style="background:#f0f0f0;"><th style="border:1px solid #ddd;padding:2px;">Test</th><th style="border:1px solid #ddd;padding:2px;">Value</th></tr>
+                                    <tr><td style="border:1px solid #ddd;padding:3px;">Core &amp; Frame</td><td style="border:1px solid #ddd;padding:0;"><input type="text" id="ir_core_frame_${rowId}" ${disabledAttr} style="width:100%;border:none;padding:3px;font-size:10px;"></td></tr>
+                                    <tr><td style="border:1px solid #ddd;padding:3px;">Core &ndash; Tank</td><td style="border:1px solid #ddd;padding:0;"><input type="text" id="ir_core_tank_${rowId}" ${disabledAttr} style="width:100%;border:none;padding:3px;font-size:10px;"></td></tr>
+                                </table>
+                            </td>
+                            <td style="padding:6px 8px;border-right:1px solid #ddd;font-size:10px;">IR Test (Megger)</td>
+                            <td style="padding:4px;border-right:1px solid #ddd;"><input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Finding" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:4px;border-right:1px solid #ddd;">
+                                <div style="font-size:10px;margin-bottom:3px;"><b>Operator:</b> <input type="text" id="operator_${rowId}" ${disabledAttr} placeholder="Sign" style="width:78%;padding:3px;border:1px solid #ddd;"></div>
+                                <div style="font-size:10px;"><b>Shop Sup.:</b> <input type="text" id="shopSup_${rowId}" readonly value="${shopSupervisorAutoSign}" placeholder="Shop Supervisor" style="width:74%;padding:3px;border:1px solid #ddd;background:#f5f5f5;color:#333;cursor:default;"></div>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:6px 4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">\ud83d\udcbe Update</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+            } else if (item.type === 'dispatch-impact') {
+                customRowHTML = `
+                        <tr style="border-bottom:1px solid #ddd;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ddd;">${itemCounter}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ddd;">${item.point}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ddd;font-size:10px;">${item.specifiedValue}</td>
+                            <td style="padding:4px;border-right:1px solid #ddd;">
+                                <select id="actualValue_${rowId}" ${disabledAttr} style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;">
+                                    <option value="">-- Select --</option>
+                                    <option>If Required</option>
+                                    <option>Fitted</option>
+                                    <option>N/A</option>
+                                </select>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;">
+                                <div style="font-size:10px;margin-bottom:3px;"><b>Operator:</b> <input type="text" id="operator_${rowId}" ${disabledAttr} placeholder="Sign" style="width:78%;padding:3px;border:1px solid #ddd;"></div>
+                                <div style="font-size:10px;"><b>Shop Sup.:</b> <input type="text" id="shopSup_${rowId}" readonly value="${shopSupervisorAutoSign}" placeholder="Shop Supervisor" style="width:74%;padding:3px;border:1px solid #ddd;background:#f5f5f5;color:#333;cursor:default;"></div>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:6px 4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">\ud83d\udcbe Update</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+            } else if (item.type === 'dispatch-pressure') {
+                customRowHTML = `
+                        <tr style="border-bottom:1px solid #ddd;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ddd;">${itemCounter}</td>
+                            <td style="padding:6px 8px;border-right:1px solid #ddd;">${item.point}</td>
+                            <td style="padding:4px;border-right:1px solid #ddd;">
+                                <table style="width:100%;border-collapse:collapse;font-size:10px;">
+                                    <tr><td style="padding:2px 3px;">Auto / Manual:</td><td style="padding:2px;">
+                                        <select id="pressure_mode_${rowId}" ${disabledAttr} style="width:100%;padding:2px;border:1px solid #ddd;font-size:10px;">
+                                            <option value="">--</option><option>Auto</option><option>Manual</option>
+                                        </select></td></tr>
+                                    <tr><td style="padding:2px 3px;">Dry Air / N2:</td><td style="padding:2px;">
+                                        <select id="pressure_gas_${rowId}" ${disabledAttr} style="width:100%;padding:2px;border:1px solid #ddd;font-size:10px;">
+                                            <option value="">--</option><option>Dry Air</option><option>N2</option>
+                                        </select></td></tr>
+                                    <tr><td style="padding:2px 3px;">ON / OFF:</td><td style="padding:2px;">
+                                        <select id="pressure_status_${rowId}" ${disabledAttr} style="width:100%;padding:2px;border:1px solid #ddd;font-size:10px;">
+                                            <option value="">--</option><option>ON</option><option>OFF</option>
+                                        </select></td></tr>
+                                    <tr><td style="padding:2px 3px;">Leakages:</td><td style="padding:2px;"><input type="text" id="pressure_leak_${rowId}" ${disabledAttr} placeholder="If any" style="width:100%;padding:2px;border:1px solid #ddd;font-size:10px;"></td></tr>
+                                    <tr><td style="padding:2px 3px;">Applied (mbar):</td><td style="padding:2px;"><input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="mbar" style="width:100%;padding:2px;border:1px solid #ddd;font-size:10px;"></td></tr>
+                                    <tr><td style="padding:2px 3px;">Observed (mbar):</td><td style="padding:2px;"><input type="text" id="pressure_obs_${rowId}" ${disabledAttr} placeholder="mbar" style="width:100%;padding:2px;border:1px solid #ddd;font-size:10px;"></td></tr>
+                                </table>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;font-size:10px;">
+                                Date: <input type="date" id="pressure_date_${rowId}" ${disabledAttr} style="width:100%;padding:2px;border:1px solid #ddd;font-size:10px;margin-bottom:3px;"><br>
+                                Time: <input type="text" id="pressure_time_${rowId}" ${disabledAttr} placeholder="HH:MM" style="width:100%;padding:2px;border:1px solid #ddd;font-size:10px;">
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;">
+                                <div style="font-size:10px;margin-bottom:3px;"><b>Operator:</b> <input type="text" id="operator_${rowId}" ${disabledAttr} placeholder="Sign" style="width:78%;padding:3px;border:1px solid #ddd;"></div>
+                                <div style="font-size:10px;"><b>Shop Sup.:</b> <input type="text" id="shopSup_${rowId}" readonly value="${shopSupervisorAutoSign}" placeholder="Shop Supervisor" style="width:74%;padding:3px;border:1px solid #ddd;background:#f5f5f5;color:#333;cursor:default;"></div>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:6px 4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">\ud83d\udcbe Update</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+            } else if (item.type === 'dispatch-date-row') {
+                customRowHTML = `
+                        <tr style="border-bottom:1px solid #ddd;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ddd;">${itemCounter}</td>
+                            <td colspan="5" style="padding:8px;border-right:1px solid #ddd;">
+                                <b>Date:</b> <input type="date" id="actualValue_${rowId}" ${disabledAttr} style="padding:4px;border:1px solid #ddd;font-size:12px;margin-left:8px;">
+                                &nbsp;&nbsp;<b>Time of Dispatch:</b> <input type="text" id="dispatch_time_${rowId}" ${disabledAttr} placeholder="HH:MM" style="padding:4px;border:1px solid #ddd;font-size:12px;width:80px;">
+                            </td>
+                            <td style="padding:6px 4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">\ud83d\udcbe Update</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+            } else if (item.type === 'dispatch-remarks-row') {
+                customRowHTML = `
+                        <tr style="border-bottom:1px solid #ddd;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ddd;">${itemCounter}</td>
+                            <td colspan="5" style="padding:8px;border-right:1px solid #ddd;">
+                                <b>${item.point}</b><br>
+                                <textarea id="actualValue_${rowId}" ${disabledAttr} rows="3" placeholder="Enter any shortage remarks here..." style="width:100%;padding:6px;border:1px solid #ddd;font-size:12px;margin-top:4px;resize:vertical;"></textarea>
+                            </td>
+                            <td style="padding:6px 4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">\ud83d\udcbe Update</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
+            } else if (item.type === 'dispatch-sign-row') {
+                customRowHTML = `
+                        <tr style="border-bottom:1px solid #ddd;">
+                            <td style="padding:6px 8px;text-align:center;font-weight:bold;border-right:1px solid #ddd;">${itemCounter}</td>
+                            <td colspan="2" style="padding:8px;border-right:1px solid #ddd;font-size:11px;">${item.point}</td>
+                            <td style="padding:4px;border-right:1px solid #ddd;"><input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Finding" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:8px;border-right:1px solid #ddd;">
+                                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                    <div><label style="font-size:10px;color:#666;">Name:</label><br><input type="text" id="sign_name_${rowId}" ${disabledAttr} placeholder="Name" style="padding:4px;border:1px solid #ddd;font-size:11px;min-width:140px;"></div>
+                                    <div><label style="font-size:10px;color:#666;">Sign:</label><br><input type="text" id="sign_${rowId}" ${disabledAttr} placeholder="Signature" style="padding:4px;border:1px solid #ddd;font-size:11px;min-width:120px;"></div>
+                                </div>
+                            </td>
+                            <td style="padding:4px;border-right:1px solid #ddd;"><input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Date" style="width:100%;padding:4px;border:1px solid #ddd;font-size:10px;"></td>
+                            <td style="padding:6px 4px;text-align:center;">
+                                <button onclick="saveNewChecklistItem('dispatch',${itemCounter},'${rowId}')" class="btn-save-item" ${disabledAttr} id="save_${rowId}">\ud83d\udcbe Update</button>
+                                <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                            </td>
+                        </tr>
+                    `;
 
             } else if (item.type === 'ok-notok' && item.phases) {
                 // Row 1 & 2: OK/Not OK dropdowns for U, V, W phases
@@ -1219,6 +2413,49 @@ function loadStageContent(stage) {
                         `).join('')}
                     </div>
                 `;
+            } else if (item.type === 'phase-ok-notok' && item.phases) {
+                specifiedValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 0; min-height: 100px; border: 1px solid #ccc; border-radius: 3px; background: #fff;">
+                        ${item.phases.map((phase, idx) => `
+                            <div style="${idx > 0 ? 'border-top: 1px solid #ccc;' : ''} padding: 6px; display: flex; align-items: center; justify-content: center; flex: 1; background: #fafafa;">
+                                <span style="font-size: 10px; font-weight: 500; color: #000;">${phase}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+                actualValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 0; min-height: 100px; border: 1px solid #ccc; border-radius: 3px; background: #fff;">
+                        ${item.phases.map((phase, idx) => `
+                            <div style="${idx > 0 ? 'border-top: 1px solid #ccc;' : ''} padding: 6px; display: flex; align-items: center; justify-content: center; flex: 1;">
+                                <select id="actualValue_${rowId}_${phase.replace(/ /g, '_')}" 
+                                        ${disabledAttr}
+                                        style="width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 2px; font-size: 10px; background: #fff; text-align: center; text-align-last: center;">
+                                    <option value="">Ok / Not Ok</option>
+                                    <option value="Ok">Ok</option>
+                                    <option value="Not Ok">Not Ok</option>
+                                </select>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (item.type === 'ok-notok-stacked' && item.phases) {
+                actualValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 0; min-height: 100px; border: 1px solid #ccc; border-radius: 3px; background: #fff;">
+                        ${item.phases.map((phase, idx) => `
+                            <div style="${idx > 0 ? 'border-top: 1px solid #ccc;' : ''} padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; background: #fafafa;">
+                                <select id="actualValue_${rowId}_${phase.replace(/ /g, '_')}" 
+                                        ${disabledAttr}
+                                        style="width: 100%; padding: 2px; border: 1px solid #ccc; border-radius: 2px; font-size: 10px; background: #fff; text-align: center; text-align-last: center; margin-bottom: 3px;">
+                                    <option value="">Ok / Not Ok</option>
+                                    <option value="Ok">Ok</option>
+                                    <option value="Not Ok">Not Ok</option>
+                                </select>
+                                <span style="font-size: 9px; font-weight: 500; color: #555;">${phase}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
             } else if (item.type === 'text-per-phase') {
                 // Text inputs per phase (no dropdown) – used for row 9 Tung piece
                 actualValueCell = `
@@ -1233,6 +2470,147 @@ function loadStageContent(stage) {
                                        style="flex: 1; padding: 5px; border: 1px solid #333; border-radius: 0; font-size: 10px; background: #fff;">
                             </div>
                         `).join('')}
+                    </div>
+                `;
+            } else if (item.type === 'sr-disc-height') {
+                specifiedValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div style="font-size: 11px;">Specified Height at Location</div>
+                        <div>1. <input type="text" id="specValue_${rowId}_1" ${disabledAttr} placeholder="........." style="width: 60px; padding: 2px; border: 1px solid #ccc; font-size: 10px;"></div>
+                    </div>
+                `;
+                actualValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <div style="font-size: 11px;">Actual Height at Location</div>
+                        <div>1. <input type="text" id="actualValue_${rowId}_1" ${disabledAttr} placeholder="........." style="width: 60px; padding: 2px; border: 1px solid #ccc; font-size: 10px;"></div>
+                        <div>2. <input type="text" id="actualValue_${rowId}_2" ${disabledAttr} placeholder="........." style="width: 60px; padding: 2px; border: 1px solid #ccc; font-size: 10px;"></div>
+                        <div>3. <input type="text" id="actualValue_${rowId}_3" ${disabledAttr} placeholder="........." style="width: 60px; padding: 2px; border: 1px solid #ccc; font-size: 10px;"></div>
+                        <div>4. <input type="text" id="actualValue_${rowId}_4" ${disabledAttr} placeholder="........." style="width: 60px; padding: 2px; border: 1px solid #ccc; font-size: 10px;"></div>
+                    </div>
+                `;
+            } else if (item.type === 'sr-strip-wrap-full') {
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center; font-weight:bold; font-size:13px; padding:8px; vertical-align:top; border:1px solid #333;">${itemCounter}</td>
+                        <td colspan="6" style="padding:0; border:1px solid #333;">
+                            <div style="padding: 10px; font-weight: 500; font-size: 11px; border-bottom: 1px solid #333;">${item.point}</div>
+                            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                                <tr>
+                                    <th style="padding: 6px; border: 1px solid #333; border-top: none; text-align: center;" rowspan="2">Sr. No.</th>
+                                    <th style="padding: 6px; border: 1px solid #333; border-top: none; text-align: center;" rowspan="2">Part no./BOM</th>
+                                    <th style="padding: 6px; border: 1px solid #333; border-top: none; text-align: center;" colspan="2">Strip/Wrap thk.</th>
+                                    <th style="padding: 6px; border: 1px solid #333; border-top: none; text-align: center;" rowspan="2">As per Drg. Dia.</th>
+                                    <th style="padding: 6px; border: 1px solid #333; border-top: none; text-align: center;" rowspan="2">Diameter Measured</th>
+                                </tr>
+                                <tr>
+                                    <th style="padding: 6px; border: 1px solid #333; text-align: center;">As per Drg.</th>
+                                    <th style="padding: 6px; border: 1px solid #333; text-align: center;">Actual</th>
+                                </tr>
+                                ${[1, 2, 3].map(n => `
+                                <tr>
+                                    <td style="padding: 4px; border: 1px solid #333; text-align: center;">${n}</td>
+                                    <td style="padding: 4px; border: 1px solid #333; text-align: center;"><input type="text" id="strip_${rowId}_part_${n}" ${disabledAttr} style="width: 90%; padding: 2px;"></td>
+                                    <td style="padding: 4px; border: 1px solid #333; text-align: center;"><input type="text" id="strip_${rowId}_drg_thk_${n}" ${disabledAttr} style="width: 90%; padding: 2px;"></td>
+                                    <td style="padding: 4px; border: 1px solid #333; text-align: center;"><input type="text" id="strip_${rowId}_act_thk_${n}" ${disabledAttr} style="width: 90%; padding: 2px;"></td>
+                                    <td style="padding: 4px; border: 1px solid #333; text-align: center;"><input type="text" id="strip_${rowId}_drg_dia_${n}" ${disabledAttr} style="width: 90%; padding: 2px;"></td>
+                                    <td style="padding: 4px; border: 1px solid #333; text-align: center;"><input type="text" id="strip_${rowId}_act_dia_${n}" ${disabledAttr} style="width: 90%; padding: 2px;"></td>
+                                </tr>`).join('')}
+                            </table>
+                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; border-top: 1px solid #333;">
+                                <div style="border-right: 1px solid #333; padding: 8px;">
+                                    <div style="font-size:10px; font-weight:bold; margin-bottom:5px; text-align:center;">Operator (Sign & Date)</div>
+                                    <input type="text" id="technician_${rowId}" ${disabledAttr} style="width:100%; padding: 4px; font-size:10px;">
+                                </div>
+                                <div style="border-right: 1px solid #333; padding: 8px;">
+                                    <div style="font-size:10px; font-weight:bold; margin-bottom:5px; text-align:center;">Shop Supervisor (Sign & Date)</div>
+                                    <input type="text" id="shopSup_${rowId}" ${disabledAttr} style="width:100%; padding: 4px; font-size:10px;">
+                                </div>
+                                <div style="padding: 8px;">
+                                    <div style="font-size:10px; font-weight:bold; margin-bottom:5px; text-align:center;">Quality Inspector (Sign & Date)</div>
+                                    <input type="text" id="qaSup_${rowId}" ${disabledAttr} style="width:100%; padding: 4px; font-size:10px;">
+                                </div>
+                            </div>
+                            <div style="text-align: right; padding: 6px; border-top: 1px solid #333;">
+                                <button class="btn-login" id="save_${rowId}" style="width:auto; padding:6px 10px; font-size:11px; background:var(--green);" onclick="saveNewChecklistItem('coreCoil', ${itemCounter}, '${rowId}')">🔄 Update</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'sr-digital-image') {
+                specifiedValueCell = `<div style="font-size: 11px; font-weight: 500;">${item.specifiedValue || 'Digital Image'}</div>`;
+                actualValueCell = `
+                    <div style="padding: 4px;">
+                        <input type="file" id="actualValue_${rowId}" ${disabledAttr} style="font-size: 10px;">
+                    </div>
+                `;
+            } else if (item.type === 'tcb-blocks') {
+                specifiedValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 0;">
+                        <div style="border: 1px solid #333; padding: 6px 8px; background: #f9f9f9; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 50px; font-weight: 500; color: #000;">Top</span>
+                            <input type="text" id="specifiedValue_${rowId}_Top" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; background-color: #fff; color: #000;">
+                        </div>
+                        <div style="border: 1px solid #333; border-top: none; padding: 6px 8px; background: #f9f9f9; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 50px; font-weight: 500; color: #000;">Centre</span>
+                            <input type="text" id="specifiedValue_${rowId}_Centre" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; background-color: #fff; color: #000;">
+                        </div>
+                        <div style="border: 1px solid #333; border-top: none; padding: 6px 8px; background: #f9f9f9; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 50px; font-weight: 500; color: #000;">Bottom</span>
+                            <input type="text" id="specifiedValue_${rowId}_Bottom" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; background-color: #fff; color: #000;">
+                        </div>
+                    </div>
+                `;
+
+                actualValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 0;">
+                        <div style="border: 1px solid #333; padding: 6px 8px; background: #fff; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 50px; font-weight: 500; color: #000;">Top</span>
+                            <input type="text" id="actualValue_${rowId}_Top" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                        </div>
+                        <div style="border: 1px solid #333; border-top: none; padding: 6px 8px; background: #fff; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 50px; font-weight: 500; color: #000;">Centre</span>
+                            <input type="text" id="actualValue_${rowId}_Centre" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                        </div>
+                        <div style="border: 1px solid #333; border-top: none; padding: 6px 8px; background: #fff; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 50px; font-weight: 500; color: #000;">Bottom</span>
+                            <input type="text" id="actualValue_${rowId}_Bottom" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                        </div>
+                    </div>
+                `;
+            } else if (item.type === 'wlt-blocks') {
+                specifiedValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 0;">
+                        <div style="border: 1px solid #333; padding: 6px 8px; background: #f9f9f9; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 55px; font-weight: 500; color: #000;">Width</span>
+                            <input type="text" id="specifiedValue_${rowId}_Width" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; background-color: #fff; color: #000;">
+                        </div>
+                        <div style="border: 1px solid #333; border-top: none; padding: 6px 8px; background: #f9f9f9; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 55px; font-weight: 500; color: #000;">Length</span>
+                            <input type="text" id="specifiedValue_${rowId}_Length" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; background-color: #fff; color: #000;">
+                        </div>
+                        <div style="border: 1px solid #333; border-top: none; padding: 6px 8px; background: #f9f9f9; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 55px; font-weight: 500; color: #000;">Thickness</span>
+                            <input type="text" id="specifiedValue_${rowId}_Thickness" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; background-color: #fff; color: #000;">
+                        </div>
+                    </div>
+                `;
+
+                actualValueCell = `
+                    <div style="display: flex; flex-direction: column; gap: 0;">
+                        <div style="border: 1px solid #333; padding: 6px 8px; background: #fff; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 55px; font-weight: 500; color: #000;">Width</span>
+                            <input type="text" id="actualValue_${rowId}_Width" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                        </div>
+                        <div style="border: 1px solid #333; border-top: none; padding: 6px 8px; background: #fff; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 55px; font-weight: 500; color: #000;">Length</span>
+                            <input type="text" id="actualValue_${rowId}_Length" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                        </div>
+                        <div style="border: 1px solid #333; border-top: none; padding: 6px 8px; background: #fff; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 10px; width: 55px; font-weight: 500; color: #000;">Thickness</span>
+                            <input type="text" id="actualValue_${rowId}_Thickness" ${disabledAttr} placeholder="......... mm" style="flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px;">
+                        </div>
                     </div>
                 `;
             } else if (item.type === 'stop-stage') {
@@ -1324,19 +2702,24 @@ function loadStageContent(stage) {
                                     <div style="font-size:10px; color:#555; font-weight:600; margin-top:4px;">Force applied:</div>
                                     <div style="display:flex; gap:16px; flex-wrap:wrap;">
                                         <div style="display:flex; align-items:center; gap:6px; font-size:11px;">
-                                            <span style="color:#555;">............... Ton</span>
+                                            <span style="color:#555;">Ton</span>
                                             <input type="text" id="jack_ton_${rowId}" ${disabledAttr} placeholder="Ton"
                                                 style="width:70px; padding:5px; border:1px solid #333; font-size:11px; border-radius:3px;">
                                         </div>
                                         <div style="display:flex; align-items:center; gap:6px; font-size:11px;">
-                                            <span style="color:#555;">............... PSI/Bar</span>
+                                            <span style="color:#555;">PSI/Bar</span>
                                             <input type="text" id="jack_psi_${rowId}" ${disabledAttr} placeholder="PSI/Bar"
                                                 style="width:70px; padding:5px; border:1px solid #333; font-size:11px; border-radius:3px;">
                                         </div>
                                     </div>
                                     <div style="display:flex; align-items:center; gap:8px; font-size:11px; margin-top:6px;">
-                                        <label style="font-weight:500;">Sign:</label>
-                                        <input type="text" id="jack_sign_${rowId}" ${disabledAttr} placeholder="Signature"
+                                        <label style="font-weight:500; width:160px;">Sign (Technician):</label>
+                                        <input type="text" id="technician_${rowId}" ${disabledAttr} placeholder="Technician Signature"
+                                            style="flex:1; padding:5px; border:1px solid #333; font-size:11px; border-radius:3px;">
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:8px; font-size:11px; margin-top:6px;">
+                                        <label style="font-weight:500; width:160px;">Sign (Quality Supervisor):</label>
+                                        <input type="text" id="qaSup_${rowId}" ${disabledAttr} placeholder="Quality Supervisor Signature" value="${window.currentUserRole === 'quality' ? (window.currentUserName || '') : ''}"
                                             style="flex:1; padding:5px; border:1px solid #333; font-size:11px; border-radius:3px;">
                                     </div>
                                 </div>
@@ -1414,6 +2797,814 @@ function loadStageContent(stage) {
                         </td>
                     </tr>
                 `;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'cooling-nomex-table') {
+                // Row 15: Position of cooling duct & Nomex - complex sub-table
+                const cnSections = [
+                    { title: 'Position of cooling duct at <strong>LV side</strong>', rows: ['Cooling duct 1', 'Cooling duct 2', 'Cooling duct 3'] },
+                    { title: 'Position of Nomex at <strong>LV side</strong>', rows: ['Nomex 1', 'Nomex 2', 'Nomex 3'] },
+                    { title: 'Position of cooling duct at <strong>HV side</strong>', rows: ['Cooling duct 1', 'Cooling duct 2', 'Cooling duct 3'] },
+                    { title: 'Position of Nomex at <strong>HV side</strong>', rows: ['Nomex 1', 'Nomex 2', 'Nomex 3'] }
+                ];
+                let cnRowIdx = 0;
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center; font-weight:bold; font-size:13px; padding:8px; vertical-align:top; border:1px solid #333;">${itemCounter}</td>
+                        <td colspan="6" style="padding:0; border:1px solid #333;">
+                            <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                                ${cnSections.map((sec, sIdx) => `
+                                    <tr style="background:#f0f0f0;">
+                                        <td colspan="3" style="padding:5px 8px; font-weight:600; border-bottom:1px solid #ccc; border-top:${sIdx > 0 ? '1px solid #aaa' : 'none'};">${sec.title}</td>
+                                        <td style="padding:5px 8px; font-size:10px; color:#777; text-align:center; border-bottom:1px solid #ccc; border-top:${sIdx > 0 ? '1px solid #aaa' : 'none'};">Step No</td>
+                                        <td colspan="2" style="padding:5px 8px; border-bottom:1px solid #ccc; border-top:${sIdx > 0 ? '1px solid #aaa' : 'none'};"></td>
+                                    </tr>
+                                    ${sec.rows.map((rowLabel, rIdx) => {
+                    const fieldId = `cn_${rowId}_${sIdx}_${rIdx}`;
+                    return `
+                                        <tr style="border-bottom:1px solid #e8e8e8;">
+                                            <td style="width:30px;"></td>
+                                            <td colspan="2" style="padding:4px 8px; font-size:11px;">${rowLabel}</td>
+                                            <td style="padding:4px 8px;">
+                                                <input type="text" id="${fieldId}" ${disabledAttr} placeholder="Step No"
+                                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:11px;border-radius:3px;">
+                                            </td>
+                                            <td colspan="2" style="padding:4px 8px;"></td>
+                                        </tr>`;
+                }).join('')}
+                                `).join('')}
+                            </table>
+                            ${!isCustomer ? `
+                            <div style="border-top:1px solid #ddd; padding:10px; background:#fafafa;">
+                                <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:8px;">
+                                    <div>
+                                        <div style="font-size:10px; font-weight:bold; margin-bottom:4px; text-align:center;">Operator</div>
+                                        <input type="text" id="cn_operator_${rowId}" ${disabledAttr} placeholder="Operator name / sign"
+                                            style="width:100%;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                    </div>
+                                    <div>
+                                        <div style="font-size:10px; font-weight:bold; margin-bottom:4px; text-align:center;">Shop Supervisor</div>
+                                        <input type="text" id="cn_shop_${rowId}" ${disabledAttr} placeholder="Shop Supervisor name / sign"
+                                            style="width:100%;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                    </div>
+                                    <div>
+                                        <div style="font-size:10px; font-weight:bold; margin-bottom:4px; text-align:center;">Quality Supervisor</div>
+                                        <input type="text" id="cn_qa_${rowId}" ${disabledAttr} placeholder="Quality Supervisor name / sign"
+                                            style="width:100%;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                    </div>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div style="flex:1;">
+                                        <div style="font-size:10px; font-weight:bold; margin-bottom:4px;">Remark</div>
+                                        <textarea id="cn_remark_${rowId}" ${disabledAttr} placeholder="Optional remark"
+                                            style="width:100%;height:48px;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;resize:none;"></textarea>
+                                    </div>
+                                    <div style="text-align:right; padding-top:18px;">
+                                        <button class="btn-login" id="save_${rowId}"
+                                            style="width:auto; padding:8px 14px; font-size:11px; background:var(--green);"
+                                            onclick="saveNewChecklistItem('coreCoil', ${itemCounter}, '${rowId}')">
+                                            🔄 Update
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>` : ''}
+                        </td>
+                    </tr>
+                `;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'vpd-shop-qa') {
+                // VPD Section 1: rows with Shop Supervisor & Quality Supervisor sign-off columns
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:top;border:1px solid #333;">${itemCounter}</td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;white-space:pre-line;vertical-align:top;">${item.point}</td>
+                        <td colspan="2" style="padding:6px;border:1px solid #333;vertical-align:top;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:4px;text-align:center;">Observations</div>
+                            <textarea id="actualValue_${rowId}" ${disabledAttr} placeholder="Observations"
+                                style="width:100%;height:70px;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;resize:none;"></textarea>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:4px;text-align:center;">Shop Supervisor</div>
+                            ${isProduction ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="shopSup_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="shopSup_${rowId}" ${isAdmin ? '' : 'readonly'} placeholder="—"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;background:#f5f5f5;text-align:center;">
+                            `}
+                            <small id="shopTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:4px;text-align:center;">Quality Supervisor</div>
+                            ${isQuality ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="qaSup_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="qaSup_${rowId}" ${isAdmin ? '' : 'readonly'} placeholder="—"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;background:#f5f5f5;text-align:center;">
+                            `}
+                            <small id="qaTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;">
+                            <textarea id="remark_${rowId}" ${disabledAttr} placeholder="Remark"
+                                style="width:100%;height:70px;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;resize:none;"></textarea>
+                        </td>
+                        ${!isCustomer ? `<td style="padding:6px;border:1px solid #333;vertical-align:middle;text-align:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:5px 8px;font-size:10px;background:var(--green);"
+                                onclick="saveNewChecklistItem('vpd',${itemCounter},'${rowId}')">💾 Save</button>
+                        </td>` : ''}
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'vpd-measure') {
+                // VPD Section 2: simple measure row (Ton / kw) with Operator & Shop sign-off
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:middle;border:1px solid #333;">${itemCounter}</td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;vertical-align:middle;">
+                            ${item.point}
+                            ${item.hasDescInput ? `<input type="text" id="descInput_${rowId}" ${disabledAttr} placeholder="Enter value"
+                                style="display:block;width:100%;margin-top:5px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">` : ''}
+                        </td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;text-align:center;white-space:pre-line;vertical-align:middle;">${item.specifiedValue || ''}</td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:middle;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Value"
+                                    style="width:100%;padding:5px;border:1px solid #ccc;font-size:11px;border-radius:3px;">
+                                <span style="font-size:10px;font-weight:600;white-space:nowrap;">${item.unit}</span>
+                            </div>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:4px;text-align:center;">Operator</div>
+                            <input type="text" id="technician_${rowId}" ${disabledAttr} placeholder="Sign & date"
+                                style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                            <small id="techTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:4px;text-align:center;">Shop Supervisor</div>
+                            ${isProduction ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="shopSup_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="shopSup_${rowId}" ${isAdmin ? '' : 'readonly'} placeholder="—"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;background:#f5f5f5;text-align:center;">
+                            `}
+                            <small id="shopTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;">
+                            <textarea id="remark_${rowId}" ${disabledAttr} placeholder="Remark"
+                                style="width:100%;height:52px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;resize:none;"></textarea>
+                        </td>
+                        ${!isCustomer ? `<td style="padding:6px;border:1px solid #333;vertical-align:middle;text-align:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:5px 8px;font-size:10px;background:var(--green);"
+                                onclick="saveNewChecklistItem('vpd',${itemCounter},'${rowId}')">💾 Save</button>
+                        </td>` : ''}
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'vpd-measure-merged') {
+                // VPD Section 2 Rows 2 & 3: merged Specified Value + Measure cell, auto-fill Shop Supervisor
+                const _shopName = isProduction ? (window.currentUserName || '') : '';
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:middle;border:1px solid #333;">${itemCounter}</td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;vertical-align:middle;">${item.point}</td>
+                        <td colspan="2" style="padding:6px;border:1px solid #333;vertical-align:middle;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Enter value"
+                                    style="flex:1;padding:5px;border:1px solid #ccc;font-size:11px;border-radius:3px;">
+                                <span style="font-size:10px;font-weight:600;white-space:nowrap;">${item.unit}</span>
+                            </div>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Operator</div>
+                            <input type="text" id="technician_${rowId}" ${disabledAttr} placeholder="Sign & date"
+                                style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                            <small id="techTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Shop Supervisor</div>
+                            <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${_shopName}</div>
+                            <input type="hidden" id="shopSup_${rowId}" value="${_shopName}">
+                            <small id="shopTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;">
+                            <textarea id="remark_${rowId}" ${disabledAttr} placeholder="Remark"
+                                style="width:100%;height:52px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;resize:none;"></textarea>
+                        </td>
+                        ${!isCustomer ? `<td style="padding:6px;border:1px solid #333;vertical-align:middle;text-align:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:5px 8px;font-size:10px;background:var(--green);"
+                                onclick="saveNewChecklistItem('vpd',${itemCounter},'${rowId}')">💾 Save</button>
+                        </td>` : ''}
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'vpd-yesno') {
+                // VPD Yes/No dropdown row with Operator & Shop Supervisor sign-off
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:middle;border:1px solid #333;">${itemCounter}</td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;vertical-align:middle;white-space:pre-line;">
+                            ${item.point}
+                            ${item.hasDescInput ? `<input type="text" id="descInput_${rowId}" ${disabledAttr} placeholder="Enter value"
+                                style="display:block;width:100%;margin-top:5px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">` : ''}
+                        </td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;text-align:center;vertical-align:middle;white-space:pre-line;">${item.specifiedValue || ''}</td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:middle;text-align:center;">
+                            <select id="actualValue_${rowId}" ${disabledAttr}
+                                style="width:100%;padding:5px;border:1px solid #ccc;font-size:11px;border-radius:3px;">
+                                <option value="">-- Select --</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Operator</div>
+                            ${isProduction ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="technician_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="technician_${rowId}" ${disabledAttr} placeholder="Name"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                            `}
+                            <small id="techTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Shop Supervisor</div>
+                            ${isProduction ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="shopSup_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="shopSup_${rowId}" ${isAdmin ? '' : 'readonly'} placeholder="—"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;background:#f5f5f5;text-align:center;">
+                            `}
+                            <small id="shopTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;">
+                            <textarea id="remark_${rowId}" ${disabledAttr} placeholder="Remark"
+                                style="width:100%;height:52px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;resize:none;"></textarea>
+                        </td>
+                        ${!isCustomer ? `<td style="padding:6px;border:1px solid #333;vertical-align:middle;text-align:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:5px 8px;font-size:10px;background:var(--green);"
+                                onclick="saveNewChecklistItem('vpd',${itemCounter},'${rowId}')">💾 Save</button>
+                        </td>` : ''}
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'vpd-oknotok') {
+                // VPD OK/Not OK dropdown row with Operator & Shop Supervisor sign-off
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:middle;border:1px solid #333;">${itemCounter}</td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;vertical-align:middle;">${item.point}</td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;text-align:center;vertical-align:middle;">${item.specifiedValue || ''}</td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:middle;text-align:center;">
+                            <select id="actualValue_${rowId}" ${disabledAttr}
+                                style="width:100%;padding:5px;border:1px solid #ccc;font-size:11px;border-radius:3px;">
+                                <option value="">-- Select --</option>
+                                <option value="OK">OK</option>
+                                <option value="Not OK">Not OK</option>
+                            </select>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Operator</div>
+                            ${isProduction ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="technician_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="technician_${rowId}" ${disabledAttr} placeholder="Name"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                            `}
+                            <small id="techTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Shop Supervisor</div>
+                            ${isProduction ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="shopSup_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="shopSup_${rowId}" ${isAdmin ? '' : 'readonly'} placeholder="—"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;background:#f5f5f5;text-align:center;">
+                            `}
+                            <small id="shopTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;">
+                            <textarea id="remark_${rowId}" ${disabledAttr} placeholder="Remark"
+                                style="width:100%;height:52px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;resize:none;"></textarea>
+                        </td>
+                        ${!isCustomer ? `<td style="padding:6px;border:1px solid #333;vertical-align:middle;text-align:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:5px 8px;font-size:10px;background:var(--green);"
+                                onclick="saveNewChecklistItem('vpd',${itemCounter},'${rowId}')">💾 Save</button>
+                        </td>` : ''}
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'vpd-dual-measure') {
+                // VPD Row 28: Td + RH dual text inputs
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:middle;border:1px solid #333;">${itemCounter}</td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;vertical-align:middle;">${item.point}</td>
+                        <td style="padding:8px;border:1px solid #333;font-size:11px;text-align:center;vertical-align:middle;">${item.specifiedValue || ''}</td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:middle;">
+                            <div style="display:flex;flex-direction:column;gap:5px;">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span style="font-size:10px;font-weight:600;width:24px;">Td:</span>
+                                    <input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="Td value"
+                                        style="flex:1;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <span style="font-size:10px;font-weight:600;width:24px;">RH:</span>
+                                    <input type="text" id="vpd_rh_${rowId}" ${disabledAttr} placeholder="RH value"
+                                        style="flex:1;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Operator</div>
+                            ${isProduction ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="technician_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="technician_${rowId}" ${disabledAttr} placeholder="Name"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                            `}
+                            <small id="techTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;min-width:110px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Shop Supervisor</div>
+                            ${isProduction ? `
+                                <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                <input type="hidden" id="shopSup_${rowId}" value="${window.currentUserName || ''}">
+                            ` : `
+                                <input type="text" id="shopSup_${rowId}" ${isAdmin ? '' : 'readonly'} placeholder="—"
+                                    style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;background:#f5f5f5;text-align:center;">
+                            `}
+                            <small id="shopTime_${rowId}" style="font-size:9px;color:#666;display:block;"></small>
+                        </td>
+                        <td style="padding:6px;border:1px solid #333;vertical-align:top;">
+                            <textarea id="remark_${rowId}" ${disabledAttr} placeholder="Remark"
+                                style="width:100%;height:52px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;resize:none;"></textarea>
+                        </td>
+                        ${!isCustomer ? `<td style="padding:6px;border:1px solid #333;vertical-align:middle;text-align:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:5px 8px;font-size:10px;background:var(--green);"
+                                onclick="saveNewChecklistItem('vpd',${itemCounter},'${rowId}')">💾 Save</button>
+                        </td>` : ''}
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'vpd-sensor-diagram') {
+                // VPD Section 2 Row 4: Sensor count + active part position + HV/LV diagram
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:top;border:1px solid #333;">${itemCounter}</td>
+                        <td colspan="6" style="padding:0;border:1px solid #333;">
+                            <div style="padding:8px 10px;font-size:11px;font-weight:600;background:#f5f5f5;border-bottom:1px solid #ccc;">${item.point}</div>
+                            <div style="padding:10px;display:flex;flex-direction:column;gap:10px;">
+                                <div style="font-size:11px;font-weight:600;margin-bottom:2px;">Position of active parts:</div>
+                                <div style="display:flex;gap:20px;flex-wrap:wrap;">
+                                    <div style="display:flex;align-items:center;gap:8px;">
+                                        <span style="font-size:10px;font-weight:500;">Inner side:</span>
+                                        <input type="text" id="vpd_inner_${rowId}" ${disabledAttr} placeholder="Inner position"
+                                            style="width:140px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:8px;">
+                                        <span style="font-size:10px;font-weight:500;">Outer side:</span>
+                                        <input type="text" id="vpd_outer_${rowId}" ${disabledAttr} placeholder="Outer position"
+                                            style="width:140px;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                    </div>
+                                </div>
+                                <!-- HV / LV SIDE COIL DIAGRAM — exact mirror of physical form -->
+                                <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:8px;">
+                                    ${['HV SIDE', 'LV SIDE'].map(label => `
+                                    <div style="flex:1;min-width:240px;border:2px solid #555;font-family:Arial,sans-serif;">
+                                        <!-- Top header -->
+                                        <div style="background:#bbb;border-bottom:2px solid #555;text-align:center;font-weight:bold;font-size:11px;padding:4px 0;letter-spacing:1px;">${label}</div>
+                                        <!-- Main body -->
+                                        <div style="display:flex;height:90px;background:#888;">
+                                            <!-- Left AUX LIMB -->
+                                            <div style="width:26px;background:#888;border-right:2px solid #555;display:flex;align-items:center;justify-content:center;position:relative;">
+                                                <span style="writing-mode:vertical-rl;transform:rotate(180deg);font-size:8px;font-weight:bold;color:#fff;letter-spacing:3px;">AUXLIMB</span>
+                                            </div>
+                                            <!-- Grey spacer left -->
+                                            <div style="width:10px;background:#888;"></div>
+                                            <!-- U coil (white column) -->
+                                            <div style="flex:1;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 0;">
+                                                <div style="width:10px;height:10px;background:#aaa;border-radius:50%;border:1px solid #555;"></div>
+                                                <span style="font-size:18px;font-weight:bold;color:#333;">U</span>
+                                                <div style="width:10px;height:10px;background:#aaa;border-radius:50%;border:1px solid #555;"></div>
+                                            </div>
+                                            <!-- Grey spacer mid1 -->
+                                            <div style="width:10px;background:#888;"></div>
+                                            <!-- V coil (white column) -->
+                                            <div style="flex:1;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 0;">
+                                                <div style="width:10px;height:10px;background:#aaa;border-radius:50%;border:1px solid #555;"></div>
+                                                <span style="font-size:18px;font-weight:bold;color:#333;">V</span>
+                                                <div style="width:10px;height:10px;background:#aaa;border-radius:50%;border:1px solid #555;"></div>
+                                            </div>
+                                            <!-- Grey spacer mid2 -->
+                                            <div style="width:10px;background:#888;"></div>
+                                            <!-- W coil (white column) -->
+                                            <div style="flex:1;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 0;">
+                                                <div style="width:10px;height:10px;background:#aaa;border-radius:50%;border:1px solid #555;"></div>
+                                                <span style="font-size:18px;font-weight:bold;color:#333;">W</span>
+                                                <div style="width:10px;height:10px;background:#aaa;border-radius:50%;border:1px solid #555;"></div>
+                                            </div>
+                                            <!-- Grey spacer right -->
+                                            <div style="width:10px;background:#888;"></div>
+                                            <!-- Right AUX LIMB -->
+                                            <div style="width:26px;background:#888;border-left:2px solid #555;display:flex;align-items:center;justify-content:center;">
+                                                <span style="writing-mode:vertical-rl;transform:rotate(0deg);font-size:8px;font-weight:bold;color:#fff;letter-spacing:3px;">AUXLIMB</span>
+                                            </div>
+                                        </div>
+                                        <!-- Bottom label -->
+                                        <div style="background:#bbb;border-top:2px solid #555;display:flex;justify-content:space-between;align-items:center;padding:3px 6px;">
+                                            <span style="font-size:9px;font-weight:bold;">A- Part no.1</span>
+                                            <span style="font-size:9px;font-weight:bold;">${label}</span>
+                                        </div>
+                                    </div>`).join('')}
+                                </div>
+                                <div style="display:flex;align-items:flex-start;gap:8px;margin-top:4px;flex-wrap:wrap;">
+                                    <div style="flex:2;min-width:160px;">
+                                        <div style="font-size:10px;font-weight:600;margin-bottom:3px;">Remarks for sensor location (if any):</div>
+                                        <input type="text" id="remark_${rowId}" ${disabledAttr} placeholder="Optional remark"
+                                            style="width:100%;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                    </div>
+                                </div>
+                                ${!isCustomer ? `
+                                <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-top:8px;padding:8px;background:#f9f9f9;border:1px solid #eee;border-radius:4px;">
+                                    <div style="flex:1;min-width:130px;">
+                                        <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Operator</div>
+                                        ${isProduction ? `
+                                            <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                            <input type="hidden" id="technician_${rowId}" value="${window.currentUserName || ''}">
+                                        ` : `
+                                            <input type="text" id="technician_${rowId}" ${disabledAttr} placeholder="Name"
+                                                style="width:100%;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;">
+                                        `}
+                                        <small id="techTime_${rowId}" style="font-size:9px;color:#666;display:block;margin-top:2px;"></small>
+                                    </div>
+                                    <div style="flex:1;min-width:130px;">
+                                        <div style="font-size:10px;font-weight:600;margin-bottom:3px;text-align:center;">Shop Supervisor</div>
+                                        ${isProduction ? `
+                                            <div style="font-size:10px;font-weight:bold;padding:4px;background:#f0fff0;border-radius:3px;text-align:center;">${window.currentUserName || ''}</div>
+                                            <input type="hidden" id="shopSup_${rowId}" value="${window.currentUserName || ''}">
+                                        ` : `
+                                            <input type="text" id="shopSup_${rowId}" ${isAdmin ? '' : 'readonly'} placeholder="—"
+                                                style="width:100%;padding:5px;border:1px solid #ccc;font-size:10px;border-radius:3px;background:#f5f5f5;text-align:center;">
+                                        `}
+                                        <small id="shopTime_${rowId}" style="font-size:9px;color:#666;display:block;margin-top:2px;"></small>
+                                    </div>
+                                    <div>
+                                        <button class="btn-login" id="save_${rowId}" style="width:auto;padding:6px 14px;font-size:11px;background:var(--green);"
+                                            onclick="saveNewChecklistItem('vpd',${itemCounter},'${rowId}')">💾 Save</button>
+                                    </div>
+                                </div>` : ''}
+                            </div>
+                        </td>
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'section-header') {
+                // Full-width section divider banner (no Sr.No column, spans all 8 cols)
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td colspan="8" style="background:#2c3e50; color:#fff; font-weight:bold; font-size:12px; padding:9px 14px; border:1px solid #1a252f; letter-spacing:0.5px; text-transform:uppercase;">
+                            ${item.point}
+                        </td>
+                    </tr>
+                `;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'mm-per-phase') {
+                // Per-phase mm measurement: each phase gets a text-box in both Specified (col) and Actual (col)
+                specifiedValueCell = `
+                    <div style="display:flex; flex-direction:column;">
+                        ${item.phases.map((phase, idx) => `
+                            <div style="border:1px solid #333; ${idx > 0 ? 'border-top:none;' : ''} padding:5px 7px; min-height:32px;">
+                                <input type="text"
+                                    id="specVal_${rowId}_${idx}"
+                                    ${disabledAttr}
+                                    placeholder="......... mm"
+                                    style="width:100%; padding:3px 5px; border:1px solid #ccc; font-size:10px; border-radius:2px; box-sizing:border-box;">
+                                <div style="font-size:9px; color:#777; margin-top:2px;">${phase}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                actualValueCell = `
+                    <div style="display:flex; flex-direction:column;">
+                        ${item.phases.map((phase, idx) => `
+                            <div style="border:1px solid #333; ${idx > 0 ? 'border-top:none;' : ''} padding:5px 7px; min-height:32px;">
+                                <input type="text"
+                                    id="actualVal_${rowId}_${idx}"
+                                    ${disabledAttr}
+                                    placeholder="......... mm"
+                                    style="width:100%; padding:3px 5px; border:1px solid #ccc; font-size:10px; border-radius:2px; box-sizing:border-box;">
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else if (item.type === 'lead-assembly-table') {
+                // Rows 34-38: Support assembly & dimension tables (HV/IV leads per phase)
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center; font-weight:bold; font-size:13px; padding:8px; vertical-align:top; border:1px solid #333;">${itemCounter}</td>
+                        <td colspan="6" style="padding:0; border:1px solid #333;">
+                            <!-- Phase sub-header -->
+                            <div style="background:#f5f5f5; border-bottom:1px solid #ccc; padding:6px 10px; font-style:italic; font-weight:600; font-size:11px;">
+                                ${item.point} <strong>(${item.phase})</strong>
+                            </div>
+                            <!-- Measurement sub-rows -->
+                            <table style="width:100%; border-collapse:collapse; font-size:11px;">
+                                <thead>
+                                    <tr style="background:#eaeaea;">
+                                        <th style="padding:4px 8px; text-align:left; border:1px solid #ddd; width:40%; font-size:10px;">Description</th>
+                                        <th style="padding:4px 8px; text-align:center; border:1px solid #ddd; width:20%; font-size:10px;">Specified Value</th>
+                                        <th style="padding:4px 8px; text-align:center; border:1px solid #ddd; width:20%; font-size:10px;">Actual Value</th>
+                                        <th style="padding:4px 8px; border:1px solid #ddd; font-size:10px;">Remark</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${item.rows.map((r, rIdx) => `
+                                        <tr style="border-bottom:1px solid #eee;">
+                                            <td style="padding:5px 8px; border:1px solid #ddd; font-size:11px;">${r.label}</td>
+                                            <td style="padding:4px 6px; border:1px solid #ddd; text-align:center;">
+                                                <div style="display:flex; align-items:center; gap:3px; justify-content:center;">
+                                                    <input type="text" id="specVal_${rowId}_${rIdx}" ${disabledAttr}
+                                                        placeholder="......."
+                                                        style="width:80px; padding:3px 5px; border:1px solid #ccc; font-size:10px; border-radius:2px; text-align:center;">
+                                                    <span style="font-size:10px; color:#555;">${r.unit}</span>
+                                                </div>
+                                            </td>
+                                            <td style="padding:4px 6px; border:1px solid #ddd; text-align:center;">
+                                                <div style="display:flex; align-items:center; gap:3px; justify-content:center;">
+                                                    <input type="text" id="actualVal_${rowId}_${rIdx}" ${disabledAttr}
+                                                        placeholder="......."
+                                                        style="width:80px; padding:3px 5px; border:1px solid #ccc; font-size:10px; border-radius:2px; text-align:center;">
+                                                    <span style="font-size:10px; color:#555;">${r.unit}</span>
+                                                </div>
+                                            </td>
+                                            <td style="padding:4px 6px; border:1px solid #ddd;">
+                                                <input type="text" id="remark_${rowId}_${rIdx}" ${disabledAttr}
+                                                    placeholder="Optional"
+                                                    style="width:100%; padding:3px 5px; border:1px solid #ccc; font-size:10px; border-radius:2px;">
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                            ${!isCustomer ? `
+                            <div style="border-top:1px solid #ddd; display:flex; align-items:stretch; background:#fafafa;">
+                                <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px;">
+                                    <div style="font-size:10px;font-weight:600;margin-bottom:5px;">Technician</div>
+                                    <input type="text" id="lat_tech_${rowId}" ${disabledAttr} placeholder="Name"
+                                        style="width:100%;padding:4px;border:1px solid #ccc;border-radius:2px;font-size:10px;">
+                                    <div style="font-size:10px;color:#aaa;margin-top:5px;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                                </div>
+                                <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px; text-align:center;">
+                                    <div style="font-size:10px;font-weight:600;margin-bottom:22px;">Shop Supervisor</div>
+                                    <div style="font-size:10px;color:#aaa;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                                </div>
+                                <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px; text-align:center;">
+                                    <div style="font-size:10px;font-weight:600;margin-bottom:22px;">Quality Supervisor</div>
+                                    <div style="font-size:10px;color:#aaa;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                                </div>
+                                <div style="padding:7px 10px; flex:1; border-right:1px solid #ddd;">
+                                    <div style="font-size:10px;color:#999;margin-bottom:2px;">Optional</div>
+                                    <textarea id="lat_rem_${rowId}" ${disabledAttr} placeholder="Remark"
+                                        style="width:100%;height:44px;padding:3px;border:1px solid #ccc;font-size:10px;border-radius:2px;resize:none;"></textarea>
+                                </div>
+                                <div style="padding:7px 10px; display:flex; align-items:center;">
+                                    <button class="btn-login" id="save_${rowId}" style="width:auto;padding:6px 10px;font-size:11px;background:var(--green);"
+                                        onclick="saveNewChecklistItem('coreCoil',${itemCounter},'${rowId}')">🔄 Update</button>
+                                    <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                                </div>
+                            </div>` : ''}
+                        </td>
+                    </tr>
+                `;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'make-srno-table') {
+                // Row 44: Make & Sr.No. of OCTC/OLTC per phase
+                const signOffPanelMSR = `
+                    <div style="border-top:1px solid #ddd; display:flex; align-items:stretch; background:#fafafa;">
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:5px;">Technician</div>
+                            <input type="text" id="msr_tech_${rowId}" ${disabledAttr} placeholder="Name" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:2px;font-size:10px;">
+                            <div style="font-size:10px;color:#aaa;margin-top:5px;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px; text-align:center;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:22px;">Shop Supervisor</div>
+                            <div style="font-size:10px;color:#aaa;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px; text-align:center;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:22px;">Quality Supervisor</div>
+                            <div style="font-size:10px;color:#aaa;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; flex:1; border-right:1px solid #ddd;">
+                            <div style="font-size:10px;color:#999;margin-bottom:2px;">Optional</div>
+                            <textarea id="msr_rem_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;height:44px;padding:3px;border:1px solid #ccc;font-size:10px;border-radius:2px;resize:none;"></textarea>
+                        </div>
+                        <div style="padding:7px 10px; display:flex; align-items:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:6px 10px;font-size:11px;background:var(--green);" onclick="saveNewChecklistItem('coreCoil',${itemCounter},'${rowId}')">🔄 Update</button>
+                            <div class="workflow-buttons" style="display:inline-block;margin-left:5px;"></div>
+                        </div>
+                    </div>`;
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:top;border:1px solid #333;">${itemCounter}</td>
+                        <td colspan="6" style="padding:0;border:1px solid #333;">
+                            <div style="padding:6px 10px;font-weight:600;font-size:11px;background:#f5f5f5;border-bottom:1px solid #ccc;">${item.point}</div>
+                            <table style="width:100%;border-collapse:collapse;font-size:11px; text-align:center;">
+                                <thead><tr style="background:#eaeaea;">
+                                    <th style="padding:5px 8px;border:1px solid #ddd;width:25%;">Make</th>
+                                    <th style="padding:5px 8px;border:1px solid #ddd;width:25%;">U Phase</th>
+                                    <th style="padding:5px 8px;border:1px solid #ddd;width:25%;">V Phase</th>
+                                    <th style="padding:5px 8px;border:1px solid #ddd;width:25%;">W Phase</th>
+                                </tr></thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding:4px 6px;border:1px solid #ddd;">
+                                            <input type="text" id="actualValue_${rowId}_Make" ${disabledAttr} placeholder="Make..." style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:2px;">
+                                        </td>
+                                        ${item.phases.map(ph => `
+                                        <td style="padding:4px 6px;border:1px solid #ddd;">
+                                            <input type="text" id="actualValue_${rowId}_${ph.replace(' ', '_')}" ${disabledAttr} placeholder="Sr. No." style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:2px;">
+                                        </td>`).join('')}
+                                    </tr>
+                                </tbody>
+                            </table>
+                            ${!isCustomer ? signOffPanelMSR : ''}
+                        </td>
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'nm-torque-table') {
+                // Row 49: Tightness verification Nm per phase + F-1 to F-5 steel bands
+                const signOffPanelNM = `
+                    <div style="border-top:1px solid #ddd; display:flex; align-items:stretch; background:#fafafa;">
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:5px;">Technician</div>
+                            <input type="text" id="nm_tech_${rowId}" ${disabledAttr} placeholder="Name" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:2px;font-size:10px;">
+                            <div style="font-size:10px;color:#aaa;margin-top:5px;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px; text-align:center;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:22px;">Shop Supervisor</div>
+                            <div style="font-size:10px;color:#aaa;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px; text-align:center;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:22px;">Quality Supervisor</div>
+                            <div style="font-size:10px;color:#aaa;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; flex:1; border-right:1px solid #ddd;">
+                            <div style="font-size:10px;color:#999;margin-bottom:2px;">Optional</div>
+                            <textarea id="nm_rem_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;height:44px;padding:3px;border:1px solid #ccc;font-size:10px;border-radius:2px;resize:none;"></textarea>
+                        </div>
+                        <div style="padding:7px 10px; display:flex; align-items:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:6px 10px;font-size:11px;background:var(--green);" onclick="saveNewChecklistItem('coreCoil',${itemCounter},'${rowId}')">🔄 Update</button>
+                        </div>
+                    </div>`;
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:top;border:1px solid #333;">${itemCounter}</td>
+                        <td colspan="6" style="padding:0;border:1px solid #333;">
+                            <div style="padding:6px 10px;font-weight:600;font-size:11px;background:#f5f5f5;border-bottom:1px solid #ccc;">${item.point}</div>
+                            <table style="width:100%;border-collapse:collapse;font-size:11px; text-align:center;">
+                                <thead><tr style="background:#eaeaea;">
+                                    <th style="padding:5px;border:1px solid #ddd;">U Phase</th>
+                                    <th style="padding:5px;border:1px solid #ddd;">V Phase</th>
+                                    <th style="padding:5px;border:1px solid #ddd;">W Phase</th>
+                                    <th style="padding:5px;border:1px solid #ddd;">F-1</th>
+                                    <th style="padding:5px;border:1px solid #ddd;">F-2</th>
+                                    <th style="padding:5px;border:1px solid #ddd;">F-3</th>
+                                    <th style="padding:5px;border:1px solid #ddd;">F-4</th>
+                                </tr></thead>
+                                <tbody>
+                                    <tr>
+                                        ${['U Phase', 'V Phase', 'W Phase', 'F-1', 'F-2', 'F-3', 'F-4'].map(ph => `
+                                        <td style="padding:4px;border:1px solid #ddd;">
+                                            <input type="text" id="actualValue_${rowId}_${ph.replace(' ', '_').replace('-', '_')}" ${disabledAttr} placeholder="Nm" style="width:100%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:2px;">
+                                        </td>`).join('')}
+                                    </tr>
+                                </tbody>
+                            </table>
+                            ${!isCustomer ? signOffPanelNM : ''}
+                        </td>
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'flitch-torque') {
+                // Row 51: Torque Application at Flitch Plate Hardware
+                // Auto-sign: technician (production), shop supervisor, quality supervisor
+                const autoTech = (window.currentUserRole === 'production') ? (window.currentUserName || '') : '';
+                const autoShop = (window.currentUserRole === 'shop_supervisor') ? (window.currentUserName || '') : '';
+                const autoQA = (window.currentUserRole === 'quality') ? (window.currentUserName || '') : '';
+
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:top;border:1px solid #333;">${itemCounter}</td>
+                        <td style="padding:8px;border:1px solid #333;">
+                            <div style="font-weight:600;font-size:12px;margin-bottom:6px;">${item.point}</div>
+                        </td>
+                        <td style="padding:8px;border:1px solid #333;">
+                            <input type="text" id="specifiedValue_${rowId}" ${disabledAttr} placeholder="......... Nm"
+                                style="width:100%;padding:5px;border:1px solid #ccc;border-radius:3px;font-size:11px;">
+                        </td>
+                        <td style="padding:8px;border:1px solid #333;">
+                            <input type="text" id="actualValue_${rowId}" ${disabledAttr} placeholder="......... Nm"
+                                style="width:100%;padding:5px;border:1px solid #ccc;border-radius:3px;font-size:11px;">
+                        </td>
+                        <td style="padding:4px;border:1px solid #333;">
+                            <div style="display:flex;flex-direction:column;gap:4px;">
+                                <div style="display:flex;align-items:center;gap:4px;">
+                                    <span style="font-size:9px;width:50px;font-weight:600;">Tech:</span>
+                                    <input type="text" id="technician_${rowId}" ${disabledAttr} value="${autoTech}" placeholder="Technician"
+                                        style="flex:1;padding:3px;border:1px solid #ccc;border-radius:2px;font-size:10px;">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:4px;">
+                                    <span style="font-size:9px;width:50px;font-weight:600;">Shop:</span>
+                                    <input type="text" id="shopSup_${rowId}" ${disabledAttr} value="${autoShop}" placeholder="Shop Supervisor"
+                                        style="flex:1;padding:3px;border:1px solid #ccc;border-radius:2px;font-size:10px;">
+                                </div>
+                                <div style="display:flex;align-items:center;gap:4px;">
+                                    <span style="font-size:9px;width:50px;font-weight:600;">QA:</span>
+                                    <input type="text" id="qaSup_${rowId}" ${disabledAttr} value="${autoQA}" placeholder="Quality Supervisor"
+                                        style="flex:1;padding:3px;border:1px solid #ccc;border-radius:2px;font-size:10px;">
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding:4px;border:1px solid #333;">
+                            <textarea id="remark_${rowId}" ${disabledAttr} placeholder="Remark"
+                                style="width:100%;height:50px;padding:3px;border:1px solid #ccc;font-size:10px;border-radius:2px;resize:none;"></textarea>
+                        </td>
+                        <td style="padding:4px;border:1px solid #333;text-align:center;">
+                            ${!isCustomer ? `<button class="btn-login" id="save_${rowId}" style="width:auto;padding:6px 10px;font-size:11px;background:var(--green);"
+                                onclick="saveNewChecklistItem('coreCoil',${itemCounter},'${rowId}')">💾 Save</button>` : ''}
+                        </td>
+                    </tr>`;
+                checklistHTML += customRowHTML;
+                return;
+            } else if (item.type === 'elec-test-table') {
+                // Row 53: Electrical Tests with CS-1/CS-2 columns
+                const tests = [
+                    'Resistance / Current Balance Test.',
+                    'Resistance Test.',
+                    'Ratio &amp; Magnetic Current / Vector Group Test.',
+                    'Step (at initial coil to core shield).'
+                ];
+                const signOffPanelET = `
+                    <div style="border-top:1px solid #ddd; display:flex; align-items:stretch; background:#fafafa;">
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:5px;">Technician</div>
+                            <input type="text" id="et_tech_${rowId}" ${disabledAttr} placeholder="Name" style="width:100%;padding:4px;border:1px solid #ccc;border-radius:2px;font-size:10px;">
+                            <div style="font-size:10px;color:#aaa;margin-top:5px;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px; text-align:center;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:22px;">Shop Supervisor</div>
+                            <div style="font-size:10px;color:#aaa;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; border-right:1px solid #ddd; min-width:130px; text-align:center;">
+                            <div style="font-size:10px;font-weight:600;margin-bottom:22px;">Quality Supervisor</div>
+                            <div style="font-size:10px;color:#aaa;border-top:1px solid #ccc;padding-top:2px;">—</div>
+                        </div>
+                        <div style="padding:7px 10px; flex:1; border-right:1px solid #ddd;">
+                            <div style="font-size:10px;color:#999;margin-bottom:2px;">Optional</div>
+                            <textarea id="et_rem_${rowId}" ${disabledAttr} placeholder="Remark" style="width:100%;height:44px;padding:3px;border:1px solid #ccc;font-size:10px;border-radius:2px;resize:none;"></textarea>
+                        </div>
+                        <div style="padding:7px 10px; display:flex; align-items:center;">
+                            <button class="btn-login" id="save_${rowId}" style="width:auto;padding:6px 10px;font-size:11px;background:var(--green);" onclick="saveNewChecklistItem('coreCoil',${itemCounter},'${rowId}')">🔄 Update</button>
+                        </div>
+                    </div>`;
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td style="text-align:center;font-weight:bold;font-size:13px;padding:8px;vertical-align:top;border:1px solid #333;">${itemCounter}</td>
+                        <td colspan="6" style="padding:0;border:1px solid #333;">
+                            <div style="padding:6px 10px;font-weight:600;font-size:11px;background:#f5f5f5;border-bottom:1px solid #ccc;">Electrical Tests</div>
+                            <table style="width:100%;border-collapse:collapse;font-size:11px;">
+                                <thead><tr style="background:#eaeaea;">
+                                    <th style="padding:5px 8px;border:1px solid #ddd;width:50%;text-align:left;">Test Description</th>
+                                    <th style="padding:5px 8px;border:1px solid #ddd;width:25%;text-align:center;">CS-1 Result</th>
+                                    <th style="padding:5px 8px;border:1px solid #ddd;width:25%;text-align:center;">CS-2 Result</th>
+                                </tr></thead>
+                                <tbody>
+                                    ${tests.map((t, i) => `
+                                    <tr>
+                                        <td style="padding:6px 8px;border:1px solid #ddd;font-size:11px;">${i + 1}) ${t}</td>
+                                        <td style="padding:4px 6px;border:1px solid #ddd;text-align:center;">
+                                            <input type="text" id="et_cs1_${rowId}_${i}" ${disabledAttr} placeholder="Result" style="width:95%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:2px;text-align:center;">
+                                        </td>
+                                        <td style="padding:4px 6px;border:1px solid #ddd;text-align:center;">
+                                            <input type="text" id="et_cs2_${rowId}_${i}" ${disabledAttr} placeholder="Result" style="width:95%;padding:4px;border:1px solid #ccc;font-size:10px;border-radius:2px;text-align:center;">
+                                        </td>
+                                    </tr>`).join('')}
+                                </tbody>
+                            </table>
+                            ${!isCustomer ? signOffPanelET : ''}
+                        </td>
+                    </tr>`;
                 checklistHTML += customRowHTML;
                 return;
             } else if (item.type === 'dof-washer-table') {
@@ -1530,7 +3721,7 @@ function loadStageContent(stage) {
                                     <option value="Inspector 1">Inspector 1</option>
                                     <option value="Inspector 2">Inspector 2</option>
                                 </select>
-                                ` : '<span style="font-size:10px;">-</span>'}
+                                ` : `<span style="font-size:10px;">-</span>`}
                             </td>
                         `).join('')}
                     </tr>
@@ -1859,17 +4050,17 @@ function loadStageContent(stage) {
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbRole === 'production'
-        ? `<td style="border:1px solid #333; padding:3px 5px; font-size:10px; vertical-align:middle; background:#f0fff0;"><strong>${cbUserName}</strong><input type="hidden" id="cb_diag_ss_${rowId}" value="${cbUserName}"></td>`
-        : cbRole === 'admin'
-            ? `<td style="border:1px solid #333; padding:2px;"><input type="text" id="cb_diag_ss_${rowId}" readonly placeholder="—" style="width:100%;border:none;padding:3px;font-size:10px;background:#f5f5f5;box-sizing:border-box;cursor:default;"></td>`
-            : `<td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag_ss_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>`
-}
+                        ? `<td style="border:1px solid #333; padding:3px 5px; font-size:10px; vertical-align:middle; background:#f0fff0;"><strong>${cbUserName}</strong><input type="hidden" id="cb_diag_ss_${rowId}" value="${cbUserName}"></td>`
+                        : cbRole === 'admin'
+                            ? `<td style="border:1px solid #333; padding:2px;"><input type="text" id="cb_diag_ss_${rowId}" readonly placeholder="—" style="width:100%;border:none;padding:3px;font-size:10px;background:#f5f5f5;box-sizing:border-box;cursor:default;"></td>`
+                            : `<td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag_ss_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>`
+                    }
                                         ${cbRole === 'quality'
-        ? `<td style="border:1px solid #333; padding:3px 5px; font-size:10px; vertical-align:middle; background:#f0f8ff;"><strong>${cbUserName}</strong><input type="hidden" id="cb_diag_qi_${rowId}" value="${cbUserName}"></td>`
-        : cbRole === 'admin'
-            ? `<td style="border:1px solid #333; padding:2px;"><input type="text" id="cb_diag_qi_${rowId}" readonly placeholder="—" style="width:100%;border:none;padding:3px;font-size:10px;background:#f5f5f5;box-sizing:border-box;cursor:default;"></td>`
-            : `<td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag_qi_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>`
-}
+                        ? `<td style="border:1px solid #333; padding:3px 5px; font-size:10px; vertical-align:middle; background:#f0f8ff;"><strong>${cbUserName}</strong><input type="hidden" id="cb_diag_qi_${rowId}" value="${cbUserName}"></td>`
+                        : cbRole === 'admin'
+                            ? `<td style="border:1px solid #333; padding:2px;"><input type="text" id="cb_diag_qi_${rowId}" readonly placeholder="—" style="width:100%;border:none;padding:3px;font-size:10px;background:#f5f5f5;box-sizing:border-box;cursor:default;"></td>`
+                            : `<td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag_qi_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>`
+                    }
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_diag" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}_diag')">💾 Save</button>` : ''}</td>
                                     </tr>
 
@@ -1909,8 +4100,32 @@ function loadStageContent(stage) {
                                             Locking of flitch plate with bottom frame &amp; tightening of flitch plate hardware.<br>
                                             <span style="font-size:9px;color:#777;">(For 3 limb W3 &amp; W4 Not Applicable)</span>
                                         </td>
-                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">Ok / Not Ok</td>
-                                        <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r5_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
+                                            <table style="width:100%;border-collapse:collapse;">
+                                                <tr style="border-bottom:1px solid #ccc;">
+                                                    <td style="padding:4px 5px; font-size:9px; color:#555; text-align:center;">Visual</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding:4px 5px; text-align:center;">
+                                                        <select id="cb_r5_oknotok_${rowId}" ${disabledAttr} style="width:100%;padding:3px;font-size:10px;border:1px solid #ccc;border-radius:3px;background:#fff;">
+                                                            <option value="">-- Select --</option>
+                                                            <option value="Ok">Ok</option>
+                                                            <option value="Not Ok">Not Ok</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
+                                            <table style="width:100%;border-collapse:collapse;">
+                                                <tr style="border-bottom:1px solid #ccc;">
+                                                    <td style="padding:0;height:22px;"><input type="text" id="cb_r5_av1_${rowId}" ${disabledAttr} placeholder="..........Nm" style="width:100%;height:22px;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding:0;height:22px;"><input type="text" id="cb_r5_av2_${rowId}" ${disabledAttr} placeholder="..........Nm" style="width:100%;height:22px;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                                </tr>
+                                            </table>
+                                        </td>
                                         <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r5_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r5')}
                                         ${cbQiCell.replace(/{{ID}}/g, 'r5')}
@@ -1929,17 +4144,13 @@ function loadStageContent(stage) {
                                             Insulation arrangement at bottom (HV/LV) frame<br>
                                             <span style="font-size:9px;color:#777;">(Bottom frame top edge to core insulation top edge) As per Drg.</span>
                                         </td>
-                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
-                                            <table style="width:100%;border-collapse:collapse;">
-                                                <tr style="border-bottom:1px solid #ccc;"><td style="padding:2px 5px;font-size:9px;color:#555;">Thickness<br><input type="text" id="cb_r6_th1_${rowId}" ${disabledAttr} placeholder="mm" style="width:70px;height:18px;border:1px solid #ccc;padding:2px 3px;font-size:9px;background:transparent;box-sizing:border-box;"></td></tr>
-                                                <tr><td style="padding:2px 5px;font-size:9px;color:#555;"><input type="text" id="cb_r6_th2_${rowId}" ${disabledAttr} placeholder="mm" style="width:70px;height:18px;border:1px solid #ccc;padding:2px 3px;font-size:9px;background:transparent;box-sizing:border-box;"></td></tr>
-                                            </table>
+                                        <td style="border:1px solid #333; padding:4px 5px; vertical-align:middle;">
+                                            <div style="font-size:9px;color:#555;text-align:center;">Thickness</div>
+                                            <input type="text" id="cb_r6_th_${rowId}" ${disabledAttr} placeholder="..........mm" style="width:100%;height:20px;border:1px solid #ccc;padding:2px 3px;font-size:9px;background:transparent;box-sizing:border-box;margin-top:2px;">
                                         </td>
-                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
-                                            <table style="width:100%;border-collapse:collapse;">
-                                                <tr style="border-bottom:1px solid #ccc;"><td style="padding:0;height:22px;"><input type="text" id="cb_r6_av1_${rowId}" ${disabledAttr} style="width:100%;height:22px;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td></tr>
-                                                <tr><td style="padding:0;height:22px;"><input type="text" id="cb_r6_av2_${rowId}" ${disabledAttr} style="width:100%;height:22px;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td></tr>
-                                            </table>
+                                        <td style="border:1px solid #333; padding:4px 5px; vertical-align:middle;">
+                                            <div style="font-size:9px;color:#555;text-align:center;">Thickness</div>
+                                            <input type="text" id="cb_r6_av_${rowId}" ${disabledAttr} placeholder="..........mm" style="width:100%;height:20px;border:1px solid #ccc;padding:2px 3px;font-size:9px;background:transparent;box-sizing:border-box;margin-top:2px;">
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r6_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r6')}
@@ -1949,21 +4160,14 @@ function loadStageContent(stage) {
 
                                     <!-- Row 7: Insulation arrangement at flitch plates -->
                                     <tr>
-                                        <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:top;">7</td>
-                                        <td style="border:1px solid #333; padding:4px 8px; vertical-align:top;">Insulation arrangement at flitch plates.</td>
-                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
-                                            <table style="width:100%;border-collapse:collapse;">
-                                                <tr style="border-bottom:1px solid #ccc;"><td style="padding:2px 5px;font-size:9px;color:#555;">Thickness<br><input type="text" id="cb_r7_th_${rowId}" ${disabledAttr} placeholder="mm" style="width:70px;height:18px;border:1px solid #ccc;padding:2px 3px;font-size:9px;background:transparent;box-sizing:border-box;"></td></tr>
-                                                <tr style="border-bottom:1px solid #ccc;"><td style="padding:2px 5px;font-size:9px;color:#555;">10 mm inspection at both ends.</td></tr>
-                                                <tr><td style="padding:2px 5px;font-size:9px;color:#555;">As per Drg.</td></tr>
-                                            </table>
+                                        <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">7</td>
+                                        <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Insulation arrangement at flitch plates.</td>
+                                        <td style="border:1px solid #333; padding:4px 5px; vertical-align:middle;">
+                                            <div style="font-size:9px;color:#555;text-align:center;">Thickness</div>
+                                            <input type="text" id="cb_r7_th_${rowId}" ${disabledAttr} placeholder="..........mm" style="width:100%;height:20px;border:1px solid #ccc;padding:2px 3px;font-size:9px;background:transparent;box-sizing:border-box;margin-top:2px;">
                                         </td>
-                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
-                                            <table style="width:100%;border-collapse:collapse;">
-                                                <tr style="border-bottom:1px solid #ccc;"><td style="padding:0;height:22px;"><input type="text" id="cb_r7_av1_${rowId}" ${disabledAttr} style="width:100%;height:22px;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td></tr>
-                                                <tr style="border-bottom:1px solid #ccc;"><td style="padding:0;height:22px;"><input type="text" id="cb_r7_av2_${rowId}" ${disabledAttr} style="width:100%;height:22px;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td></tr>
-                                                <tr><td style="padding:0;height:22px;"><input type="text" id="cb_r7_av3_${rowId}" ${disabledAttr} style="width:100%;height:22px;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td></tr>
-                                            </table>
+                                        <td style="border:1px solid #333; padding:4px 5px; vertical-align:middle;">
+                                            <input type="text" id="cb_r7_av_${rowId}" ${disabledAttr} placeholder="..........mm" style="width:100%;height:20px;border:1px solid #ccc;padding:2px 3px;font-size:10px;background:transparent;box-sizing:border-box;">
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r7_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r7')}
@@ -1975,8 +4179,14 @@ function loadStageContent(stage) {
                                     <tr>
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">8</td>
                                         <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Use of nomex at insulation joint</td>
-                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">Ok / Not Ok</td>
-                                        <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r8_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">10 mm projection<br>at both ends.</td>
+                                        <td style="border:1px solid #333; padding:4px 5px; text-align:center; vertical-align:middle;">
+                                            <select id="cb_r8_av_${rowId}" ${disabledAttr} style="width:100%;padding:3px;font-size:10px;border:1px solid #ccc;border-radius:3px;background:#fff;">
+                                                <option value="">-- Select --</option>
+                                                <option value="Ok">Ok</option>
+                                                <option value="Not Ok">Not Ok</option>
+                                            </select>
+                                        </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r8_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r8')}
                                         ${cbQiCell.replace(/{{ID}}/g, 'r8')}
@@ -1987,8 +4197,14 @@ function loadStageContent(stage) {
                                     <tr>
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">9</td>
                                         <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Position of Step blocks.</td>
-                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">Ok / Not Ok</td>
-                                        <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r9_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">As per Drg.</td>
+                                        <td style="border:1px solid #333; padding:4px 5px; text-align:center; vertical-align:middle;">
+                                            <select id="cb_r9_av_${rowId}" ${disabledAttr} style="width:100%;padding:3px;font-size:10px;border:1px solid #ccc;border-radius:3px;background:#fff;">
+                                                <option value="">-- Select --</option>
+                                                <option value="Ok">Ok</option>
+                                                <option value="Not Ok">Not Ok</option>
+                                            </select>
+                                        </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r9_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r9')}
                                         ${cbQiCell.replace(/{{ID}}/g, 'r9')}
@@ -2004,8 +4220,14 @@ function loadStageContent(stage) {
                                     <tr>
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">10</td>
                                         <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Surface Condition of Laminations should be Rust free, Damage Free, Waviness Free.</td>
-                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">Visual<br>Ok / Not Ok</td>
-                                        <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r10_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">Visual</td>
+                                        <td style="border:1px solid #333; padding:0; height:36px;">
+                                            <select id="cb_r10_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                                <option value="">-- Select --</option>
+                                                <option value="Ok">Ok</option>
+                                                <option value="Not Ok">Not Ok</option>
+                                            </select>
+                                        </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r10_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r10')}
                                         ${cbQiCell.replace(/{{ID}}/g, 'r10')}
@@ -2040,8 +4262,14 @@ function loadStageContent(stage) {
                                     <tr>
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">13</td>
                                         <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Position of First Lamination with respect to Yoke Clamp &amp; Insulation</td>
-                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">Visual<br>Ok / Not Ok</td>
-                                        <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r13_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td style="border:1px solid #333; padding:4px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">Visual</td>
+                                        <td style="border:1px solid #333; padding:0; height:36px;">
+                                            <select id="cb_r13_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                                <option value="">-- Select --</option>
+                                                <option value="Ok">Ok</option>
+                                                <option value="Not Ok">Not Ok</option>
+                                            </select>
+                                        </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r13_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r13')}
                                         ${cbQiCell.replace(/{{ID}}/g, 'r13')}
@@ -2093,17 +4321,17 @@ function loadStageContent(stage) {
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag2_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbRole === 'production'
-        ? `<td style="border:1px solid #333; padding:3px 5px; font-size:10px; vertical-align:middle; background:#f0fff0;"><strong>${cbUserName}</strong><input type="hidden" id="cb_diag2_ss_${rowId}" value="${cbUserName}"></td>`
-        : cbRole === 'admin'
-            ? `<td style="border:1px solid #333; padding:2px;"><input type="text" id="cb_diag2_ss_${rowId}" readonly placeholder="—" style="width:100%;border:none;padding:3px;font-size:10px;background:#f5f5f5;box-sizing:border-box;cursor:default;"></td>`
-            : `<td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag2_ss_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>`
-}
+                        ? `<td style="border:1px solid #333; padding:3px 5px; font-size:10px; vertical-align:middle; background:#f0fff0;"><strong>${cbUserName}</strong><input type="hidden" id="cb_diag2_ss_${rowId}" value="${cbUserName}"></td>`
+                        : cbRole === 'admin'
+                            ? `<td style="border:1px solid #333; padding:2px;"><input type="text" id="cb_diag2_ss_${rowId}" readonly placeholder="—" style="width:100%;border:none;padding:3px;font-size:10px;background:#f5f5f5;box-sizing:border-box;cursor:default;"></td>`
+                            : `<td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag2_ss_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>`
+                    }
                                         ${cbRole === 'quality'
-        ? `<td style="border:1px solid #333; padding:3px 5px; font-size:10px; vertical-align:middle; background:#f0f8ff;"><strong>${cbUserName}</strong><input type="hidden" id="cb_diag2_qi_${rowId}" value="${cbUserName}"></td>`
-        : cbRole === 'admin'
-            ? `<td style="border:1px solid #333; padding:2px;"><input type="text" id="cb_diag2_qi_${rowId}" readonly placeholder="—" style="width:100%;border:none;padding:3px;font-size:10px;background:#f5f5f5;box-sizing:border-box;cursor:default;"></td>`
-            : `<td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag2_qi_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>`
-}
+                        ? `<td style="border:1px solid #333; padding:3px 5px; font-size:10px; vertical-align:middle; background:#f0f8ff;"><strong>${cbUserName}</strong><input type="hidden" id="cb_diag2_qi_${rowId}" value="${cbUserName}"></td>`
+                        : cbRole === 'admin'
+                            ? `<td style="border:1px solid #333; padding:2px;"><input type="text" id="cb_diag2_qi_${rowId}" readonly placeholder="—" style="width:100%;border:none;padding:3px;font-size:10px;background:#f5f5f5;box-sizing:border-box;cursor:default;"></td>`
+                            : `<td style="border:1px solid #333; padding:0;"><input type="text" id="cb_diag2_qi_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>`
+                    }
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_diag2" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}_diag2')">💾 Save</button>` : ''}</td>
                                     </tr>
 
@@ -2119,31 +4347,42 @@ function loadStageContent(stage) {
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r16hdr" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r16hdr')">💾 Save</button>` : ''}</td>
                                     </tr>
                                     ${[
-        { lbl: 'a', desc: '1st Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16a' },
-        { lbl: 'b', desc: '1st Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16b' },
-        { lbl: 'c', desc: '2nd Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16c' },
-        { lbl: 'd', desc: '2nd Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16d' },
-        { lbl: 'e', desc: '3rd Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16e' },
-        { lbl: 'f', desc: '3rd Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16f' },
-        { lbl: 'g', desc: '4th Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16g' },
-        { lbl: 'h', desc: '4th Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16h' },
-        { lbl: 'i', desc: '5th Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16i' },
-        { lbl: 'j', desc: '5th Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16j' },
-        { lbl: 'k', desc: '6th Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16k' },
-        { lbl: 'l', desc: '6th Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16l' },
-        { lbl: 'm', desc: '7th Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16m' },
-        { lbl: 'n', desc: '7th Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16n' }
-    ].map(row => `
+                        { lbl: 'a', desc: '1st Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16a', tested: false },
+                        { lbl: 'b', desc: '1st Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16b', tested: true },
+                        { lbl: 'c', desc: '2nd Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16c', tested: false },
+                        { lbl: 'd', desc: '2nd Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16d', tested: true },
+                        { lbl: 'e', desc: '3rd Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16e', tested: false },
+                        { lbl: 'f', desc: '3rd Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16f', tested: true },
+                        { lbl: 'g', desc: '4th Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16g', tested: false },
+                        { lbl: 'h', desc: '4th Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16h', tested: true },
+                        { lbl: 'i', desc: '5th Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16i', tested: false },
+                        { lbl: 'j', desc: '5th Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16j', tested: true },
+                        { lbl: 'k', desc: '6th Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16k', tested: false },
+                        { lbl: 'l', desc: '6th Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16l', tested: true },
+                        { lbl: 'm', desc: '7th Duct or nomex layer laid out correctly', spec: 'As per Drg.', id: 'r16m', tested: false },
+                        { lbl: 'n', desc: '7th Duct or nomex layer tested by using 1kV DC ohmmeter', spec: 'Acceptance criteria >5MΩ', id: 'r16n', tested: true },
+                    ].map(row => `
                                     <tr>
                                         <td style="border:1px solid #333; padding:4px 6px; font-size:10px; vertical-align:middle;"><strong>${row.lbl}</strong> — ${row.desc}</td>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">${row.spec}</td>
-                                        <td style="border:1px solid #333; padding:2px; vertical-align:middle;">
+                                        <td style="border:1px solid #333; padding:2px; vertical-align:top;">
+                                            ${row.tested ? `
+                                            <div style="display:flex;flex-direction:column;gap:2px;padding:2px;">
+                                                <select id="cb_${row.id}_type_${rowId}" ${disabledAttr} style="width:100%;border:1px solid #ccc;padding:2px 3px;font-size:10px;background:#fff;box-sizing:border-box;border-radius:2px;">
+                                                    <option value="">— Select —</option>
+                                                    <option value="Duct">Duct</option>
+                                                    <option value="Nomex">Nomex</option>
+                                                </select>
+                                                <span style="font-size:9px;color:#555;padding:2px 3px;">F1-F2</span>
+                                            </div>
+                                            ` : `
                                             <select id="cb_${row.id}_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:2px 3px;font-size:10px;background:transparent;box-sizing:border-box;">
                                                 <option value="">— Select —</option>
                                                 <option value="Ok">Ok</option>
                                                 <option value="Not Ok">Not Ok</option>
                                                 <option value="N/A">N/A</option>
                                             </select>
+                                            `}
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_${row.id}_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, row.id)}
@@ -2205,7 +4444,7 @@ function loadStageContent(stage) {
                                     <tr>
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">20</td>
                                         <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Use of nomex at insulation joint</td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">Finish Date</td>
+                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">10mm projection<br>at both ends.</td>
                                         <td style="border:1px solid #333; padding:0; height:36px;">
                                             <select id="cb_r20_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
                                                 <option value="">Select</option>
@@ -2223,7 +4462,7 @@ function loadStageContent(stage) {
                                     <tr>
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">21</td>
                                         <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Position of Step blocks.</td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">10 mm projection at bolt ends</td>
+                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">As per Drg.</td>
                                         <td style="border:1px solid #333; padding:0; height:36px;">
                                             <select id="cb_r21_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
                                                 <option value="">Select</option>
@@ -2239,93 +4478,68 @@ function loadStageContent(stage) {
 
                                     <!-- Row 22: Flitch plate to flitch plate width Measurement -->
                                     <tr>
-                                        <td rowspan="5" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">22</td>
-                                        <td rowspan="5" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Flitch plate to flitch plate width Measurement (± 2/0 mm)<br><span style="font-size:9px;color:#555;">(For 3 limb W3 & W4 Not Applicable)</span></td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">As per Drg.</td>
-                                        <td style="border:1px solid #333; padding:0; height:28px;" colspan="2"></td>
-                                        <td rowspan="5" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r22').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
-                                        <td rowspan="5" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r22').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
-                                        <td rowspan="5" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r22" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r22')">💾 Save</button>` : ''}</td>
-                                    </tr>
-                                    <tr>
+                                        <td rowspan="4" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">22</td>
+                                        <td rowspan="4" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Flitch plate to flitch plate width Measurement (± 2/0 mm)<br><span style="font-size:9px;color:#555;">(For 3 limb W3 & W4 Not Applicable)</span></td>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">W1</td>
                                         <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r22_w1_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r22_w1op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
+                                        <td rowspan="4" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r22').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="4" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r22').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="4" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r22" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r22')">💾 Save</button>` : ''}</td>
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">W2</td>
                                         <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r22_w2_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r22_w2op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">W3</td>
                                         <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r22_w3_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r22_w3op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">W4</td>
                                         <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r22_w4_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r22_w4op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
 
                                     <!-- Row 23: Bottom HV/LV frame to Top Height Measurement -->
                                     <tr>
-                                        <td rowspan="5" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">23</td>
-                                        <td rowspan="5" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Bottom HV/LV frame to Top Height Measurement (± 2/0 mm)<br><span style="font-size:9px;color:#555;">(For 3 limb H3 & H4 Not Applicable)</span></td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">As per Drg.</td>
-                                        <td style="border:1px solid #333; padding:0; height:28px;" colspan="2"></td>
-                                        <td rowspan="5" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r23').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
-                                        <td rowspan="5" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r23').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
-                                        <td rowspan="5" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r23" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r23')">💾 Save</button>` : ''}</td>
-                                    </tr>
-                                    <tr>
+                                        <td rowspan="4" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">23</td>
+                                        <td rowspan="4" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Bottom HV/LV frame to Top Height Measurement (± 2/0 mm)<br><span style="font-size:9px;color:#555;">(For 3 limb H3 & H4 Not Applicable)</span></td>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">H1</td>
                                         <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r23_h1_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r23_h1op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
+                                        <td rowspan="4" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r23').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="4" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r23').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="4" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r23" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r23')">💾 Save</button>` : ''}</td>
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">H2</td>
                                         <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r23_h2_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r23_h2op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">H3</td>
                                         <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r23_h3_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r23_h3op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">H4</td>
                                         <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r23_h4_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r23_h4op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
 
                                     <!-- Row 24: Insulation arrangement at basefeet & Isolation tube filled at Hardware -->
                                     <tr>
-                                        <td rowspan="7" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">24</td>
-                                        <td rowspan="7" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Insulation arrangement at basefeet &amp; Isolation tube filled at Hardware.</td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">Visual Check for:</td>
-                                        <td style="border:1px solid #333; padding:0; height:28px;" colspan="2"></td>
-                                        <td rowspan="7" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r24').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
-                                        <td rowspan="7" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r24').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
-                                        <td rowspan="7" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r24" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r24')">💾 Save</button>` : ''}</td>
-                                    </tr>
-                                    <tr>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">Insulation at base feet</td>
-                                        <td style="border:1px solid #333; padding:0;">
-                                            <select id="cb_r24_basefeet_ok_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
-                                        </td>
-                                        <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r24_basefeet_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
+                                        <td rowspan="6" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">24</td>
+                                        <td rowspan="6" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Insulation arrangement at basefeet &amp; Isolation tube filled at Hardware.</td>
+                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; text-align:center; vertical-align:middle;">Visual check for<br>Insulation/isolation</td>
+                                        <td style="border:1px solid #333; padding:0;"></td>
+                                        <td style="border:1px solid #333; padding:0;"></td>
+                                        <td rowspan="6" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r24').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="6" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r24').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="6" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r24" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r24')">💾 Save</button>` : ''}</td>
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">Uphase</td>
@@ -2335,7 +4549,6 @@ function loadStageContent(stage) {
                                             </select>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r24_uphase_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">Vphase</td>
@@ -2345,7 +4558,6 @@ function loadStageContent(stage) {
                                             </select>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r24_vphase_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">Wphase</td>
@@ -2355,7 +4567,6 @@ function loadStageContent(stage) {
                                             </select>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r24_wphase_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">Aux. limb1</td>
@@ -2365,7 +4576,6 @@ function loadStageContent(stage) {
                                             </select>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r24_aux1_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">Aux. limb2</td>
@@ -2375,7 +4585,6 @@ function loadStageContent(stage) {
                                             </select>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r24_aux2_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
 
                                     <!-- Row 25: Base feet hardware tightning -->
@@ -2383,11 +4592,7 @@ function loadStageContent(stage) {
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">25</td>
                                         <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Base feet hardware tightning.<br><span style="font-size:9px;color:#555;">(Torque application as per Drg.)</span></td>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">As per Drg.<br>F1</td>
-                                        <td style="border:1px solid #333; padding:0; height:36px;">
-                                            <select id="cb_r25_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
-                                        </td>
+                                        <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r25_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r25_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r25')}
                                         ${cbQiCell.replace(/{{ID}}/g, 'r25')}
@@ -2398,72 +4603,86 @@ function loadStageContent(stage) {
                                     <tr>
                                         <td rowspan="4" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">26</td>
                                         <td rowspan="4" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Steel band assembly (AS Per Drg.):-<br>- Tightening.<br>- Isolation arrangement &amp;<br>- Hardware tightening.<br><span style="font-size:9px;color:#555;">(Torque application as per Drg.)</span></td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;"></td>
-                                        <td style="border:1px solid #333; padding:0; height:28px;" colspan="2"></td>
+                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">F1</td>
+                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
+                                            <div style="display:flex;flex-direction:column;">
+                                                <select id="cb_r26_f1_ok_${rowId}" ${disabledAttr} style="width:100%;border:none;border-bottom:1px solid #ccc;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                                    <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
+                                                </select>
+                                                <input type="text" id="cb_r26_f1_nm_${rowId}" ${disabledAttr} placeholder="Nm" style="width:100%;border:none;padding:3px;font-size:9px;background:transparent;box-sizing:border-box;">
+                                            </div>
+                                        </td>
+                                        <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r26_f1_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td rowspan="4" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r26').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
                                         <td rowspan="4" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r26').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
                                         <td rowspan="4" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r26" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r26')">💾 Save</button>` : ''}</td>
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">F2</td>
-                                        <td style="border:1px solid #333; padding:0;">
-                                            <select id="cb_r26_f2_ok_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
+                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
+                                            <div style="display:flex;flex-direction:column;">
+                                                <select id="cb_r26_f2_ok_${rowId}" ${disabledAttr} style="width:100%;border:none;border-bottom:1px solid #ccc;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                                    <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
+                                                </select>
+                                                <input type="text" id="cb_r26_f2_nm_${rowId}" ${disabledAttr} placeholder="Nm" style="width:100%;border:none;padding:3px;font-size:9px;background:transparent;box-sizing:border-box;">
+                                            </div>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r26_f2_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">F3</td>
-                                        <td style="border:1px solid #333; padding:0;">
-                                            <select id="cb_r26_f3_ok_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
+                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
+                                            <div style="display:flex;flex-direction:column;">
+                                                <select id="cb_r26_f3_ok_${rowId}" ${disabledAttr} style="width:100%;border:none;border-bottom:1px solid #ccc;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                                    <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
+                                                </select>
+                                                <input type="text" id="cb_r26_f3_nm_${rowId}" ${disabledAttr} placeholder="Nm" style="width:100%;border:none;padding:3px;font-size:9px;background:transparent;box-sizing:border-box;">
+                                            </div>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r26_f3_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">F4</td>
-                                        <td style="border:1px solid #333; padding:0;">
-                                            <select id="cb_r26_f4_ok_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
+                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
+                                            <div style="display:flex;flex-direction:column;">
+                                                <select id="cb_r26_f4_ok_${rowId}" ${disabledAttr} style="width:100%;border:none;border-bottom:1px solid #ccc;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                                    <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
+                                                </select>
+                                                <input type="text" id="cb_r26_f4_nm_${rowId}" ${disabledAttr} placeholder="Nm" style="width:100%;border:none;padding:3px;font-size:9px;background:transparent;box-sizing:border-box;">
+                                            </div>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r26_f4_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
 
                                     <!-- Row 27: End Bracket Assembly -->
                                     <tr>
-                                        <td rowspan="3" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">27</td>
-                                        <td rowspan="3" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">End Bracket Assembly (As Per Drg.):-<br>-Hardware tightening<br>-Isolation Arrangement<br><span style="font-size:9px;color:#555;">-Torque Application as per Drg.</span></td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;"></td>
-                                        <td style="border:1px solid #333; padding:0; height:28px;" colspan="2"></td>
-                                        <td rowspan="3" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r27').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
-                                        <td rowspan="3" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r27').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
-                                        <td rowspan="3" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r27" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r27')">💾 Save</button>` : ''}</td>
-                                    </tr>
-                                    <tr>
+                                        <td rowspan="2" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">27</td>
+                                        <td rowspan="2" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">End Bracket Assembly (As Per Drg.):-<br>-Hardware tightening<br>-Isolation Arrangement<br><span style="font-size:9px;color:#555;">-Torque Application as per Drg.</span></td>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">F1</td>
-                                        <td style="border:1px solid #333; padding:0;">
-                                            <select id="cb_r27_f1_ok_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
+                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
+                                            <div style="display:flex;flex-direction:column;">
+                                                <select id="cb_r27_f1_ok_${rowId}" ${disabledAttr} style="width:100%;border:none;border-bottom:1px solid #ccc;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                                    <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
+                                                </select>
+                                                <input type="text" id="cb_r27_f1_nm_${rowId}" ${disabledAttr} placeholder="Nm" style="width:100%;border:none;padding:3px;font-size:9px;background:transparent;box-sizing:border-box;">
+                                            </div>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r27_f1_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
+                                        <td rowspan="2" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r27').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="2" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r27').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="2" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r27" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r27')">💾 Save</button>` : ''}</td>
                                     </tr>
                                     <tr>
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;">F4</td>
-                                        <td style="border:1px solid #333; padding:0;">
-                                            <select id="cb_r27_f4_ok_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
+                                        <td style="border:1px solid #333; padding:0; vertical-align:top;">
+                                            <div style="display:flex;flex-direction:column;">
+                                                <select id="cb_r27_f4_ok_${rowId}" ${disabledAttr} style="width:100%;border:none;border-bottom:1px solid #ccc;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
+                                                    <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
+                                                </select>
+                                                <input type="text" id="cb_r27_f4_nm_${rowId}" ${disabledAttr} placeholder="Nm" style="width:100%;border:none;padding:3px;font-size:9px;background:transparent;box-sizing:border-box;">
+                                            </div>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r27_f4_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-
                                     </tr>
 
                                     <!-- Row 28: Application of Blue Lacquer/white varnish -->
@@ -2572,12 +4791,8 @@ function loadStageContent(stage) {
                                     <tr>
                                         <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">31</td>
                                         <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Spreader beam to be placed at every location<br><span style="font-size:9px;color:#555;">(The spreader beam between 2 adjacent limbs, Top HV to LV yoke clamp 1 no for every 2limb)</span></td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">Specified Value</td>
-                                        <td style="border:1px solid #333; padding:0; height:36px;">
-                                            <select id="cb_r31_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
-                                        </td>
+                                        <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r31_sv_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td style="border:1px solid #333; padding:0; height:36px;"><input type="text" id="cb_r31_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r31_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                         ${cbSsCell.replace(/{{ID}}/g, 'r31')}
                                         ${cbQiCell.replace(/{{ID}}/g, 'r31')}
@@ -2829,18 +5044,19 @@ function loadStageContent(stage) {
 
                                     <!-- Row 46: Final Isolation Test Core & Frame -->
                                     <tr>
-                                        <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">46</td>
-                                        <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Final Isolation Test Core &amp; Frame<br><span style="font-size:9px;color:#555;">(All ducts &amp; all phases shorted)</span></td>
-                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">Test</td>
-                                        <td style="border:1px solid #333; padding:0; height:36px;">
-                                            <select id="cb_r46_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
-                                            </select>
-                                        </td>
-                                        <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r46_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
-                                        ${cbSsCell.replace(/{{ID}}/g, 'r46')}
-                                        ${cbQiCell.replace(/{{ID}}/g, 'r46')}
-                                        <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r46" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r46')">💾 Save</button>` : ''}</td>
+                                        <td rowspan="2" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">46</td>
+                                        <td rowspan="2" style="border:1px solid #333; padding:4px 8px; vertical-align:middle;">Final Isolation Test Core &amp; Frame<br><span style="font-size:9px;color:#555;">(All ducts &amp; all phases shorted)</span></td>
+                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;"><div style="display:flex;align-items:center;gap:2px;white-space:nowrap;">2kV AC<input type="text" id="cb_r46_sv_ac_${rowId}" ${disabledAttr} style="width:45px;height:20px;border:1px solid #ccc;padding:2px;font-size:9px;background:transparent;box-sizing:border-box;">mA</div></td>
+                                        <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r46_ac_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r46_ac_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td rowspan="2" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbSsCell.replace(/{{ID}}/g, 'r46').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="2" style="border:1px solid #333; padding:0; vertical-align:middle;">${cbQiCell.replace(/{{ID}}/g, 'r46').replace(/<td[^>]*>/, '').replace(/<\/td>/, '')}</td>
+                                        <td rowspan="2" style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle;">${!isCustomer ? `<button class="btn-login" id="save_${rowId}_r46" style="width:auto;padding:4px 8px;font-size:10px;background:var(--green);" onclick="saveNewChecklistItem('${stage}',${itemCounter},'${rowId}_r46')">💾 Save</button>` : ''}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="border:1px solid #333; padding:3px 5px; font-size:9px; vertical-align:middle;"><div style="display:flex;align-items:center;gap:2px;white-space:nowrap;">2.5kV DC<input type="text" id="cb_r46_sv_dc_${rowId}" ${disabledAttr} style="width:45px;height:20px;border:1px solid #ccc;padding:2px;font-size:9px;background:transparent;box-sizing:border-box;">Ω</div></td>
+                                        <td style="border:1px solid #333; padding:0; height:28px;"><input type="text" id="cb_r46_dc_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
+                                        <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r46_dc_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                                     </tr>
 
                                     <!-- Row 47: Core Clean & free from damage -->
@@ -2850,7 +5066,7 @@ function loadStageContent(stage) {
                                         <td style="border:1px solid #333; padding:3px 5px; font-size:9px; color:#555; vertical-align:middle;">Visual</td>
                                         <td style="border:1px solid #333; padding:0; height:36px;">
                                             <select id="cb_r47_av_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;">
-                                                <option value="">Select</option><option value="Yes">Yes</option><option value="No">No</option>
+                                                <option value="">Select</option><option value="Ok">Ok</option><option value="Not Ok">Not Ok</option>
                                             </select>
                                         </td>
                                         <td style="border:1px solid #333; padding:0;"><input type="text" id="cb_r47_op_${rowId}" ${disabledAttr} style="width:100%;height:100%;border:none;padding:3px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
@@ -2934,7 +5150,7 @@ function loadStageContent(stage) {
                             <td style="border: 1px solid #333; padding: 0; height: 26px;"><input type="text" id="hilo_${rowId}_${coilIdx}_${rowIdx}_dia" ${disabledAttr} style="width:100%;height:100%;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                             <td style="border: 1px solid #333; padding: 0; height: 26px;"><input type="text" id="hilo_${rowId}_${coilIdx}_${rowIdx}_actual" ${disabledAttr} style="width:100%;height:100%;border:none;padding:2px 4px;font-size:10px;background:transparent;box-sizing:border-box;"></td>
                             <td style="border: 1px solid #333; padding: 0; height: 26px;">
-                                ${(isQuality || isAdmin) ? `<select id="hilo_${rowId}_${coilIdx}_${rowIdx}_qa" ${disabledAttr} style="width:100%;height:100%;border:none;padding:2px;font-size:10px;background:transparent;box-sizing:border-box;"><option value="">-- Select --</option><option value="Inspector 1">Inspector 1</option><option value="Inspector 2">Inspector 2</option></select>` : '<span style="font-size:10px;text-align:center;display:block;padding:4px;">-</span>'}
+                                ${(isQuality || isAdmin) ? `<select id="hilo_${rowId}_${coilIdx}_${rowIdx}_qa" ${disabledAttr} style="width:100%;height:100%;border:none;padding:2px;font-size:10px;background:transparent;box-sizing:border-box;"><option value="">-- Select --</option><option value="Inspector 1">Inspector 1</option><option value="Inspector 2">Inspector 2</option></select>` : `<span style="font-size:10px;text-align:center;display:block;padding:4px;">-</span>`}
                             </td>
                         </tr>
                     `).join('');
@@ -2972,13 +5188,12 @@ function loadStageContent(stage) {
                                 <thead>
                                     <tr style="background: #f9f9f9;">
                                         <th style="border:1px solid #333; padding:5px 4px; width:30px; text-align:center;">S.No</th>
-                                        <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Part No.</th>
-                                        <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Strip Drg No.</th>
+                                        <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Part No./ BOM</th>
+                                        <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Strip</th>
                                         <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Strip Used</th>
                                         <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Cyl Drg No.</th>
                                         <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Cyl Used</th>
-                                        <th style="border:1px solid #333; padding:5px 4px; text-align:center;">As Per Drg</th>
-                                        <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Dia</th>
+                                        <th style="border:1px solid #333; padding:5px 4px; text-align:center;">As Per Drg<br>DIA</th>
                                         <th style="border:1px solid #333; padding:5px 4px; text-align:center;">Actual</th>
                                         <th style="border:1px solid #333; padding:5px 4px; width:100px; text-align:center;">Sign of Quality</th>
                                     </tr>
@@ -2987,23 +5202,6 @@ function loadStageContent(stage) {
                                     ${tableRows}
                                 </tbody>
                             </table>
-                        </td>
-                    </tr>
-                `;
-                checklistHTML += customRowHTML;
-                return;
-            } else if (item.type === 'remarks-lines') {
-                // Remarks (If Any) — 7 full-width dotted lines matching paper form
-                const lines = Array.from({ length: 7 }, () =>
-                    '<div style="border-bottom:1.5px dotted #888;height:22px;width:100%;"></div>'
-                ).join('');
-                customRowHTML = `
-                    <tr id="${rowId}">
-                        <td colspan="7" style="padding:12px 16px 14px 16px; border:1px solid #333; background:#fff;">
-                            <div style="position:relative;">
-                                <span style="font-size:12px;font-weight:600;color:#333;position:absolute;top:0;left:0;line-height:22px;">Remarks (If Any)</span>
-                                <div style="margin-left:0;">${lines}</div>
-                            </div>
                         </td>
                     </tr>
                 `;
@@ -3026,7 +5224,7 @@ function loadStageContent(stage) {
                                 style="width:100%;border:none;padding:2px;font-size:10px;background:transparent;">
                             ${qualitySupervisors.map(s => `<option value="${s === '-- Select --' ? '' : s}">${s}</option>`).join('')}
                         </select>
-                    ` : '<span style="font-size:10px;">-</span>';
+                    ` : `<span style="font-size:10px;">-</span>`;
 
                     return `
                         <tr>
@@ -3086,7 +5284,7 @@ function loadStageContent(stage) {
                                 style="width:100%;border:none;padding:2px;font-size:10px;background:transparent;">
                             ${qualitySupervisors37.map(s => `<option value="${s === '-- Select --' ? '' : s}">${s}</option>`).join('')}
                         </select>
-                    ` : '<span style="font-size:10px;">-</span>';
+                    ` : `<span style="font-size:10px;">-</span>`;
 
                     return `
                         <tr>
@@ -3275,14 +5473,27 @@ function loadStageContent(stage) {
                 shopSupCell = '<span style="font-size: 10px; text-align: center; display: block;">-</span>';
                 remarkCell = '<span style="font-size: 10px; text-align: center; display: block;">-</span>';
             } else {
-                // Default: regular text input
-                actualValueCell = `
-                    <input type="text"
-                           id="actualValue_${rowId}"
-                           ${disabledAttr}
-                           placeholder="Enter value"
-                           style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px;">
+                // Default: regular text input or dynamic dropdown
+                if (item.actualInputType === 'dropdown') {
+                    actualValueCell = `
+                        <select id="actualValue_${rowId}" ${disabledAttr} style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
+                            <option value="">-- Select --</option>
+                            <option value="Ok">Ok</option>
+                            <option value="Not Ok">Not Ok</option>
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                            <option value="N/A">N/A</option>
+                        </select>
                     `;
+                } else {
+                    actualValueCell = `
+                        <input type="text"
+                               id="actualValue_${rowId}"
+                               ${disabledAttr}
+                               placeholder="Enter value"
+                               style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
+                    `;
+                }
             }
 
             // Set default sign-off cells if not already set by custom logic
@@ -3357,15 +5568,235 @@ function loadStageContent(stage) {
                 }
             }
 
+            // Special handling for dismantling-hv-visual type (row 13)
+            if (item.type === 'dismantling-hv-visual') {
+                const hvVisualItems = [
+                    'No loose paper taping',
+                    'Tightness of hardware',
+                    'Proper arrangement of T.G. Supports',
+                    'Balance Work of T.G. if any',
+                    'Looseness in wedges & coil pressing blocks',
+                    'Proper tieing of leads'
+                ];
 
-            checklistHTML += `
+                const hvVisualRows = hvVisualItems.map((desc, i) => {
+                    const subRowId = `${rowId}_hv_${i}`;
+                    return `
+                        <tr>
+                            <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle; font-size:10px;">${i + 1}</td>
+                            <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle; font-size:10px;">${desc}</td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="specifiedValue_${subRowId}" ${disabledAttr} 
+                                       placeholder="Enter value" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="methodCheck_${subRowId}" ${disabledAttr} 
+                                       value="Visual" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="technician_${subRowId}" ${disabledAttr} 
+                                       placeholder="Operator" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="shopSup_${subRowId}" ${disabledAttr} 
+                                       placeholder="Shop Supervisor" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="remark_${subRowId}" ${disabledAttr} 
+                                       placeholder="Remark" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                customRowHTML = `
                     <tr id="${rowId}">
-                    <td>${itemCounter}</td>
-                    <td>${item.pointPrefixInput ? `<input type="text" id="pointPrefix_${rowId}" ${disabledAttr} placeholder="" style="width: 80px; padding: 3px 5px; border: 1px solid #aaa; border-radius: 3px; font-size: 11px; margin-right: 4px;">` : ''}${item.point}</td>
-                    <td style="font-size: 11px; color: #555;">${specifiedValueCell}</td>
-                    ${stage === 'tanking' ? actualValueCell : `<td>${actualValueCell}</td>`}
-                    <td style="padding: 0;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; height: 100%; border-collapse: collapse;">
+                        <td>${itemCounter}</td>
+                        <td colspan="6" style="padding:0;">
+                            <div style="border:1px solid #333; margin:4px 0;">
+                                <div style="background:#f0f0f0; padding:6px 8px; font-weight:bold; font-size:11px; border-bottom:1px solid #333;">
+                                    ${item.point}
+                                </div>
+                                <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                                    <thead>
+                                        <tr style="background:#e8e8e8;">
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:40px;">Sr. No.</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center;">Description</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:120px;">Specified Value</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:100px;">Method of Check</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:100px;">Operator</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:120px;">Shop Supervisor</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:100px;">Remark</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${hvVisualRows}
+                                    </tbody>
+                                </table>
+                                ${!isCustomer ? `<div style="padding:8px; text-align:center; background:#f9f9f9; border-top:1px solid #333;">
+                                    <button class="btn-login" id="save_${rowId}" 
+                                            style="width:auto; padding:6px 12px; font-size:11px; background:var(--green);" 
+                                            onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}')">
+                                        💾 Save HV Visual Checks
+                                    </button>
+                                </div>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                checklistHTML += customRowHTML;
+                return;
+            }
+
+            // Special handling for dismantling-lv-visual type (row 16)
+            if (item.type === 'dismantling-lv-visual') {
+                const lvVisualItems = [
+                    { desc: 'No loose paper taping', preFill: 'Visual' },
+                    { desc: 'Tightness of hardware (F.G./Permali/M.S.)', preFill: '' },
+                    { desc: 'Proper arrangement of T.G. Supports', preFill: 'Visual' },
+                    { desc: 'Balance Work of T.G. if any', preFill: 'Visual' },
+                    { desc: 'Looseness in wedges & coil pressing blocks', preFill: '' },
+                    { desc: 'Proper tieing of leads', preFill: 'Visual' }
+                ];
+
+                const lvVisualRows = lvVisualItems.map((item, i) => {
+                    const subRowId = `${rowId}_lv_${i}`;
+                    return `
+                        <tr>
+                            <td style="border:1px solid #333; padding:4px; text-align:center; vertical-align:middle; font-size:10px;">${i + 1}</td>
+                            <td style="border:1px solid #333; padding:4px 8px; vertical-align:middle; font-size:10px;">${item.desc}</td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="specifiedValue_${subRowId}" ${disabledAttr} 
+                                       placeholder="Enter value" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="methodCheck_${subRowId}" ${disabledAttr} 
+                                       value="${item.preFill}" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="technician_${subRowId}" ${disabledAttr} 
+                                       placeholder="Operator" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="shopSup_${subRowId}" ${disabledAttr} 
+                                       placeholder="Shop Supervisor" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                            <td style="border:1px solid #333; padding:0; vertical-align:middle;">
+                                <input type="text" id="remark_${subRowId}" ${disabledAttr} 
+                                       placeholder="Remark" 
+                                       style="width:100%; height:100%; border:none; padding:3px; font-size:10px; background:transparent; box-sizing:border-box;">
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td>${itemCounter}</td>
+                        <td colspan="6" style="padding:0;">
+                            <div style="border:1px solid #333; margin:4px 0;">
+                                <div style="background:#f0f0f0; padding:6px 8px; font-weight:bold; font-size:11px; border-bottom:1px solid #333;">
+                                    ${item.point}
+                                </div>
+                                <table style="width:100%; border-collapse:collapse; font-size:10px;">
+                                    <thead>
+                                        <tr style="background:#e8e8e8;">
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:40px;">Sr. No.</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center;">Description</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:120px;">Specified Value</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:100px;">Method of Check</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:100px;">Operator</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:120px;">Shop Supervisor</th>
+                                            <th style="border:1px solid #333; padding:4px; text-align:center; width:100px;">Remark</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${lvVisualRows}
+                                    </tbody>
+                                </table>
+                                ${!isCustomer ? `<div style="padding:8px; text-align:center; background:#f9f9f9; border-top:1px solid #333;">
+                                    <button class="btn-login" id="save_${rowId}" 
+                                            style="width:auto; padding:6px 12px; font-size:11px; background:var(--green);" 
+                                            onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}')">
+                                        💾 Save LV Visual Checks
+                                    </button>
+                                </div>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                checklistHTML += customRowHTML;
+                return;
+            }
+
+            // Special merged input row for dismantling rows 6, 9, and 12
+            const singleInputDismantlingRows = [6, 9, 12];
+            if (stage === 'dismantling' && singleInputDismantlingRows.includes(itemCounter)) {
+                customRowHTML = `
+                    <tr id="${rowId}">
+                        <td>${itemCounter}</td>
+                        <td>${item.pointPrefixInput ? `<input type="text" id="pointPrefix_${rowId}" ${disabledAttr} placeholder="" style="width: 80px; padding: 3px 5px; border: 1px solid #aaa; border-radius: 3px; font-size: 11px; margin-right: 4px;">` : ''}${item.point}</td>
+                        <td colspan="3" style="padding:8px; vertical-align:top;">
+                            <input type="text"
+                                   id="actualValue_${rowId}"
+                                   ${disabledAttr}
+                                   placeholder=""
+                                   style="width:100%; padding:8px; border:1px solid #ccc; border-radius:3px; font-size:11px;">
+                        </td>
+                        <td style="padding: 8px; vertical-align:top;">
+                            ${remarkCell}
+                        </td>
+                        <td style="text-align: center; padding: 6px; vertical-align:top;">
+                            ${!isCustomer ? `
+                                <button class="btn-login"
+                                        id="save_${rowId}"
+                                        style="width:auto; padding:6px 10px; font-size:11px; background: var(--green); margin-bottom: 5px;"
+                                        onclick="saveNewChecklistItem('${stage}', ${itemCounter}, '${rowId}')">
+                                    🔄 Update
+                                </button>
+                                ${isAdmin ? `<br>
+                                    <button class="btn-login"
+                                            id="lock_${rowId}"
+                                            style="width:auto; padding:6px 10px; font-size:11px; background: #e74c3c; margin-top: 5px; display: none;"
+                                            onclick="showRowLockDialog('${rowId}')">
+                                        🔒 Lock Row
+                                    </button>
+                                    <br>
+                                    <button class="btn-login"
+                                            id="rowUnlock_${rowId}"
+                                            style="width:auto; padding:6px 10px; font-size:11px; background: #3498db; margin-top: 5px; display: none;"
+                                            onclick="showRowUnlockDialog('${rowId}')">
+                                        🔓 Unlock Row
+                                    </button>
+                                ` : ''}
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }
+
+            // If a stage-specific handler built a complete row, use it and skip the generic builder
+            if (customRowHTML !== null) {
+                checklistHTML += customRowHTML;
+                return;
+            }
+
+            // Determine grid columns for dismantling stage with special row handling
+            const specialDismantlingRows = [3, 4, 7, 8, 10, 11, 14, 15, 19];
+            const isDismantlingOnlyTechnician = stage === 'dismantling' && specialDismantlingRows.includes(itemCounter);
+            const isDismantlingStage = stage === 'dismantling';
+
+            let gridColumns = '1fr 1fr 1fr';
+            let signoffHTML = `
                             <div style="border-right: 1px solid #ddd; padding: 8px;">
                                 <div style="font-size: 10px; font-weight: bold; margin-bottom: 5px; text-align: center;">Technician</div>
                                 ${technicianCell}
@@ -3378,6 +5809,81 @@ function loadStageContent(stage) {
                                 <div style="font-size: 10px; font-weight: bold; margin-bottom: 5px; text-align: center;">Quality Supervisor</div>
                                 ${qaSupCell}
                             </div>
+                        `;
+
+            // For dismantling: remove Quality Supervisor column entirely
+            if (isDismantlingStage) {
+                gridColumns = isDismantlingOnlyTechnician ? '1fr' : '1fr 1fr';
+                if (isDismantlingOnlyTechnician) {
+                    // Only Technician column for special rows
+                    signoffHTML = `
+                            <div style="padding: 8px;">
+                                <div style="font-size: 10px; font-weight: bold; margin-bottom: 5px; text-align: center;">Technician</div>
+                                ${technicianCell}
+                            </div>
+                        `;
+                } else {
+                    // Technician and Shop Supervisor for other dismantling rows (no Quality Supervisor)
+                    signoffHTML = `
+                            <div style="border-right: 1px solid #ddd; padding: 8px;">
+                                <div style="font-size: 10px; font-weight: bold; margin-bottom: 5px; text-align: center;">Technician</div>
+                                ${technicianCell}
+                            </div>
+                            <div style="padding: 8px;">
+                                <div style="font-size: 10px; font-weight: bold; margin-bottom: 5px; text-align: center;">Shop Supervisor</div>
+                                ${shopSupCell}
+                            </div>
+                        `;
+                }
+            }
+
+            checklistHTML += `
+                    <tr id="${rowId}">
+                    <td style="position: relative;">
+                        ${itemCounter}
+                    </td>
+                    <td>${item.pointPrefixInput ? `<input type="text" id="pointPrefix_${rowId}" ${disabledAttr} placeholder="" style="width: 80px; padding: 3px 5px; border: 1px solid #aaa; border-radius: 3px; font-size: 11px; margin-right: 4px;">` : ''}
+                        <span ${isAdmin ? `contenteditable="true" onblur="updateMasterData('${stage}', 'point', ${itemCounter - 1}, this.innerText, ${sectionIndex})"` : ''}>
+                            ${item.point}
+                        </span>
+                    </td>
+                    <td style="font-size: 11px; color: #555; position: relative; min-width: 100px; padding-right: 25px;">
+                        ${specifiedValueCell}
+                        ${isEditMode ? `
+                            <div style="position: absolute; top: 2px; right: 2px; z-index: 5;">
+                                <button onclick="toggleMasterInputType('${stage}', ${sectionIndex}, ${itemIndex}, 'specified')" 
+                                        style="font-size: 8px; padding: 1px 3px; background: rgba(238,238,238,0.8); border: 1px solid #ccc; cursor: pointer; border-radius: 2px;"
+                                        title="Switch to ${item.specifiedInputType === 'dropdown' ? 'Text' : 'Dropdown'}">
+                                    ${item.specifiedInputType === 'dropdown' ? 'Txt' : 'DD'}
+                                </button>
+                            </div>
+                        ` : ''}
+                    </td>
+                    <td style="padding: 8px; position: relative; min-width: 100px; padding-right: 25px;">
+                        ${actualValueCell.includes('<td') ? actualValueCell.replace(/^<td[^>]*>/, '').replace(/<\/td>$/, '') : actualValueCell}
+                        ${isEditMode ? `
+                            <div style="position: absolute; top: 2px; right: 2px; z-index: 5;">
+                                <button onclick="toggleMasterInputType('${stage}', ${sectionIndex}, ${itemIndex}, 'actual')" 
+                                        style="font-size: 8px; padding: 1px 3px; background: rgba(238,238,238,0.8); border: 1px solid #ccc; cursor: pointer; border-radius: 2px;"
+                                        title="Switch to ${item.actualInputType === 'dropdown' ? 'Text' : 'Dropdown'}">
+                                    ${item.actualInputType === 'dropdown' ? 'Txt' : 'DD'}
+                                </button>
+                            </div>
+                        ` : ''}
+                    </td>
+                    <td style="padding: 0;" colspan="${stage === 'shunt_reactor' ? 3 : 1}">
+                        <div style="display: grid; grid-template-columns: ${stage === 'shunt_reactor' ? '1fr 1fr 1fr' : gridColumns}; height: 100%; border-collapse: collapse;">
+                            ${stage === 'shunt_reactor' ? `
+                                <div style="border-right: 1px solid #ddd; padding: 8px;">
+                                    ${technicianCell}
+                                </div>
+                                <div style="border-right: 1px solid #ddd; padding: 8px;">
+                                    ${shopSupCell}
+                                </div>
+                                <div style="padding: 8px;">
+                                    ${qaSupCell}
+                                </div>
+                            ` : signoffHTML}
                         </div>
                     </td>
                     <td style="padding: 8px;">
@@ -3405,6 +5911,14 @@ function loadStageContent(stage) {
                                         onclick="showRowUnlockDialog('${rowId}')">
                                     🔓 Unlock Row
                                 </button>
+                                ${isEditMode ? `
+                                    <div style="margin-top: 10px; border-top: 1px dashed #ccc; padding-top: 10px;">
+                                        <button class="btn-login" style="width:auto; padding:4px 8px; font-size:10px; background: #e74c3c;" 
+                                                onclick="deleteMasterRow('${stage}', ${sectionIndex}, ${itemIndex})">
+                                            🗑️ Delete Row
+                                        </button>
+                                    </div>
+                                ` : ''}
                             ` : ''}
                         ` : ''}
                     </td>
@@ -3415,33 +5929,534 @@ function loadStageContent(stage) {
         checklistHTML += `
                 </tbody>
             </table>
+            ${isEditMode ? `
+                <div style="text-align: right; margin-top: 10px; margin-bottom: 20px;">
+                    <button class="btn-login" style="width: auto; padding: 6px 15px; background: #27ae60; font-size: 12px;" 
+                            onclick="addMasterRow('${stage}', ${sectionIndex})">
+                        ➕ Add New Row to ${section.name} (Clones Layout)
+                    </button>
+                </div>
+            ` : ''}
                     `;
     });
     // Render final content
-    content.innerHTML = `
-                    <h3>${stageInfo.title}</h3>
-                        ${stageInfo.subtitle ? `<p style="color: #666; font-size: 14px; margin-bottom: 20px;">${stageInfo.subtitle}</p>` : ''}
-        
-        <button class="btn-login" 
-                style="width:auto; padding:10px 20px; font-size:14px; background:var(--red); margin:15px 0;" 
-                onclick="exportStageChecklistPDF('${stage}')">
-            Download ${stageInfo.title} PDF
-        </button>
-        
-        <div class="checklist-paper" id="stageChecklist_${stage}">
-            <h2 style="text-align:center; margin-bottom: 20px;">${stageInfo.title.toUpperCase()}</h2>
+    if (stage === 'shunt_reactor') {
+        content.innerHTML = `
+            <div class="checklist-paper" id="stageChecklist_${stage}" style="box-shadow: none;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px; border: 1px solid #000;">
+                    <tr>
+                        <td style="padding: 10px; border-right: 1px solid #000; width: 60%;">
+                            <label style="font-weight: bold; font-size: 14px;">W.O. No:</label>
+                            <input type="text" id="stageWONo_${stage}" ${isAdmin ? '' : 'readonly'} value="${window.currentWO || ''}" 
+                                   onchange="if(window.currentUserRole==='admin'){window.currentWO=this.value; document.querySelectorAll('[id^=stageWONo_]').forEach(f=>f.value=this.value);}" 
+                                   style="border: none; border-bottom: 1px dotted #000; width: 70%; background: ${isAdmin ? 'rgba(59,130,246,0.05)' : 'transparent'}; font-size: 14px; padding-left: 5px; ${isAdmin ? 'cursor:text;' : 'cursor:default;'}">
+                            ${isAdmin ? '<span style="font-size:10px;color:#3b82f6;margin-left:4px;">✏️ Auto-filled | Admin editable</span>' : ''}
+                        </td>
+                        <td style="padding: 10px; width: 40%;">
+                            <label style="font-weight: bold; font-size: 14px;">Date:</label>
+                            <input type="text" id="stageDate_${stage}" ${disabledAttr} value="${new Date().toLocaleDateString('en-GB').split('/').join('-')}" 
+                                   style="border: none; border-bottom: 1px dotted #000; width: 60%; background: transparent; font-size: 14px; padding-left: 5px;">
+                        </td>
+                    </tr>
+                </table>
+                ${checklistHTML}
+            </div>
             
-            <table class="form-table" style="margin-bottom: 15px;">
-                <tr>
-                    <td><strong>W.O. No:</strong> <input type="text" id="stageWONo_${stage}" readonly value="${window.currentWO || ''}" style="border:none; border-bottom:1px dotted #000; width:200px; background:transparent;"></td>
-                    <td><strong>Date:</strong> <input type="date" id="stageDate_${stage}" ${disabledAttr} value="${new Date().toISOString().split('T')[0]}" style="border:none; border-bottom:1px dotted #000;"></td>
-                </tr>
-            </table>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-login" 
+                        style="width:auto; padding:10px 20px; font-size:14px; background:var(--red);" 
+                        onclick="exportStageChecklistPDF('${stage}')">
+                    Download Shunt Reactor PDF
+                </button>
+            </div>
+            ${isEditMode ? `
+                <div style="text-align: center; margin-top: 20px; margin-bottom: 20px;">
+                    <button class="btn-login" style="width: auto; padding: 10px 20px; background: #3498db; font-size: 14px;" 
+                            onclick="addNewSectionToStage()">
+                        ➕ Add New Section Block
+                    </button>
+                </div>
+            ` : ''}
+        `;
+        // Apply saved table dimensions (always, for all roles)
+        setTimeout(() => applyTableDimensions(stage), 90);
+        // Initialize resizable columns for admin (always available so handles are present after edit-mode toggle)
+        if (isAdmin) {
+            setTimeout(() => setupResizableColumns(stage), 120);
+        }
+        // Initialize block layout overlay (admin split/merge system)
+        (function _tryBlkInit(attempts) {
+            if (window.BlockLayout) { window.BlockLayout.init(stage); }
+            else if (attempts > 0) { setTimeout(() => _tryBlkInit(attempts - 1), 200); }
+        })(10);
+    } else {
+        content.innerHTML = `
+                        <h3>${stageInfo.title}</h3>
+                            ${stageInfo.subtitle ? `<p style="color: #666; font-size: 14px; margin-bottom: 20px;">${stageInfo.subtitle}</p>` : ''}
             
-            ${checklistHTML}
-        </div>
-                `;
+            <button class="btn-login" 
+                    style="width:auto; padding:10px 20px; font-size:14px; background:var(--red); margin:15px 0;" 
+                    onclick="exportStageChecklistPDF('${stage}')">
+                Download ${stageInfo.title} PDF
+            </button>
+            
+            <div class="checklist-paper" id="stageChecklist_${stage}">
+                <h2 style="text-align:center; margin-bottom: 20px;">${stageInfo.title.toUpperCase()}</h2>
+                
+                <table class="form-table" style="margin-bottom: 15px;">
+                    <tr>
+                        <td><strong>W.O. No:</strong> 
+                            <input type="text" id="stageWONo_${stage}" ${isAdmin ? '' : 'readonly'} value="${window.currentWO || ''}" 
+                                   onchange="if(window.currentUserRole==='admin'){window.currentWO=this.value; document.querySelectorAll('[id^=stageWONo_]').forEach(f=>f.value=this.value);}" 
+                                   style="border:none; border-bottom:1px dotted #000; width:200px; background:${isAdmin ? 'rgba(59,130,246,0.05)' : 'transparent'}; ${isAdmin ? 'cursor:text;' : 'cursor:default;'}">
+                            ${isAdmin ? '<span style="font-size:10px;color:#3b82f6;margin-left:4px;">✏️ Auto-filled</span>' : ''}
+                        </td>
+                        <td><strong>Date:</strong> <input type="date" id="stageDate_${stage}" ${disabledAttr} value="${new Date().toISOString().split('T')[0]}" style="border:none; border-bottom:1px dotted #000;"></td>
+                    </tr>
+                </table>
+                
+                ${checklistHTML}
+            </div>
+            ${isEditMode ? `
+                <div style="text-align: center; margin-top: 20px; margin-bottom: 20px;">
+                    <button class="btn-login" style="width: auto; padding: 10px 20px; background: #3498db; font-size: 14px;" 
+                            onclick="addNewSectionToStage()">
+                        ➕ Add New Section Block
+                    </button>
+                </div>
+            ` : ''}
+        `;
+        // Apply saved table dimensions (always, for all roles)
+        setTimeout(() => applyTableDimensions(stage), 90);
+        // Initialize resizable columns for admin (always available so handles are present after edit-mode toggle)
+        if (isAdmin) {
+            setTimeout(() => setupResizableColumns(stage), 120);
+        }
+        // Initialize block layout overlay
+        if (window.BlockLayout) setTimeout(() => window.BlockLayout.init(stage), 150);
+    }
 }
+/* ===============================
+   ADMIN: RESIZABLE COLUMNS & ROWS
+================================ */
+
+// Apply saved column/row dimensions from master data to all tables on screen
+function applyTableDimensions(stage) {
+    const stageData = window.checklistMasterData?.[stage];
+    if (!stageData) return;
+
+    const tables = document.querySelectorAll('.form-table');
+    tables.forEach((table, tIdx) => {
+        // Apply table-layout: fixed so width styles are respected
+        table.style.tableLayout = 'fixed';
+
+        const colWidths = stageData.columnWidths?.[tIdx];
+        if (colWidths) {
+            Object.entries(colWidths).forEach(([colIdxStr, width]) => {
+                const colIdx = parseInt(colIdxStr);
+                const headers = table.querySelectorAll('th');
+                if (headers[colIdx]) headers[colIdx].style.width = width + 'px';
+                const rows = table.querySelectorAll('tr');
+                rows.forEach(row => {
+                    if (row.cells[colIdx]) row.cells[colIdx].style.width = width + 'px';
+                });
+            });
+        }
+
+        const rowHeights = stageData.rowHeights?.[tIdx];
+        if (rowHeights) {
+            const rows = table.querySelectorAll('tr');
+            rows.forEach((row, rowIdx) => {
+                if (rowHeights[String(rowIdx)] !== undefined) {
+                    row.style.height = rowHeights[String(rowIdx)] + 'px';
+                }
+            });
+        }
+    });
+}
+
+function setupResizableColumns(stage) {
+    const tables = document.querySelectorAll('.form-table');
+
+    // First apply saved dimensions
+    applyTableDimensions(stage);
+
+    tables.forEach((table, tableIdx) => {
+        // Set table-layout: fixed so column widths are enforced
+        table.style.tableLayout = 'fixed';
+
+        /* ── COLUMN RESIZE ── */
+        const headers = table.querySelectorAll('th');
+        headers.forEach((th, colIdx) => {
+            if (th.querySelector('.col-resize-handle')) return;
+            th.style.position = 'relative';
+            th.style.overflow = 'hidden';
+
+            const colHandle = document.createElement('div');
+            colHandle.className = 'col-resize-handle';
+            colHandle.style.cssText = 'position:absolute;right:0;top:0;width:6px;height:100%;cursor:col-resize;background:rgba(52,152,219,0.5);z-index:20;transition:background 0.15s;';
+            colHandle.title = 'Drag to resize column';
+            colHandle.addEventListener('mouseenter', () => colHandle.style.background = 'rgba(52,152,219,1)');
+            colHandle.addEventListener('mouseleave', () => colHandle.style.background = 'rgba(52,152,219,0.5)');
+
+            colHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const startX = e.clientX;
+                const startWidth = th.getBoundingClientRect().width;
+
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;cursor:col-resize;z-index:99999;';
+                document.body.appendChild(overlay);
+
+                function onMove(e) {
+                    const newWidth = Math.max(30, startWidth + (e.clientX - startX));
+                    th.style.width = newWidth + 'px';
+                    const rows = table.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        if (row.cells[colIdx]) row.cells[colIdx].style.width = newWidth + 'px';
+                    });
+                }
+
+                async function onUp() {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    overlay.remove();
+
+                    const finalWidth = Math.round(th.getBoundingClientRect().width);
+                    if (!window.checklistMasterData?.[stage]) return;
+                    if (!window.checklistMasterData[stage].columnWidths) window.checklistMasterData[stage].columnWidths = {};
+                    if (!window.checklistMasterData[stage].columnWidths[tableIdx]) window.checklistMasterData[stage].columnWidths[tableIdx] = {};
+                    window.checklistMasterData[stage].columnWidths[tableIdx][String(colIdx)] = finalWidth;
+                    _showResizeStatus('Saving...');
+                    await saveMasterLayout();
+                    _showResizeStatus('All Changes Saved', true);
+                    console.log(`✅ Col ${colIdx} width → ${finalWidth}px (saved)`);
+                }
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+
+            th.appendChild(colHandle);
+        });
+
+        /* ── ROW RESIZE ── */
+        const rows = table.querySelectorAll('tr');
+        rows.forEach((row, rowIdx) => {
+            if (row.querySelector('.row-resize-handle')) return;
+
+            const rowHandle = document.createElement('div');
+            rowHandle.className = 'row-resize-handle';
+            rowHandle.style.cssText = 'position:absolute;left:0;bottom:0;width:100%;height:5px;cursor:row-resize;background:rgba(231,76,60,0.4);z-index:20;transition:background 0.15s;';
+            rowHandle.title = 'Drag to resize row';
+            row.style.position = 'relative';
+            rowHandle.addEventListener('mouseenter', () => rowHandle.style.background = 'rgba(231,76,60,0.9)');
+            rowHandle.addEventListener('mouseleave', () => rowHandle.style.background = 'rgba(231,76,60,0.4)');
+
+            rowHandle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const startY = e.clientY;
+                const startHeight = row.getBoundingClientRect().height;
+
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;cursor:row-resize;z-index:99999;';
+                document.body.appendChild(overlay);
+
+                function onMove(e) {
+                    const newH = Math.max(20, startHeight + (e.clientY - startY));
+                    row.style.height = newH + 'px';
+                }
+
+                async function onUp() {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    overlay.remove();
+
+                    const finalH = Math.round(row.getBoundingClientRect().height);
+                    if (!window.checklistMasterData?.[stage]) return;
+                    if (!window.checklistMasterData[stage].rowHeights) window.checklistMasterData[stage].rowHeights = {};
+                    if (!window.checklistMasterData[stage].rowHeights[tableIdx]) window.checklistMasterData[stage].rowHeights[tableIdx] = {};
+                    window.checklistMasterData[stage].rowHeights[tableIdx][String(rowIdx)] = finalH;
+                    _showResizeStatus('Saving...');
+                    await saveMasterLayout();
+                    _showResizeStatus('All Changes Saved', true);
+                    console.log(`✅ Row ${rowIdx} height → ${finalH}px (saved)`);
+                }
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+
+            // Insert into first cell of row
+            if (row.cells[0]) {
+                row.cells[0].style.position = 'relative';
+                row.cells[0].appendChild(rowHandle);
+            }
+        });
+    });
+}
+window.setupResizableColumns = setupResizableColumns;
+window.applyTableDimensions = applyTableDimensions;
+
+// Resize save status toast
+let _resizeStatusTimer = null;
+function _showResizeStatus(msg, success = false) {
+    let toast = document.getElementById('resize-save-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'resize-save-toast';
+        toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:8px 20px;border-radius:20px;font-size:12px;z-index:99999;box-shadow:0 4px 15px rgba(0,0,0,0.3);transition:opacity 0.3s;pointer-events:none;';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    toast.style.borderLeft = `4px solid ${success ? '#10b981' : '#3b82f6'}`;
+    if (_resizeStatusTimer) clearTimeout(_resizeStatusTimer);
+    if (success) {
+        _resizeStatusTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2500);
+    }
+}
+
+
+function updateMasterData(stage, type, index, text, sectionIndex) {
+    if (!window.checklistMasterData) return;
+
+    if (type === 'section') {
+        window.checklistMasterData[stage].sections[index].name = text.trim();
+    } else if (type === 'point') {
+        if (typeof sectionIndex !== 'undefined') {
+            window.checklistMasterData[stage].sections[sectionIndex].items[index].point = text.trim();
+        }
+    }
+}
+
+async function fetchChecklistMaster() {
+    try {
+        const result = await apiCall('/checklist-master/master', 'GET');
+        window.checklistMasterData = result;
+        console.log('✅ Checklist Master Data Loaded from Server');
+    } catch (err) {
+        console.log('⚠️ No server checklist master found or error, using defaults.', err);
+        // Fallback to static seed
+        if (typeof getStageData === 'function') {
+            window.checklistMasterData = getStageData();
+        } else if (typeof getMasterStageData === 'function') {
+            window.checklistMasterData = getMasterStageData();
+        }
+    }
+    renderCustomStages();
+}
+// NOTE: fetchChecklistMaster() is now called from auth.js after successful login
+// to prevent a 401 error on page load before the user has authenticated.
+
+/* ===============================
+   DYNAMIC STAGES & SECTIONS
+================================ */
+function renderCustomStages() {
+    const container = document.getElementById('customStagesContainer');
+    const addBtn = document.getElementById('addStageBtn');
+    if (!container) return;
+
+    // Standard stages to ignore
+    const standardStages = ['winding1', 'winding2', 'winding3', 'spa', 'coreCoil', 'tanking', 'coreBuilding', 'vpd', 'dismantling', 'dispatch', 'shunt_reactor', 'fos_annexure'];
+
+    container.innerHTML = '';
+
+    if (window.checklistMasterData) {
+        Object.keys(window.checklistMasterData).forEach(key => {
+            if (!standardStages.includes(key)) {
+                const stageData = window.checklistMasterData[key];
+                const btn = document.createElement('button');
+                btn.className = 'stage-btn custom-stage-btn';
+                btn.textContent = stageData.title || key;
+                btn.onclick = function () {
+                    showMainStage(key, this);
+                };
+                container.appendChild(btn);
+            }
+        });
+    }
+
+    // Only admin can add stages
+    if (addBtn) {
+        addBtn.style.display = (window.currentUserRole === 'admin') ? 'inline-block' : 'none';
+    }
+}
+
+async function addNewStage() {
+    if (window.currentUserRole !== 'admin') {
+        alert("Only administrators can add new stages.");
+        return;
+    }
+
+    const stageName = prompt("Enter new stage name (e.g., Pre-Dispatch Checks):");
+    if (!stageName || !stageName.trim()) return;
+
+    const key = stageName.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    if (window.checklistMasterData && window.checklistMasterData[key]) {
+        alert("A stage with a similar name already exists.");
+        return;
+    }
+
+    if (!window.checklistMasterData) window.checklistMasterData = {};
+
+    window.checklistMasterData[key] = {
+        title: stageName.trim() + " Checklist",
+        subtitle: "Custom Stage",
+        sections: [
+            {
+                name: "General Checklist Items",
+                items: [
+                    { point: "New checklist point", specifiedValue: "" }
+                ]
+            }
+        ]
+    };
+
+    renderCustomStages();
+    await saveMasterLayout(false);
+    alert(`Stage "${stageName}" added successfully.`);
+}
+
+function addNewSectionToStage() {
+    if (window.currentUserRole !== 'admin' || !window.isEditMode) return;
+
+    const stage = window.currentStage;
+    if (!stage || !window.checklistMasterData || !window.checklistMasterData[stage]) return;
+
+    const sectionName = prompt("Enter new section name:");
+    if (!sectionName || !sectionName.trim()) return;
+
+    window.checklistMasterData[stage].sections.push({
+        name: sectionName.trim(),
+        items: [
+            { point: "New checklist point", specifiedValue: "" }
+        ]
+    });
+
+    saveMasterLayout(false).then(() => {
+        loadStageContent(stage); // Re-render the stage with the new section
+    });
+}
+
+async function saveMasterLayout(showConfirm = false) {
+    if (!window.checklistMasterData) {
+        console.warn('No master data to save');
+        return;
+    }
+
+    if (showConfirm) {
+        if (!confirm('Are you sure you want to save this global checklist layout? This will affect all new checklists.')) return;
+    }
+
+    if (!window.currentUserId) {
+        alert('❌ You must be logged in as Admin to save the layout.');
+        return;
+    }
+
+    try {
+        const res = await apiCall('/checklist-master/master', 'POST', window.checklistMasterData);
+        if (showConfirm) alert('✅ Checklist master layout saved successfully!');
+        await fetchChecklistMaster();
+    } catch (err) {
+        console.error('Save master layout error:', err);
+        alert('❌ Failed to save layout: ' + err.message);
+    }
+}
+
+async function addMasterRow(stage, sectionIndex) {
+    if (!window.checklistMasterData) return;
+    const stageData = window.checklistMasterData[stage];
+    if (!stageData) return;
+
+    const section = stageData.sections[sectionIndex];
+    if (!section) return;
+
+    // Clone the last item in this section to maintain layout
+    const lastItem = section.items[section.items.length - 1];
+    let newItem;
+
+    if (lastItem) {
+        // deep clone
+        newItem = JSON.parse(JSON.stringify(lastItem));
+        // Reset values for the new row
+        newItem.point = "NEW: " + (newItem.point.includes('<br>') ? newItem.point.split('<br>')[0] : newItem.point);
+        newItem.specifiedValue = newItem.specifiedValue || "";
+    } else {
+        // Fallback for empty sections
+        newItem = {
+            point: "New Inspection Point",
+            specifiedValue: "Enter spec",
+            type: "text"
+        };
+    }
+
+    section.items.push(newItem);
+
+    // Auto-save and reload
+    await saveMasterLayout();
+    loadStageContent(stage);
+}
+
+function toggleEditMode(stage) {
+    window.isEditMode = !window.isEditMode;
+    console.log(`🛠️ Edit Mode: ${window.isEditMode}`);
+    if (stage) loadStageContent(stage);
+}
+
+async function deleteMasterRow(stage, sectionIndex, itemIndex) {
+    if (!window.checklistMasterData) return;
+    if (!confirm('Are you sure you want to delete this row from the master checklist? This will affect all future checklists.')) return;
+
+    const stageData = window.checklistMasterData[stage];
+    if (!stageData) return;
+
+    stageData.sections[sectionIndex].items.splice(itemIndex, 1);
+
+    // Auto-save and reload
+    await saveMasterLayout();
+    loadStageContent(stage);
+}
+
+async function toggleMasterInputType(stage, sectionIndex, itemIndex, fieldType) {
+    if (!window.checklistMasterData) return;
+    const stageData = window.checklistMasterData[stage];
+    if (!stageData) return;
+
+    const item = stageData.sections[sectionIndex].items[itemIndex];
+    if (!item) return;
+
+    const prop = fieldType === 'specified' ? 'specifiedInputType' : 'actualInputType';
+    item[prop] = (item[prop] === 'dropdown' ? 'text' : 'dropdown');
+
+    await saveMasterLayout();
+    loadStageContent(stage);
+}
+
+/* ===============================
+   SHUNT REACTOR: IMPRESSION CHECK
+================================ */
+function toggleImpression(rowId, phase) {
+    if (window.currentUserRole === 'customer') return;
+    const diag = document.getElementById(`${phase.toLowerCase()}_diag_${rowId}`);
+    if (!diag) return;
+
+    const colors = { 'U': '#3498db', 'V': '#e74c3c', 'W': '#f1c40f' };
+    const currentColor = diag.style.background;
+
+    if (currentColor && currentColor !== 'transparent' && currentColor !== '') {
+        diag.style.background = 'transparent';
+        diag.style.color = colors[phase];
+    } else {
+        diag.style.background = colors[phase];
+        diag.style.color = '#fff';
+    }
+}
+
+
 /* ===============================
    PDF EXPORT
 ================================ */
@@ -3624,11 +6639,18 @@ window.showMainStage = showMainStage;
 window.switchStage = switchStage;
 window.loadStageContent = loadStageContent;
 window.exportStageChecklistPDF = exportStageChecklistPDF;
-// Add to window exports (at the end of ui.js):
 window.initializeAuditAccess = initializeAuditAccess;
 window.loadAuditLogs = loadAuditLogs;
 window.renderAuditTable = renderAuditTable;
 window.clearAuditFilters = clearAuditFilters;
+// T2.0 admin functions
+window.toggleEditMode = toggleEditMode;
+window.updateMasterData = updateMasterData;
+window.toggleImpression = toggleImpression;
+window.deleteMasterRow = deleteMasterRow;
+window.addMasterRow = addMasterRow;
+window.saveMasterLayout = saveMasterLayout;
+window.getStageData = getStageData;
 
 /* ===============================
    QUESTIONS MANAGEMENT – MCQ System
@@ -3780,7 +6802,7 @@ async function renderExamLinks() {
         const r = await fetch('/api/server-ip');
         const d = await r.json();
         lanBase = d.base; // e.g. http://10.1.19.69:3000
-    } catch {} /* fall back to location.origin */
+    } catch { } /* fall back to location.origin */
 
     // Fetch public tunnel URL (from start-public.ps1 / cloudflared)
     let publicBase = null;
@@ -3788,7 +6810,7 @@ async function renderExamLinks() {
         const pr = await fetch('/api/public-url');
         const pd = await pr.json();
         if (pd.active && pd.url) publicBase = pd.url;
-    } catch {} /* no tunnel active */
+    } catch { } /* no tunnel active */
 
     const localhostBase = window.location.origin;
     const phoneBase = lanBase || localhostBase; // prefer LAN IP for phone links
@@ -3811,20 +6833,20 @@ async function renderExamLinks() {
         <div style="background:#e8f4fd; border:1px solid #b3d9f7; border-radius:10px; padding:14px 18px; margin-bottom:18px; font-size:13px;">
             📱 <strong>Same-WiFi links (always available):</strong> These work when the phone is on the <strong>same WiFi</strong> as this computer.
             ${lanBase
-        ? `<br><br>✅ LAN link: <code style="background:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${lanBase}</code>`
-        : '<br><br>⚠️ Could not detect LAN IP — showing localhost links (only work on this computer).'
-}
+            ? `<br><br>✅ LAN link: <code style="background:#fff; padding:2px 8px; border-radius:4px; font-size:12px;">${lanBase}</code>`
+            : '<br><br>⚠️ Could not detect LAN IP — showing localhost links (only work on this computer).'
+        }
         </div>
     ` + SECTIONS.map(s => {
-        const qCount = _allQuestions.filter(q => q.section === s.key).length;
-        const defaultCount = Math.min(3, qCount); // start with 3 or max available
+            const qCount = _allQuestions.filter(q => q.section === s.key).length;
+            const defaultCount = Math.min(3, qCount); // start with 3 or max available
 
-        // All URLs include ?count= from the start
-        const phoneUrl = `${phoneBase}/exam/${s.key}?count=${defaultCount}`;
-        const publicUrl = publicBase ? `${publicBase}/exam/${s.key}?count=${defaultCount}` : null;
-        const qrUrl = QR_API(publicUrl || phoneUrl);
+            // All URLs include ?count= from the start
+            const phoneUrl = `${phoneBase}/exam/${s.key}?count=${defaultCount}`;
+            const publicUrl = publicBase ? `${publicBase}/exam/${s.key}?count=${defaultCount}` : null;
+            const qrUrl = QR_API(publicUrl || phoneUrl);
 
-        return `
+            return `
         <div style="border:2px solid ${s.color}33; border-radius:12px; padding:20px; background:${s.color}08;" id="section-card-${s.key}">
             <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:16px; flex-wrap:wrap;">
                 <div style="display:flex; align-items:center; gap:10px;">
@@ -3893,7 +6915,7 @@ async function renderExamLinks() {
                 </div>
             </div>
         </div>`;
-    }).join('');
+        }).join('');
 }
 
 // ── Live-update link + QR when count changes ──────────────────────────────────
@@ -4037,6 +7059,218 @@ function closeAnswerKey() {
 }
 
 
+/* ===============================
+   SHUNT REACTOR: ROW WORKFLOW LOGIC
+   Sequential: Operator → Shop Supervisor → Quality Inspector
+================================ */
+
+/**
+ * Apply workflow state to a shunt reactor row after data load
+ * @param {string} rowId - The row identifier
+ * @param {string} workflowState - 'pending' | 'operator_signed' | 'shop_signed' | 'quality_signed'
+ */
+function applyShuntReactorWorkflowState(rowId, workflowState) {
+    const row = document.getElementById(rowId);
+    if (!row) return;
+
+    const actualInput = row.querySelector(`[id^="actualValue_${rowId}"]`);
+    const opInput = row.querySelector(`[id^="op_${rowId}"], [id^="technician_${rowId}"]`);
+    const ssInput = row.querySelector(`[id^="ss_${rowId}"], [id^="shopSup_${rowId}"]`);
+    const qaInput = row.querySelector(`[id^="qa_${rowId}"], [id^="qaSup_${rowId}"]`);
+    const saveBtn = document.getElementById(`save_${rowId}`);
+
+    const isAdmin = window.currentUserRole === 'admin';
+    const isShopSup = window.currentUserRole === 'production' || window.currentUserRole === 'shop_supervisor';
+    const isQuality = window.currentUserRole === 'quality';
+
+    switch (workflowState) {
+        case 'operator_signed':
+            // Operator has saved — lock actual value & operator sign for non-admin
+            if (!isAdmin) {
+                if (actualInput) { actualInput.readOnly = true; actualInput.style.background = '#f5f5f5'; }
+                if (opInput) { opInput.readOnly = true; opInput.style.background = '#f5f5f5'; }
+            }
+            // Enable shop supervisor sign
+            if (ssInput) { ssInput.disabled = false; ssInput.style.background = '#fff'; }
+            // Keep QA disabled
+            if (qaInput) { qaInput.disabled = true; qaInput.style.background = '#eee'; }
+            // Row background
+            row.style.background = '#fffde7';
+            // Update button
+            if (saveBtn && isShopSup) {
+                saveBtn.textContent = '✅ Verify';
+                saveBtn.style.background = '#2196f3';
+            }
+            break;
+
+        case 'shop_signed':
+            // Shop Supervisor verified — lock for operator and shop sup
+            if (!isAdmin) {
+                if (actualInput) { actualInput.readOnly = true; actualInput.style.background = '#f5f5f5'; }
+                if (opInput) { opInput.readOnly = true; opInput.style.background = '#f5f5f5'; }
+                if (ssInput) { ssInput.readOnly = true; ssInput.style.background = '#f5f5f5'; }
+            }
+            // Enable QA sign
+            if (qaInput) { qaInput.disabled = false; qaInput.style.background = '#fff'; }
+            // Row background
+            row.style.background = '#e8f5e9';
+            // Update button for QA
+            if (saveBtn && isQuality) {
+                saveBtn.textContent = '✅ Verify';
+                saveBtn.style.background = '#4caf50';
+            } else if (saveBtn && !isAdmin) {
+                saveBtn.style.display = 'none';
+            }
+            break;
+
+        case 'quality_signed':
+            // Fully verified — lock everything
+            if (!isAdmin) {
+                if (actualInput) { actualInput.readOnly = true; actualInput.style.background = '#f0f0f0'; }
+                if (opInput) { opInput.readOnly = true; opInput.style.background = '#f0f0f0'; }
+                if (ssInput) { ssInput.readOnly = true; ssInput.style.background = '#f0f0f0'; }
+                if (qaInput) { qaInput.readOnly = true; qaInput.style.background = '#f0f0f0'; }
+                if (saveBtn) saveBtn.style.display = 'none';
+            }
+            // Row background — fully verified
+            row.style.background = '#e3f2fd';
+            // Show lock indicator
+            const lockIndicator = document.createElement('span');
+            lockIndicator.innerHTML = '🔒';
+            lockIndicator.style.cssText = 'font-size:14px; display:block; text-align:center; margin-top:4px;';
+            if (saveBtn && saveBtn.parentNode && !saveBtn.parentNode.querySelector('.lock-indicator')) {
+                lockIndicator.className = 'lock-indicator';
+                saveBtn.parentNode.appendChild(lockIndicator);
+            }
+            break;
+
+        default: // 'pending'
+            // Initial state — QA and Shop Sup sign fields disabled
+            if (ssInput && !isShopSup && !isAdmin) { ssInput.disabled = true; ssInput.style.background = '#eee'; }
+            if (qaInput && !isQuality && !isAdmin) { qaInput.disabled = true; qaInput.style.background = '#eee'; }
+            break;
+    }
+}
+
+/**
+ * Verify a shunt reactor row (Shop Supervisor or Quality Inspector)
+ * @param {string} stage - Stage name
+ * @param {number} itemNumber - Item number
+ * @param {string} rowId - Row identifier
+ * @param {string} role - 'shop_supervisor' | 'quality_inspector'
+ */
+async function verifyShuntReactorRow(stage, itemNumber, rowId, role) {
+    if (!window.currentWO) {
+        alert('⚠️ Please select a transformer W.O. number first!');
+        return;
+    }
+
+    const todayStr = new Date().toLocaleDateString('en-GB');
+    const userName = window.currentUserName || '';
+    const signValue = `${userName} | ${todayStr}`;
+
+    const verifyData = {
+        wo: String(window.currentWO),
+        stage: String(stage),
+        itemNumber: Number(itemNumber),
+        rowId: String(rowId),
+        verifyRole: role,
+        verifySign: signValue,
+        userId: String(window.currentUserId || ''),
+        userName: String(userName),
+        userRole: String(window.currentUserRole || ''),
+        timestamp: new Date().toLocaleString('en-IN')
+    };
+
+    // Determine new workflow state
+    if (role === 'shop_supervisor') {
+        verifyData.workflowState = 'shop_signed';
+        verifyData.shopSupervisor = signValue;
+    } else if (role === 'quality_inspector') {
+        verifyData.workflowState = 'quality_signed';
+        verifyData.qaSupervisor = signValue;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/checklist/save`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(verifyData)
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+            // Apply the workflow state visually
+            applyShuntReactorWorkflowState(rowId, verifyData.workflowState);
+            alert(`✅ Row ${itemNumber} verified by ${role === 'shop_supervisor' ? 'Shop Supervisor' : 'Quality Inspector'}`);
+        } else {
+            throw new Error(result.error || 'Verification failed');
+        }
+    } catch (error) {
+        console.error('❌ Shunt reactor verify error:', error);
+        alert(`❌ Error: ${error.message}`);
+    }
+}
+
+/**
+ * Admin: Unlock a fully-locked shunt reactor row for re-editing
+ * @param {string} rowId - Row identifier
+ */
+function adminUnlockShuntReactorRow(rowId) {
+    if (window.currentUserRole !== 'admin') {
+        alert('⚠️ Only admins can unlock rows');
+        return;
+    }
+
+    const reason = prompt('🔓 Unlock this row for re-editing?\n\nEnter reason (min 10 characters):');
+    if (!reason || reason.length < 10) {
+        alert('⚠️ Please enter a valid reason (minimum 10 characters)');
+        return;
+    }
+
+    const row = document.getElementById(rowId);
+    if (!row) return;
+
+    // Re-enable all inputs
+    row.querySelectorAll('input, select, textarea').forEach(el => {
+        el.readOnly = false;
+        el.disabled = false;
+        el.style.background = '#fff';
+    });
+
+    // Reset row background
+    row.style.background = '#fff3e0'; // Orange tint to indicate unlocked/edited
+
+    // Show save button again
+    const saveBtn = document.getElementById(`save_${rowId}`);
+    if (saveBtn) {
+        saveBtn.style.display = 'inline-block';
+        saveBtn.textContent = '🔄 Update';
+        saveBtn.style.background = 'var(--green)';
+    }
+
+    // Remove lock indicator
+    const lockIndicator = row.querySelector('.lock-indicator');
+    if (lockIndicator) lockIndicator.remove();
+
+    // Add edit history marker
+    const editMarker = document.createElement('div');
+    editMarker.style.cssText = 'font-size:9px; color:#e65100; text-align:center; margin-top:4px;';
+    editMarker.textContent = `✏️ Unlocked by Admin`;
+    editMarker.title = `Reason: ${reason}\nTime: ${new Date().toLocaleString('en-IN')}`;
+    if (saveBtn && saveBtn.parentNode) {
+        saveBtn.parentNode.appendChild(editMarker);
+    }
+
+    console.log(`🔓 Row ${rowId} unlocked by admin. Reason: ${reason}`);
+}
+
+// Expose workflow functions globally
+window.applyShuntReactorWorkflowState = applyShuntReactorWorkflowState;
+window.verifyShuntReactorRow = verifyShuntReactorRow;
+window.adminUnlockShuntReactorRow = adminUnlockShuntReactorRow;
+
 window.addQuestion = addQuestion;
 window.deleteQuestion = deleteQuestion;
 
@@ -4047,3 +7281,50 @@ window.viewAnswerKey = viewAnswerKey;
 window.closeAnswerKey = closeAnswerKey;
 window.updateExamCount = updateExamCount;
 
+// ── Disc-height description sub-row management (admin only) ──────────────────
+window.srAddSubRow = function (rowId) {
+    const table = document.getElementById('desc_table_' + rowId);
+    const partCell = document.getElementById('disc_part_cell_' + rowId);
+    if (!table || !partCell) return;
+
+    const inputs = table.querySelectorAll('.disc-sublabel-inp');
+    const idx = inputs.length;
+    const curSpan = parseInt(partCell.getAttribute('rowspan') || '1');
+    partCell.setAttribute('rowspan', curSpan + 1);
+
+    const tr = document.createElement('tr');
+    tr.className = 'disc-sub-row';
+    tr.innerHTML =
+        '<td class="disc-sublabel-cell" style="position:relative; padding:3px 5px; height:26px; border-bottom:1px solid #ddd;">' +
+        '<input class="disc-sublabel-inp" type="text" id="sublabel_' + rowId + '_' + idx + '" ' +
+        'placeholder="e.g. Compartment ' + (idx + 1) + '" ' +
+        'style="width:calc(100% - 22px); border:none; border-bottom:1px dashed #bbb; padding:2px 4px; font-size:11px; background:transparent; outline:none;">' +
+        '<button onclick="srRemoveSubRow(this,\'' + rowId + '\')" title="Remove" ' +
+        'style="position:absolute;right:2px;top:50%;transform:translateY(-50%);border:none;background:none;color:#c00;cursor:pointer;font-size:13px;line-height:1;padding:0 2px;">×</button>' +
+        '</td>';
+
+    // Insert the new row before the last row that holds the "+Row" button (if any)
+    const lastSubRows = table.querySelectorAll('.disc-sub-row');
+    if (lastSubRows.length) {
+        lastSubRows[lastSubRows.length - 1].insertAdjacentElement('afterend', tr);
+    } else {
+        table.querySelector('.disc-part-first-row').insertAdjacentElement('afterend', tr);
+    }
+};
+
+window.srRemoveSubRow = function (btn, rowId) {
+    const table = document.getElementById('desc_table_' + rowId);
+    const partCell = document.getElementById('disc_part_cell_' + rowId);
+    if (!table || !partCell) return;
+
+    const allCells = table.querySelectorAll('.disc-sublabel-cell');
+    if (allCells.length <= 1) {
+        if (window.showToast) showToast('At least one sub-row is required.', 'warning');
+        return;
+    }
+
+    const tr = btn.closest('tr');
+    const curSpan = parseInt(partCell.getAttribute('rowspan') || '1');
+    partCell.setAttribute('rowspan', Math.max(1, curSpan - 1));
+    tr.remove();
+};

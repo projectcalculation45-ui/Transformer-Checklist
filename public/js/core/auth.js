@@ -267,6 +267,10 @@ function initializeAuth() {
                 // Apply role-based restrictions
                 applyRoleRestrictions();
 
+                // Fetch checklist master data now that the user is authenticated
+                // (prevents 401 that occurs when called on script load before login)
+                if (typeof fetchChecklistMaster === 'function') fetchChecklistMaster();
+
                 // Start session inactivity timer
                 if (typeof startSessionTimer === 'function') startSessionTimer();
 

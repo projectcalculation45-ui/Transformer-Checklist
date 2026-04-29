@@ -46,7 +46,8 @@ async function loadStageStatus(wo) {
             tanking: { status: 'pending', completionPercentage: 0, locked: true, completedAt: null, completedBy: null },
             vpd: { status: 'pending', completionPercentage: 0, locked: true, completedAt: null, completedBy: null },
             tankFilling: { status: 'pending', completionPercentage: 0, locked: true, completedAt: null, completedBy: null },
-            coreBuilding: { status: 'pending', completionPercentage: 0, locked: true, completedAt: null, completedBy: null }
+            coreBuilding: { status: 'pending', completionPercentage: 0, locked: true, completedAt: null, completedBy: null },
+            shunt_reactor: { status: 'in-progress', completionPercentage: 0, locked: false, completedAt: null, completedBy: null }
         };
         updateStageUI();
         return null;
@@ -65,15 +66,16 @@ function updateStageUI() {
     // Show the container
     stageContainer.style.display = 'block';
 
-    const stages = ['winding', 'spa', 'vpd', 'coreCoil', 'tanking', 'tankFilling', 'coreBuilding'];
+    const stages = ['winding', 'spa', 'vpd', 'coreCoil', 'tanking', 'tankFilling', 'coreBuilding', 'shunt_reactor'];
     const stageLabels = {
         winding: 'Winding',
         spa: 'SPA',
         vpd: 'VPD',
         coreCoil: 'Core Coil',
-        tanking: 'Tanking',
+        tanking: 'Repacking & Tanking',
         tankFilling: 'Tank Filling',
-        coreBuilding: 'Core Building'
+        coreBuilding: 'Core Building',
+        shunt_reactor: 'Shunt Reactor'
     };
     let html = '<div class="stage-badges">';
 
@@ -117,9 +119,9 @@ function updateStageUI() {
 function hideAllStagePanels() {
     ['stageControlButtons', 'stageLockMessage', 'stageApprovedMessage',
         'stageRejectedMessage', 'stageAwaitingQAMessage'].forEach(id => {
-        const div = document.getElementById(id);
-        if (div) div.style.display = 'none';
-    });
+            const div = document.getElementById(id);
+            if (div) div.style.display = 'none';
+        });
 }
 
 function renderApprovedState(stageInfo, isAdmin) {
@@ -280,6 +282,17 @@ async function validateStageAccess(wo, stage) {
         // Check if stage is locked and completed
         if (stageInfo.locked && stageInfo.status === 'completed') {
             console.warn(`⛔ Access denied - stage is locked: ${mainStage}`);
+
+            if (window.currentUserRole === 'admin') {
+                console.warn(`🔓 Admin override: granting access to locked stage.`);
+                return true;
+            }
+
+            // Allow QA to view (but API/UI will block their edits)
+            if (window.currentUserRole === 'quality') {
+                return true;
+            }
+
             alert('⛔ Stage is locked and cannot be edited.\nContact admin to unlock.');
             return false;
         }
@@ -558,9 +571,11 @@ function onWOChange() {
 
     const selectedOption = select.options[select.selectedIndex];
     currentWO = select.value;
+    window.currentWO = currentWO;
 
     if (currentWO) {
         currentTransformerData = JSON.parse(selectedOption.getAttribute('data-transformer'));
+        window.currentTransformerData = currentTransformerData;
 
         // Show transformer details
         document.getElementById('woDetails').style.display = 'block';
@@ -600,85 +615,96 @@ function onWOChange() {
 }
 
 /* ===============================
-   SAVE CHECKLIST ITEM (PDF Structure)
+   DATA EXTRACTION ADAPTER
 ================================ */
-async function saveNewChecklistItem(stage, itemNumber, rowId) {
-    if (!currentWO) {
-        alert('⚠️ Please select a transformer W.O. number first!');
-        return;
-    }
-
-    // 🔹 NEW: Check stage access before saving
-    const canAccess = await validateStageAccess(currentWO, stage);
-    if (!canAccess) {
-        return;
-    }
-
-    // Get all values
-    // Get actual value - handle different input types
+function extractChecklistRowData(rowId, defaultRowType) {
     let actualValue = '';
-    const mainInput = document.getElementById(`actualValue_${rowId}`);
+    const allValues = {};
+    const rowEl = document.getElementById(rowId);
+    let rowType = defaultRowType;
 
-    if (mainInput) {
-        // Single input field
-        actualValue = mainInput.value || '';
-    } else {
-        // Multiple phase/limb inputs - collect all values
-        const allValues = {};
+    if (rowEl) {
+        // Collect ALL inputs, selects, and textareas within this row
+        const allInputs = rowEl.querySelectorAll('input, select, textarea');
+        
+        allInputs.forEach(input => {
+            // Skip hidden elements, buttons, and readonly structural fields
+            if (input.type === 'hidden' || input.type === 'button' || input.type === 'submit') return;
 
-        // Check for phase-based inputs (U Phase, V Phase, W Phase)
-        const phases = ['U_Phase', 'V_Phase', 'W_Phase'];
-        phases.forEach(phase => {
-            const input = document.getElementById(`actualValue_${rowId}_${phase}`);
-            if (input) {
-                allValues[phase.replace('_', ' ')] = input.value || '';
+            const id = input.id;
+            if (!id) return;
+
+            // Skip standard sign-off/administrative/structural fields
+            if (id === `technician_${rowId}` || 
+                id === `shopSup_${rowId}` || 
+                id === `qaSup_${rowId}` || 
+                id === `remark_${rowId}` || 
+                id === `descInput_${rowId}` ||
+                id.startsWith('techTime_') ||
+                id.startsWith('shopSupTime_') ||
+                id.startsWith('qaSupTime_') ||
+                id.startsWith('specifiedValue_') ||
+                id.startsWith('final_qa_') ||
+                id.startsWith('cn_operator_') ||
+                id.startsWith('cn_shop_') ||
+                id.startsWith('cn_qa_') ||
+                id.startsWith('jack_total_') ||
+                id.startsWith('jack_capacity_') ||
+                id.startsWith('jack_ton_') ||
+                id.startsWith('jack_psi_')) {
+                return;
             }
-        });
 
-        // Check for limb-based inputs
-        const limbs = ['Limb_1_Near_U_Phase', 'Limb_2_Near_W_Phase'];
-        limbs.forEach(limb => {
-            const input = document.getElementById(`actualValue_${rowId}_${limb}`);
-            if (input) {
-                allValues[limb.replace(/_/g, ' ')] = input.value || '';
-            }
-        });
+            // If it's a checkbox/radio, collect boolean state
+            if (input.type === 'checkbox' || input.type === 'radio') {
+                allValues[id] = input.checked ? 'Yes' : 'No';
+            } else {
+                // Determine a clean key for the JSON object
+                let key = id;
+                if (id === `actualValue_${rowId}`) {
+                    key = 'Value'; // Main input fallback key
+                } else if (id.startsWith(`actualValue_${rowId}_`)) {
+                    // Extract custom suffix (e.g., actualValue_rowId_Top -> Top)
+                    key = id.replace(`actualValue_${rowId}_`, '');
+                    key = key.replace(/_/g, ' '); // Convert 'U_Phase' to 'U Phase'
+                }
 
-        // Check for TMB measurements
-        phases.forEach(phase => {
-            ['T', 'M', 'B'].forEach(pos => {
-                const input = document.getElementById(`actualValue_${rowId}_${phase}_${pos}`);
-                if (input) {
-                    const key = `${phase.replace('_', ' ')} ${pos}`;
+                // Save the value
+                if (key) {
                     allValues[key] = input.value || '';
                 }
-            });
+            }
         });
-
-        // Convert to JSON string if we have multiple values
-        if (Object.keys(allValues).length > 0) {
-            actualValue = JSON.stringify(allValues);
-        }
     }
 
-    // Also handle technician as text input instead of dropdown
-    let technicianInput = document.getElementById(`technician_${rowId}`);
-    let technician = technicianInput?.value || '';
+    // Determine final actualValue based on collected fields
+    const keys = Object.keys(allValues);
+    if (keys.length === 1 && keys[0] === 'Value') {
+        // Only the main standard input was found
+        actualValue = allValues['Value'];
+    } else if (keys.length > 0) {
+        // Remove dummy main input if it exists but other inputs were collected
+        if ('Value' in allValues) {
+            delete allValues['Value'];
+        }
+        
+        // Force row type to 'multi-field' since we detected multiple or suffixed inputs
+        if (!rowType) {
+            rowType = 'multi-field';
+        }
 
-    let shopSupervisorInput = document.getElementById(`shopSup_${rowId}`);
-    let shopSupervisor = shopSupervisorInput?.value || '';
+        actualValue = JSON.stringify(allValues);
+    }
 
-    let qaSupervisorInput = document.getElementById(`qaSup_${rowId}`);
-    let qaSupervisor = qaSupervisorInput?.value || '';
+    // Extract Technician, Supervisors, and Remarks
+    let technician = document.getElementById(`technician_${rowId}`)?.value || '';
+    let shopSupervisor = document.getElementById(`shopSup_${rowId}`)?.value || '';
+    let qaSupervisor = document.getElementById(`qaSup_${rowId}`)?.value || '';
+    let remark = document.getElementById(`remark_${rowId}`)?.value || '';
 
-    let remarkInput = document.getElementById(`remark_${rowId}`);
-    let remark = remarkInput?.value || '';
-
-    // If these main inputs don't have values, check for split inputs (per phase)
-    // defined in tmb-measurements or others
+    // Handle Split Sign-offs (tmb-measurements, etc.)
     const phasesForSplit = ['U_Phase', 'V_Phase', 'W_Phase'];
 
-    // Technician Split
     if (!technician) {
         let techSplit = {};
         phasesForSplit.forEach(phase => {
@@ -688,7 +714,6 @@ async function saveNewChecklistItem(stage, itemNumber, rowId) {
         if (Object.keys(techSplit).length > 0) technician = JSON.stringify(techSplit);
     }
 
-    // Shop Sup Split
     if (!shopSupervisor) {
         let shopSplit = {};
         phasesForSplit.forEach(phase => {
@@ -698,7 +723,6 @@ async function saveNewChecklistItem(stage, itemNumber, rowId) {
         if (Object.keys(shopSplit).length > 0) shopSupervisor = JSON.stringify(shopSplit);
     }
 
-    // QA Sup Split
     if (!qaSupervisor) {
         let qaSplit = {};
         phasesForSplit.forEach(phase => {
@@ -718,14 +742,125 @@ async function saveNewChecklistItem(stage, itemNumber, rowId) {
         if (Object.keys(remSplit).length > 0) remark = JSON.stringify(remSplit);
     }
 
-    // Validation
-    if (!actualValue.trim()) {
-        alert('❌ Please enter Actual Value');
+    return {
+        actualValue,
+        rowType,
+        technician,
+        shopSupervisor,
+        qaSupervisor,
+        remark
+    };
+}
+
+/* ===============================
+   SAVE CHECKLIST ITEM (PDF Structure)
+================================ */
+async function saveNewChecklistItem(stage, itemNumber, rowId) {
+    if (!currentWO) {
+        alert('⚠️ Please select a transformer W.O. number first!');
         return;
     }
 
+    // 🔹 NEW: Check stage access before saving
+    const canAccess = await validateStageAccess(currentWO, stage);
+    if (!canAccess) {
+        return;
+    }
+
+    // Read the row type from the DOM element's data-row-type attribute.
+    // Falls back to rowId prefix heuristic for rows rendered by ui.js.
+    const rowEl2 = document.getElementById(rowId);
+    let initialRowType = rowEl2?.dataset?.rowType || '';
+
+    // Extract all relevant data fields using the adapter
+    const extractedData = extractChecklistRowData(rowId, initialRowType);
+    let { actualValue, rowType, technician, shopSupervisor, qaSupervisor, remark } = extractedData;
+
+    // ── Row-type-aware validation ────────────────────────────────────────────
+    // Types that NEVER expose a single `actualValue_${rowId}` input — either they
+    // use no actual-value field (structural rows) or they already gathered their
+    // values above into the JSON `actualValue` string (multi-field rows).
+    // All of these skip the "empty actualValue" guard below.
+    const NO_VALUE_TYPES = new Set([
+        // Structural / display-only rows
+        'section-header', 'stop-stage', 'jack-diagram',
+        // Complex sub-table rows (their data is collected into allValues above)
+        'cooling-nomex-table', 'lead-assembly-table', 'observation-table',
+        'shield-preparation-table', 'drum-details-table',
+        'brazed-joints-table', 'dof-washer-table',
+        'sr-strip-wrap-full',
+        // Multi-field rows — values already captured into JSON string above
+        'tcb-blocks', 'wlt-blocks', 'sr-disc-height',
+        'tmb-measurements', 'ok-notok', 'ok-notok-limbs',
+        'text-phases', 'text-per-phase', 'phase-ok-notok', 'ok-notok-stacked',
+    ]);
+
+    // Heuristic fallback: infer type from the DOM when attribute is absent
+    if (!rowType) {
+        if (!document.getElementById(`actualValue_${rowId}`)) {
+            // No main input AND no collected value → complex structural row
+            rowType = 'section-header';
+        } else {
+            rowType = 'standard';
+        }
+    }
+
+    // Ensure multi-field types are properly registered
+    if (rowType === 'multi-field') {
+        NO_VALUE_TYPES.add('multi-field');
+    }
+
+    // Helper: show per-row error instead of generic alert
+    function showRowError(msg) {
+        const rowElem = document.getElementById(rowId);
+        if (rowElem) {
+            rowElem.classList.add('row-validation-error');
+            setTimeout(() => rowElem.classList.remove('row-validation-error'), 2500);
+        }
+        if (typeof showToast === 'function') {
+            showToast(msg, 'error');
+        } else {
+            alert(msg);
+        }
+    }
+
+    // For multi-field rows that DID populate allValues, validate that at least
+    // one sub-field has a non-empty value (prevents saving blank multi-field rows)
+    if (NO_VALUE_TYPES.has(rowType) && actualValue && actualValue.startsWith('{')) {
+        try {
+            const parsed = JSON.parse(actualValue);
+            const hasAtLeastOne = Object.values(parsed).some(
+                v => v !== null && v !== undefined && String(v).trim() !== ''
+            );
+            if (!hasAtLeastOne) {
+                // All sub-fields empty — require at least one value
+                showRowError('❌ Please fill at least one field in Actual Value');
+                return;
+            }
+        } catch (_) { /* malformed JSON – let it pass to the server */ }
+    }
+
+    // actualValue is required only for standard single-input rows
+    const requiresValue = !NO_VALUE_TYPES.has(rowType);
+    if (requiresValue) {
+        // Strict check: value must not be null, undefined, or empty string
+        const trimmed = (actualValue !== null && actualValue !== undefined) ? String(actualValue).trim() : '';
+        if (trimmed === '') {
+            showRowError('❌ Please enter Actual Value for this row');
+            return;
+        }
+    }
+
+    // Re-read technician in case it is a hidden auto-filled field
     if (!technician) {
-        alert('❌ Please select Technician');
+        const hiddenTech = document.getElementById(`technician_${rowId}`);
+        technician = hiddenTech?.value || '';
+    }
+
+    // Only block save if technician field actually exists in this row
+    const techField = document.getElementById(`technician_${rowId}`);
+    if (techField && !technician) {
+        showRowError('❌ Please enter your name in the Technician field');
         return;
     }
 
@@ -745,6 +880,7 @@ async function saveNewChecklistItem(stage, itemNumber, rowId) {
         shopSupervisor: String(shopSupervisor || ''),
         qaSupervisor: String(qaSupervisor || ''),
         remark: String(remark || ''),
+        rowType: String(rowType || 'standard'),
         timestamp: String(timestamp || ''),
         userId: String(window.currentUserId || ''),
         userName: String(window.currentUserName || ''),
@@ -905,65 +1041,90 @@ async function loadChecklistData(stage) {
         checklistItems.forEach(item => {
             const rowId = item.rowId;
 
-            // Set values
-            // Handle loading actual values - check if it's JSON (multiple values)
+            // ── Load Actual Value ─────────────────────────────────────────────
             const actualValueInput = document.getElementById(`actualValue_${rowId}`);
             if (actualValueInput) {
-                actualValueInput.value = item.actualValue || '';
-                if (item.locked && window.currentUserRole !== 'admin') {
+                // Single main input — value may be plain text OR a JSON string
+                // If it's JSON, try to pretty-display it; otherwise, just set it
+                let displayVal = item.actualValue || '';
+                try {
+                    const parsed = JSON.parse(displayVal);
+                    if (typeof parsed === 'object' && parsed !== null) {
+                        // Compact human-readable for single textarea/input
+                        displayVal = Object.entries(parsed).map(([k, v]) => `${k}: ${v}`).join(' | ');
+                    }
+                } catch { /* plain string – use as-is */ }
+                actualValueInput.value = displayVal;
+                // Disable only when the row is fully locked (admin always editable)
+                if (window.currentUserRole !== 'admin' && item.locked) {
                     actualValueInput.disabled = true;
                 }
             } else {
-                // Try to parse as JSON for multi-value fields
+                // Multi-value field — restore each sub-field from saved JSON
                 try {
                     const values = JSON.parse(item.actualValue || '{}');
                     Object.entries(values).forEach(([key, value]) => {
-                        // Convert key to ID format
-                        const cleanKey = key.replace(/\s+/g, '_');
-                        let inputId = `actualValue_${rowId}_${cleanKey}`;
+                        // Try exact element ID first (e.g. dynamic block IDs)
+                        let input = document.getElementById(key);
 
-                        const input = document.getElementById(inputId);
+                        if (!input) {
+                            // Fallback: phase/position-based ID
+                            const cleanKey = key.replace(/\s+/g, '_');
+                            input = document.getElementById(`actualValue_${rowId}_${cleanKey}`);
+                        }
+
                         if (input) {
                             input.value = value;
-                            if (item.locked && window.currentUserRole !== 'admin') {
+                            // Disable if locked (admin always editable)
+                            if (window.currentUserRole !== 'admin' && item.locked) {
                                 input.disabled = true;
                             }
                         }
                     });
-                } catch {
-                    // Not JSON, try single value
-                    const singleInput = document.getElementById(`actualValue_${rowId}`);
-                    if (singleInput) {
-                        singleInput.value = item.actualValue || '';
-                    }
-                }
+                } catch { /* not JSON or empty – nothing to restore */ }
             }
 
+            // ── Load Technician ───────────────────────────────────────────────
             const techInput = document.getElementById(`technician_${rowId}`);
             if (techInput) {
                 techInput.value = item.technician || '';
-                if (item.locked && window.currentUserRole !== 'admin') {
-                    techInput.disabled = true;
+                if (window.currentUserRole !== 'admin') {
+                    // Disable if already signed OR the current user is not production
+                    if (item.technician || window.currentUserRole !== 'production') {
+                        techInput.disabled = true;
+                    }
                 }
             } else {
-                // Try parsing as split technician
+                // Split per-phase technician inputs
                 try {
                     const techs = JSON.parse(item.technician || '{}');
                     Object.entries(techs).forEach(([key, val]) => {
                         const el = document.getElementById(`technician_${rowId}_${key.replace(/\s+/g, '_')}`);
                         if (el) {
                             el.value = val;
-                            if (item.locked && window.currentUserRole !== 'admin') el.disabled = true;
+                            if (window.currentUserRole !== 'admin' &&
+                                (item.technician || window.currentUserRole !== 'production')) {
+                                el.disabled = true;
+                            }
                         }
                     });
                 } catch { }
             }
 
-            // Load Shop Supervisor
+            // ── Load Shop Supervisor ──────────────────────────────────────────
             const shopInput = document.getElementById(`shopSup_${rowId}`);
             if (shopInput) {
                 shopInput.value = item.shopSupervisor || '';
-                if (item.locked && window.currentUserRole !== 'admin') shopInput.disabled = true;
+                if (window.currentUserRole !== 'admin') {
+                    const shopCanSign = window.currentUserRole === 'production' &&
+                        !item.shopSupervisor && item.technician;
+                    if (!shopCanSign) {
+                        shopInput.disabled = true;
+                    } else {
+                        shopInput.disabled = false;
+                        if (!shopInput.value) shopInput.value = window.currentUserName || '';
+                    }
+                }
             } else {
                 try {
                     const shops = JSON.parse(item.shopSupervisor || '{}');
@@ -971,17 +1132,30 @@ async function loadChecklistData(stage) {
                         const el = document.getElementById(`shopSup_${rowId}_${key.replace(/\s+/g, '_')}`);
                         if (el) {
                             el.value = val;
-                            if (item.locked && window.currentUserRole !== 'admin') el.disabled = true;
+                            if (window.currentUserRole !== 'admin') {
+                                const canSign = window.currentUserRole === 'production' &&
+                                    !item.shopSupervisor && item.technician;
+                                if (!canSign) el.disabled = true;
+                            }
                         }
                     });
-                } catch {}
+                } catch { }
             }
 
-            // Load QA Supervisor
+            // ── Load QA Supervisor ────────────────────────────────────────────
             const qaInput = document.getElementById(`qaSup_${rowId}`);
             if (qaInput) {
                 qaInput.value = item.qaSupervisor || '';
-                if (item.locked && window.currentUserRole !== 'admin') qaInput.disabled = true;
+                if (window.currentUserRole !== 'admin') {
+                    const qaCanSign = window.currentUserRole === 'quality' &&
+                        !item.qaSupervisor && item.shopSupervisor;
+                    if (!qaCanSign) {
+                        qaInput.disabled = true;
+                    } else {
+                        qaInput.disabled = false;
+                        if (!qaInput.value) qaInput.value = window.currentUserName || '';
+                    }
+                }
             } else {
                 try {
                     const qas = JSON.parse(item.qaSupervisor || '{}');
@@ -989,17 +1163,32 @@ async function loadChecklistData(stage) {
                         const el = document.getElementById(`qaSup_${rowId}_${key.replace(/\s+/g, '_')}`);
                         if (el) {
                             el.value = val;
-                            if (item.locked && window.currentUserRole !== 'admin') el.disabled = true;
+                            if (window.currentUserRole !== 'admin') {
+                                const canSign = window.currentUserRole === 'quality' &&
+                                    !item.qaSupervisor && item.shopSupervisor;
+                                if (!canSign) el.disabled = true;
+                            }
                         }
                     });
-                } catch {}
+                } catch { }
             }
 
-            // Load Remark
+            // ── Load Remark ───────────────────────────────────────────────────
             const remInput = document.getElementById(`remark_${rowId}`);
             if (remInput) {
-                remInput.value = item.remark || '';
-                if (item.locked && window.currentUserRole !== 'admin') remInput.disabled = true;
+                // If remark is stored as JSON (split remark), show a readable summary
+                let remarkDisplay = item.remark || '';
+                try {
+                    const parsedRem = JSON.parse(remarkDisplay);
+                    if (typeof parsedRem === 'object' && parsedRem !== null) {
+                        remarkDisplay = Object.entries(parsedRem)
+                            .map(([k, v]) => v ? `${k}: ${v}` : '')
+                            .filter(Boolean)
+                            .join(' | ');
+                    }
+                } catch { /* plain string */ }
+                remInput.value = remarkDisplay;
+                if (window.currentUserRole !== 'admin' && item.locked) remInput.disabled = true;
             } else {
                 try {
                     const rems = JSON.parse(item.remark || '{}');
@@ -1007,11 +1196,12 @@ async function loadChecklistData(stage) {
                         const el = document.getElementById(`remark_${rowId}_${key.replace(/\s+/g, '_')}`);
                         if (el) {
                             el.value = val;
-                            if (item.locked && window.currentUserRole !== 'admin') el.disabled = true;
+                            if (window.currentUserRole !== 'admin' && item.locked) el.disabled = true;
                         }
                     });
-                } catch {}
+                } catch { }
             }
+
 
             // Display timestamps
             if (item.timestamp) {
@@ -1045,13 +1235,15 @@ async function loadChecklistData(stage) {
             } else {
                 const saveBtn = document.getElementById(`save_${rowId}`);
                 if (saveBtn) {
-                    if (item.locked && window.currentUserRole !== 'admin') {
+                    let canSave = window.currentUserRole === 'admin';
+                    if (window.currentUserRole === 'production' && !item.technician) canSave = true;
+                    if (window.currentUserRole === 'shop' && item.technician && !item.shopSupervisor) canSave = true;
+                    if (window.currentUserRole === 'quality' && item.shopSupervisor && !item.qaSupervisor) canSave = true;
+
+                    if (!canSave) {
                         saveBtn.innerHTML = '🔒 Locked';
                         saveBtn.disabled = true;
                         saveBtn.style.background = '#95a5a6';
-                    } else if (item.locked && window.currentUserRole === 'admin') {
-                        saveBtn.innerHTML = '🔒 Update';
-                        saveBtn.style.background = '#3498db';
                     } else {
                         saveBtn.innerHTML = '✅ Submit';
                         saveBtn.style.background = '#27ae60';
@@ -1497,3 +1689,156 @@ function exportChecklistPDF() {
     window.open(url, '_blank');
 }
 window.exportChecklistPDF = exportChecklistPDF;
+
+/* ===============================
+   QUALITY SUPERVISOR: Verify & Sign
+   (Ported from Transformer 2.0)
+================================ */
+
+function _applyQualityVerifyButton(rowId, item, stage, itemNumber) {
+    const userRole = window.currentUserRole;
+    const verifyBtn = document.getElementById(`verify_${rowId}`);
+    if (!verifyBtn) return;
+
+    if (userRole === 'quality') {
+        if (item.qaSignedOff || item.qualitySign) {
+            // Already verified
+            verifyBtn.innerHTML = '✅ Verified';
+            verifyBtn.disabled = true;
+            verifyBtn.style.background = '#2e7d32';
+        } else if (item.supervisorSignedOff || item.shopSign || item.shopSupervisor) {
+            // Ready for quality to verify
+            verifyBtn.innerHTML = '🔍 Verify & Sign';
+            verifyBtn.disabled = false;
+            verifyBtn.style.background = '#1565c0';
+        } else {
+            // Shop sup hasn't saved yet
+            verifyBtn.innerHTML = '⏳ Awaiting Shop Sup';
+            verifyBtn.disabled = true;
+            verifyBtn.style.background = '#9e9e9e';
+        }
+    } else {
+        verifyBtn.style.display = 'none';
+    }
+}
+
+/* ─── Quality Supervisor: Verify & Sign a checklist row ───────────────────── */
+async function verifyChecklistRow(wo, stage, rowId, itemNumber, verifyRemark) {
+    const response = await fetch(`${API_BASE}/checklist/row/${rowId}/signoff`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wo, stage, status: 'approved', notes: verifyRemark })
+    });
+    const result = await response.json();
+    if (!result.success) return result;
+    
+    const items = result.data?.items || [];
+    const savedItem = items.find(i => i.rowId === rowId);
+    return { success: true, item: savedItem };
+}
+
+/* ─── Quality Supervisor: Verify & Sign a checklist row ───────────────────── */
+async function verifyChecklistItem(stage, itemNumber, rowId) {
+    if (!currentWO) { alert('⚠️ Please select a transformer W.O. number first!'); return; }
+
+    const userRole = window.currentUserRole;
+    if (userRole !== 'quality' && userRole !== 'admin') {
+        alert('⛔ Only Quality Supervisor can verify rows.');
+        return;
+    }
+
+    const confirmed = confirm(
+        `🔍 Verify & Sign Row ${itemNumber}?\n\n` +
+        `This will lock the row.\n` +
+        `Only Admin will be able to unlock it afterwards.\n\nContinue?`
+    );
+    if (!confirmed) return;
+
+    // Optional comment field for Quality Supervisor
+    const verifyRemark = prompt("Optional: Enter a verification comment/remark (or leave blank):", "");
+
+    try {
+        const result = await verifyChecklistRow(currentWO, stage, rowId, itemNumber, verifyRemark);
+
+        if (result.success) {
+            const savedItem = result.item;
+
+            // Reload checklist data to refresh badges and states
+            loadChecklistData(window.currentStage);
+
+            // Lock ALL inputs in this row
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.style.backgroundColor = '#e8f5e9';  // green = verified & locked
+                const inputs = row.querySelectorAll('input, select, textarea');
+                inputs.forEach(inp => inp.disabled = true);
+            }
+
+            // Update Save button
+            const saveBtn = document.getElementById(`save_${rowId}`);
+            if (saveBtn) {
+                saveBtn.innerHTML = '🔒 Locked';
+                saveBtn.disabled = true;
+                saveBtn.style.background = '#95a5a6';
+            }
+
+            // Update Verify button
+            const verifyBtn = document.getElementById(`verify_${rowId}`);
+            if (verifyBtn) {
+                verifyBtn.innerHTML = '✅ Verified';
+                verifyBtn.disabled = true;
+                verifyBtn.style.background = '#2e7d32';
+            }
+
+            alert(`✅ Row ${itemNumber} verified and locked!`);
+            setTimeout(() => updateProgress(), 200);
+        } else {
+            throw new Error(result.error || 'Verification failed');
+        }
+    } catch (error) {
+        console.error('❌ Verify error:', error);
+        alert(`❌ Error: ${error.message}`);
+    }
+}
+
+/* -- Sign-off badge CSS ─────────────────────────────────────────────────── */
+(function injectSignCSS() {
+    const s = document.createElement('style');
+    s.textContent = `
+.sign-badge-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 8px 4px;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 6px;
+    font-size: 12px;
+}
+.sign-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+.sign-badge small { font-weight: 400; opacity: 0.8; font-size: 11px; }
+.sign-shop    { background: #f3e5f5; color: #4a148c; border: 1px solid #ce93d8; }
+.sign-quality { background: #e3f2fd; color: #0d47a1; border: 1px solid #90caf9; }
+.sign-locked  { background: #fbe9e7; color: #bf360c; border: 1px solid #ffab91; font-weight: 700; }
+.sign-pending { background: #f5f5f5; color: #757575; border: 1px dashed #bdbdbd; }
+/* Row state backgrounds */
+.checklist-row-saved    { background-color: #e3f2fd !important; }  /* blue  = shop saved  */
+.checklist-row-verified { background-color: #e8f5e9 !important; }  /* green = quality locked */
+.checklist-row-admin    { background-color: #fff3cd !important; }  /* yellow = admin unlocked */
+`;
+    if (document.head) {
+        document.head.appendChild(s);
+    } else {
+        document.addEventListener('DOMContentLoaded', () => document.head.appendChild(s));
+    }
+})();
+
+window.verifyChecklistItem = verifyChecklistItem;

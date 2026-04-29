@@ -3,7 +3,7 @@ const { successResponse, errorResponse } = require('../utils/response');
 const { logAudit } = require('../utils/audit');
 const { STAGE_ORDER } = require('../utils/stageControl');
 
-exports.getTransformers = (req, res) => {
+exports.getTransformers = async (req, res) => {
     try {
         const filters = {};
 
@@ -17,17 +17,17 @@ exports.getTransformers = (req, res) => {
             filters.customerVisible = 1; // Only show explicitly shared transformers
         }
 
-        const transformers = transformerService.findAll(filters);
+        const transformers = await transformerService.findAll(filters);
         res.json(successResponse(transformers, 'Transformers loaded'));
     } catch (error) {
         res.status(500).json(errorResponse(error));
     }
 };
 
-exports.getTransformer = (req, res) => {
+exports.getTransformer = async (req, res) => {
     try {
         const id = req.params.id;
-        const transformer = transformerService.findByWO(id);
+        const transformer = await transformerService.findByWO(id);
 
         if (!transformer) {
             return res.status(404).json(errorResponse('Transformer not found'));
@@ -49,7 +49,7 @@ exports.getTransformer = (req, res) => {
     }
 };
 
-exports.createTransformer = (req, res) => {
+exports.createTransformer = async (req, res) => {
     try {
         const transformerData = {
             wo: req.body.wo,
@@ -67,7 +67,7 @@ exports.createTransformer = (req, res) => {
             return res.status(400).json(errorResponse('Customer ID is required'));
         }
 
-        const newTransformer = transformerService.create(transformerData);
+        const newTransformer = await transformerService.create(transformerData);
 
         logAudit(
             req.user.id,
@@ -86,9 +86,9 @@ exports.createTransformer = (req, res) => {
     }
 };
 
-exports.updateTransformer = (req, res) => {
+exports.updateTransformer = async (req, res) => {
     try {
-        const oldTransformer = transformerService.findByWO(req.params.id);
+        const oldTransformer = await transformerService.findByWO(req.params.id);
         if (!oldTransformer) {
             return res.status(404).json(errorResponse('Transformer not found'));
         }
@@ -109,7 +109,7 @@ exports.updateTransformer = (req, res) => {
             }
         }
 
-        const updatedTransformer = transformerService.update(req.params.id, updates);
+        const updatedTransformer = await transformerService.update(req.params.id, updates);
 
         logAudit(
             req.user.id,

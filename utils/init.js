@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+﻿const bcrypt = require('bcrypt');
 const { FILES } = require('../config/paths');
 const db = require('../config/database');
 

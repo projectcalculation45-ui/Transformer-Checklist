@@ -269,23 +269,21 @@ async function addTransformer() {
         return;
     }
 
-    const customerId = document.getElementById('customerSelect').value;
-    const wo = document.getElementById('w').value;
-    const rating = document.getElementById('r').value;
-    const hv = document.getElementById('hv_master').value;
-    const lv = document.getElementById('lv_master').value;
+    const customerName = document.getElementById('customerInput').value.trim();
+    const wo = document.getElementById('w').value.trim();
+    const rating = document.getElementById('r').value.trim();
+    const hv = document.getElementById('hv_master').value.trim();
+    const lv = document.getElementById('lv_master').value.trim();
 
-    if (!customerId || !wo) {
-        Toast.warning('Please select a customer and enter W.O. No', { title: 'Missing Fields' });
+    if (!customerName || !wo) {
+        Toast.warning('Please enter a customer and W.O. No', { title: 'Missing Fields' });
         return;
     }
 
     try {
-        const customer = customerList.find(c => c.customerId === customerId);
-
         const result = await apiRequest('/api/transformers', {
             method: 'POST',
-            body: JSON.stringify({ customerId, customer: customer?.name, wo, rating, hv, lv })
+            body: JSON.stringify({ customerId: customerName, customer: customerName, wo, rating, hv, lv })
         });
 
         if (result.success) {
@@ -295,6 +293,8 @@ async function addTransformer() {
             document.getElementById('hv_master').value = '';
             document.getElementById('lv_master').value = '';
             updateTransformerDropdowns();
+            if (typeof invalidateChecklistTransformers === 'function') invalidateChecklistTransformers();
+            if (typeof loadChecklistTransformers === 'function') loadChecklistTransformers();
             doSearch();
         }
     } catch (error) {
@@ -336,9 +336,9 @@ async function loadCustomerList() {
         const response = await apiRequest('/api/transformers/customers');
         customerList = response.data || response || [];
 
-        const select = document.getElementById('customerSelect');
-        if (select) {
-            select.innerHTML = '<option value="">-- Select Customer --</option>' +
+        const filterDropdown = document.getElementById('customerFilterDropdown');
+        if (filterDropdown) {
+            filterDropdown.innerHTML = '<option value="">&#x1F464; All Customers</option>' +
                 customerList.map(c =>
                     `<option value="${c.customerId}">${c.name || c.customerId}</option>`
                 ).join('');

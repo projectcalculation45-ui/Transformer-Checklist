@@ -32,6 +32,7 @@
     <link rel="stylesheet" href="/css/digital-twin.css">
     <link rel="stylesheet" href="/css/wo-timeline.css">
     <link rel="stylesheet" href="/css/checklist-premium.css">
+    <link rel="stylesheet" href="/css/checklist-block-layout.css">
     <link rel="stylesheet" href="/css/audit-log.css">
     <link rel="stylesheet" href="/css/bom-upload.css">
 
@@ -172,27 +173,26 @@
                 <div class="nav-item active" id="nav-dashboard"
                     onclick="showTab('dashboardSection', this); if(typeof initAnalytics==='function') initAnalytics()">
                     &#x1F4CA; Dashboard</div>
-                <div class="nav-item" id="nav-transformer" onclick="showTab('transformerMaster', this)">&#128295; Transformer Master</div>
-                <div class="nav-item" id="nav-documents" onclick="showTab('documentsSection', this)">&#128193; Documents</div>
+                <div class="nav-item" id="nav-transformer" onclick="showTab('transformerMaster', this)">&#128295;
+                    Transformer Master</div>
+                <div class="nav-item" id="nav-documents" onclick="showTab('documentsSection', this)">&#128193; Documents
+                </div>
 
                 <div class="nav-item" id="nav-checklist" onclick="toggleSubmenu(this)">
                     &#x2705; Manufacturing Checklist
                     <span id="nav-badge-checklist"></span>
                 </div>
                 <div class="nav-submenu" id="checklistSubmenu">
-                    <div class="nav-subitem" data-stage="winding" onclick="showChecklistStage('winding', this)">Winding
-                        <span id="nav-badge-winding"></span>
-                    </div>
-                    <div class="nav-subitem" data-stage="vpd" onclick="showChecklistStage('vpd', this)">VPD <span
-                            id="nav-badge-vpd"></span></div>
-                    <div class="nav-subitem" data-stage="coreCoil" onclick="showChecklistStage('coreCoil', this)">Core
-                        Coil <span id="nav-badge-coreCoil"></span></div>
-                    <div class="nav-subitem" data-stage="tanking" onclick="showChecklistStage('tanking', this)">
-                        Repacking &amp; Tanking
-                        <span id="nav-badge-tanking"></span>
-                    </div>
-                    <div class="nav-subitem" data-stage="tankFilling" onclick="showChecklistStage('tankFilling', this)">
-                        Tank Filling <span id="nav-badge-tankFilling"></span></div>
+                    <div class="nav-subitem" onclick="showChecklistStage('winding', this)">Winding</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('spa', this)">SPA</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('fos_annexure', this)">FOS Annexure</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('coreCoil', this)">Core Coil Assembly</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('shunt_reactor', this)">Shunt Reactor</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('tanking', this)">Repacking &amp; Tanking</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('coreBuilding', this)">Core Building</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('vpd', this)">VPD</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('dismantling', this)">Dismantling</div>
+                    <div class="nav-subitem" onclick="showChecklistStage('dispatch', this)">Dispatch</div>
                 </div>
 
                 <!-- IEC 60076 Calculator (internal section) -->
@@ -206,20 +206,25 @@
                 </div>
 
                 <!-- Questions (Admin only) -->
-                <div class="nav-item" id="questionsNav" onclick="showTab('questions', this)" style="display:none;">&#x2753;
+                <div class="nav-item" id="questionsNav" onclick="showTab('questions', this)" style="display:none;">
+                    &#x2753;
                     Questions</div>
 
                 <!-- User Management (Admin only) -->
-                <div class="nav-item" id="nav-users" onclick="showTab('usersSection', this)" style="display:none;">&#x1F465; User Management</div>
+                <div class="nav-item" id="nav-users" onclick="showTab('usersSection', this)" style="display:none;">
+                    &#x1F465; User Management</div>
 
                 <!-- MCQ Exam System -->
                 <div class="nav-item" id="nav-exam" onclick="toggleSubmenu(this)">
                     &#x1F393; MCQ Exam
                 </div>
                 <div class="nav-submenu" id="examSubmenu">
-                    <div class="nav-subitem" onclick="window.open('/exam/winding','_blank')">&#x1F535; Winding Exam</div>
-                    <div class="nav-subitem" onclick="window.open('/exam/core','_blank')">&#x1F7E2; Core Building Exam</div>
-                    <div class="nav-subitem" onclick="window.open('/exam/tanking','_blank')">&#x1F7E1; Tanking Exam</div>
+                    <div class="nav-subitem" onclick="window.open('/exam/winding','_blank')">&#x1F535; Winding Exam
+                    </div>
+                    <div class="nav-subitem" onclick="window.open('/exam/core','_blank')">&#x1F7E2; Core Building Exam
+                    </div>
+                    <div class="nav-subitem" onclick="window.open('/exam/tanking','_blank')">&#x1F7E1; Tanking Exam
+                    </div>
                 </div>
 
                 <!-- Audit Log is now a tab inside Dashboard -->
@@ -314,7 +319,8 @@
                                         <span>&#x1F4CA; 11 Modules</span>
                                         <span>&#x1F504; OCTC Analysis</span>
                                     </div>
-                                    <button class="hp-tool-btn" onclick="showTab('designCalculations', document.querySelector('[onclick*=designCalculations]'))">
+                                    <button class="hp-tool-btn"
+                                        onclick="showTab('designCalculations', document.querySelector('[onclick*=designCalculations]'))">
                                         Open Calculator â†’
                                     </button>
                                 </div>
@@ -337,7 +343,8 @@
                                         <span>&#x1F4F8; Media Gallery</span>
                                         <span>&#x1F4DC; Audit Log</span>
                                     </div>
-                                    <button class="hp-tool-btn" onclick="showTab('digitalTwin', document.querySelector('[onclick*=digitalTwin]'))">
+                                    <button class="hp-tool-btn"
+                                        onclick="showTab('digitalTwin', document.querySelector('[onclick*=digitalTwin]'))">
                                         Open Digital Twin â†’
                                     </button>
                                 </div>
@@ -409,7 +416,8 @@
                             <div class="dt-search-icon">&#x1F52E;</div>
                             <div class="dt-search-body">
                                 <h1 class="dt-search-title">Digital Twin</h1>
-                                <p class="dt-search-subtitle">Real-time lifecycle tracking &middot; Stage visibility &middot; Full
+                                <p class="dt-search-subtitle">Real-time lifecycle tracking &middot; Stage visibility
+                                    &middot; Full
                                     audit trail</p>
                                 <div class="dt-search-row">
                                     <select id="dtWOSelect" class="dt-wo-input"
@@ -559,14 +567,16 @@
                     <div id="dashboardContent" style="margin-top: 20px;"></div>
 
                     <!-- â”€â”€ AUDIT LOG PANEL (merged into Dashboard) â”€â”€ -->
-                    <div id="auditSection" style="margin-top:28px; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); border:1px solid #e8ecf0; overflow:hidden;">
+                    <div id="auditSection"
+                        style="margin-top:28px; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.07); border:1px solid #e8ecf0; overflow:hidden;">
                         <div class="audit-panel-header" onclick="toggleAuditPanel()">
                             <span class="audit-panel-title">&#x1F4DC; Audit Log</span>
                             <span id="auditPanelChevron" class="audit-panel-chevron">&#9660;</span>
                         </div>
                         <div id="auditPanel" style="display:none; padding:20px;">
                             <div id="auditLogContent">
-                                <p style="color:#888; font-size:13px; text-align:center; padding:20px 0;">Click the panel above to load audit log…</p>
+                                <p style="color:#888; font-size:13px; text-align:center; padding:20px 0;">Click the
+                                    panel above to load audit log…</p>
                             </div>
                         </div>
                     </div>
@@ -638,9 +648,8 @@
                         <div class="tm-register-grid">
                             <div class="tm-form-group">
                                 <label>Customer</label>
-                                <select id="customerSelect" class="tm-filter-select" style="width:100%">
-                                    <option value="">-- Select Customer --</option>
-                                </select>
+                                <input type="text" id="customerInput" class="tm-search-input" placeholder="e.g. UPPCTL"
+                                    style="width:100%">
                             </div>
                             <div class="tm-form-group">
                                 <label>W.O. Number</label>
@@ -673,483 +682,373 @@
                 <section id="documentsSection" class="section">
 
                     <!-- Tab bar -->
-                    <div style="display:flex; gap:0; border-bottom:2px solid #dde1e7; margin-bottom:0; padding:0 24px; background:#fff; border-radius:12px 12px 0 0; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-                        <button id="docTab-bom" onclick="switchDocTab('bom')" class="doc-tab doc-tab-active">&#x1F4CB; BOM Upload</button>
-                        <button id="docTab-design" onclick="switchDocTab('design')" class="doc-tab">&#x1F50D; Design Documents</button>
+                    <div
+                        style="display:flex; gap:0; border-bottom:2px solid #dde1e7; margin-bottom:0; padding:0 24px; background:#fff; border-radius:12px 12px 0 0; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+                        <button id="docTab-bom" onclick="switchDocTab('bom')" class="doc-tab doc-tab-active">&#x1F4CB;
+                            BOM Upload</button>
+                        <button id="docTab-design" onclick="switchDocTab('design')" class="doc-tab">&#x1F50D; Design
+                            Documents</button>
                     </div>
 
                     <!-- BOM TAB -->
                     <div id="docPanel-bom">
-                <!-- BOM UPLOAD -->
-                <section id="bomUpload">
+                        <!-- BOM UPLOAD -->
+                        <section id="bomUpload">
 
-                    <!-- Hero -->
-                    <div class="bu-hero bu-hero-bom">
-                        <div class="bu-hero-title-group">
-                            <span class="bu-hero-icon">&#x1F4CB;</span>
-                            <div>
-                                <h1 class="bu-hero-title">Bill of Materials</h1>
-                                <p class="bu-hero-sub">Upload and manage BOM files per transformer unit</p>
+                            <!-- Hero -->
+                            <div class="bu-hero bu-hero-bom">
+                                <div class="bu-hero-title-group">
+                                    <span class="bu-hero-icon">&#x1F4CB;</span>
+                                    <div>
+                                        <h1 class="bu-hero-title">Bill of Materials</h1>
+                                        <p class="bu-hero-sub">Upload and manage BOM files per transformer unit</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Upload Card -->
-                    <div class="bu-card">
-                        <div class="bu-wo-row">
-                            <label class="bu-label">&#x1F4E6; Transformer Unit</label>
-                            <select id="bomTransformer" class="bu-select">
-                                <option value="">-- Select Transformer --</option>
-                            </select>
-                        </div>
+                            <!-- Upload Card -->
+                            <div class="bu-card">
+                                <div class="bu-wo-row">
+                                    <label class="bu-label">&#x1F4E6; Transformer Unit</label>
+                                    <select id="bomTransformer" class="bu-select">
+                                        <option value="">-- Select Transformer --</option>
+                                    </select>
+                                </div>
 
-                        <!-- Drag & Drop Zone -->
-                        <div class="bu-dropzone" id="bomDropzone" ondragover="buDragOver(event,'bomDropzone')"
-                            ondragleave="buDragLeave('bomDropzone')" ondrop="buDrop(event,'bomFile','bomDropzone')"
-                            onclick="document.getElementById('bomFile').click()">
-                            <div class="bu-drop-icon">&#x1F4C4;</div>
-                            <div class="bu-drop-title">Drop BOM file here</div>
-                            <div class="bu-drop-sub">or click to browse</div>
-                            <div class="bu-drop-types">Accepted: .pdf &middot; .xlsx &middot; .xls</div>
-                            <input type="file" id="bomFile" accept=".pdf,.xlsx,.xls" style="display:none;"
-                                onchange="buFileSelected('bomFile','bomFilePreview')">
-                        </div>
+                                <!-- Drag & Drop Zone -->
+                                <div class="bu-dropzone" id="bomDropzone" ondragover="buDragOver(event,'bomDropzone')"
+                                    ondragleave="buDragLeave('bomDropzone')"
+                                    ondrop="buDrop(event,'bomFile','bomDropzone')"
+                                    onclick="document.getElementById('bomFile').click()">
+                                    <div class="bu-drop-icon">&#x1F4C4;</div>
+                                    <div class="bu-drop-title">Drop BOM file here</div>
+                                    <div class="bu-drop-sub">or click to browse</div>
+                                    <div class="bu-drop-types">Accepted: .pdf &middot; .xlsx &middot; .xls</div>
+                                    <input type="file" id="bomFile" accept=".pdf,.xlsx,.xls" style="display:none;"
+                                        onchange="buFileSelected('bomFile','bomFilePreview')">
+                                </div>
 
-                        <!-- File preview -->
-                        <div class="bu-file-preview" id="bomFilePreview" style="display:none;"></div>
+                                <!-- File preview -->
+                                <div class="bu-file-preview" id="bomFilePreview" style="display:none;"></div>
 
-                        <!-- Progress bar (hidden until upload) -->
-                        <div class="bu-progress-wrap" id="bomProgress" style="display:none;">
-                            <div class="bu-progress-label">Uploading…</div>
-                            <div class="bu-progress-bar-bg">
-                                <div class="bu-progress-bar" id="bomProgressBar"></div>
+                                <!-- Progress bar (hidden until upload) -->
+                                <div class="bu-progress-wrap" id="bomProgress" style="display:none;">
+                                    <div class="bu-progress-label">Uploading…</div>
+                                    <div class="bu-progress-bar-bg">
+                                        <div class="bu-progress-bar" id="bomProgressBar"></div>
+                                    </div>
+                                </div>
+
+                                <div class="bu-actions">
+                                    <button class="bu-upload-btn" onclick="uploadBOM()">
+                                        &#x1F4E4; Upload BOM
+                                    </button>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="bu-actions">
-                            <button class="bu-upload-btn" onclick="uploadBOM()">
-                                &#x1F4E4; Upload BOM
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Uploaded files list -->
-                    <div class="bu-list-card">
-                        <div class="bu-list-header">
-                            <span>&#x1F4C2; Uploaded BOM Files</span>
-                        </div>
-                        <div id="bomList" class="bu-file-list">
-                            <div class="bu-list-empty">
-                                <span>&#x1F4CB;</span>
-                                <p>Select a transformer to view its BOM files</p>
+                            <!-- Uploaded files list -->
+                            <div class="bu-list-card">
+                                <div class="bu-list-header">
+                                    <span>&#x1F4C2; Uploaded BOM Files</span>
+                                </div>
+                                <div id="bomList" class="bu-file-list">
+                                    <div class="bu-list-empty">
+                                        <span>&#x1F4CB;</span>
+                                        <p>Select a transformer to view its BOM files</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                </section>
+                        </section>
                     </div><!-- /docPanel-bom -->
 
                     <!-- DESIGN DOCS TAB -->
                     <div id="docPanel-design" style="display:none;">
-                <!-- DESIGN DOCUMENTS -->
-                <section id="designDocuments">
+                        <!-- DESIGN DOCUMENTS -->
+                        <section id="designDocuments">
 
-                    <!-- Hero -->
-                    <div class="bu-hero bu-hero-doc">
-                        <div class="bu-hero-title-group">
-                            <span class="bu-hero-icon">&#x1F50D;</span>
-                            <div>
-                                <h1 class="bu-hero-title">Technical Drawings &amp; Documents</h1>
-                                <p class="bu-hero-sub">Upload DWG, DXF and PDF design documents per unit</p>
+                            <!-- Hero -->
+                            <div class="bu-hero bu-hero-doc">
+                                <div class="bu-hero-title-group">
+                                    <span class="bu-hero-icon">&#x1F50D;</span>
+                                    <div>
+                                        <h1 class="bu-hero-title">Technical Drawings &amp; Documents</h1>
+                                        <p class="bu-hero-sub">Upload DWG, DXF and PDF design documents per unit</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Upload Card -->
-                    <div class="bu-card">
-                        <div class="bu-wo-row bu-wo-row-2">
-                            <div>
-                                <label class="bu-label">&#x26A1; Transformer Unit</label>
-                                <select id="docTransformer" class="bu-select">
-                                    <option value="">-- Select Transformer --</option>
-                                </select>
+                            <!-- Upload Card -->
+                            <div class="bu-card">
+                                <div class="bu-wo-row bu-wo-row-2">
+                                    <div>
+                                        <label class="bu-label">&#x26A1; Transformer Unit</label>
+                                        <select id="docTransformer" class="bu-select">
+                                            <option value="">-- Select Transformer --</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="bu-label">&#x1F50D; Document Type</label>
+                                        <select id="docType" class="bu-select">
+                                            <option value="winding">&#x1F527; Winding Drawing</option>
+                                            <option value="core">&#x2699; Core Drawing</option>
+                                            <option value="tank">&#x1F6E2; Oil Tank Drawing</option>
+                                            <option value="ga">&#x1F50D; GA Drawing</option>
+                                            <option value="other">&#x1F4C4; Other Technical Doc</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Drag & Drop Zone -->
+                                <div class="bu-dropzone bu-dropzone-doc" id="docDropzone"
+                                    ondragover="buDragOver(event,'docDropzone')"
+                                    ondragleave="buDragLeave('docDropzone')"
+                                    ondrop="buDrop(event,'docFile','docDropzone')"
+                                    onclick="document.getElementById('docFile').click()">
+                                    <div class="bu-drop-icon">&#x1F50D;</div>
+                                    <div class="bu-drop-title">Drop design document here</div>
+                                    <div class="bu-drop-sub">or click to browse</div>
+                                    <div class="bu-drop-types">Accepted: .pdf &middot; .dwg &middot; .dxf</div>
+                                    <input type="file" id="docFile" accept=".pdf,.dwg,.dxf" style="display:none;"
+                                        onchange="buFileSelected('docFile','docFilePreview')">
+                                </div>
+
+                                <!-- File preview -->
+                                <div class="bu-file-preview" id="docFilePreview" style="display:none;"></div>
+
+                                <!-- Progress bar -->
+                                <div class="bu-progress-wrap" id="docProgress" style="display:none;">
+                                    <div class="bu-progress-label">Uploading…</div>
+                                    <div class="bu-progress-bar-bg">
+                                        <div class="bu-progress-bar bu-progress-doc" id="docProgressBar"></div>
+                                    </div>
+                                </div>
+
+                                <div class="bu-actions">
+                                    <button class="bu-upload-btn bu-upload-doc" onclick="uploadDocument()">
+                                        &#x1F4E4; Upload Document
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label class="bu-label">&#x1F50D; Document Type</label>
-                                <select id="docType" class="bu-select">
-                                    <option value="winding">&#x1F527; Winding Drawing</option>
-                                    <option value="core">&#x2699; Core Drawing</option>
-                                    <option value="tank">&#x1F6E2; Oil Tank Drawing</option>
-                                    <option value="ga">&#x1F50D; GA Drawing</option>
-                                    <option value="other">&#x1F4C4; Other Technical Doc</option>
-                                </select>
+
+                            <!-- Uploaded files list -->
+                            <div class="bu-list-card">
+                                <div class="bu-list-header">
+                                    <span>&#x1F4C2; Uploaded Documents</span>
+                                </div>
+                                <div id="docList" class="bu-file-list">
+                                    <div class="bu-list-empty">
+                                        <span>&#x1F50D;</span>
+                                        <p>Select a transformer to view its design documents</p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Drag & Drop Zone -->
-                        <div class="bu-dropzone bu-dropzone-doc" id="docDropzone"
-                            ondragover="buDragOver(event,'docDropzone')" ondragleave="buDragLeave('docDropzone')"
-                            ondrop="buDrop(event,'docFile','docDropzone')"
-                            onclick="document.getElementById('docFile').click()">
-                            <div class="bu-drop-icon">&#x1F50D;</div>
-                            <div class="bu-drop-title">Drop design document here</div>
-                            <div class="bu-drop-sub">or click to browse</div>
-                            <div class="bu-drop-types">Accepted: .pdf &middot; .dwg &middot; .dxf</div>
-                            <input type="file" id="docFile" accept=".pdf,.dwg,.dxf" style="display:none;"
-                                onchange="buFileSelected('docFile','docFilePreview')">
-                        </div>
-
-                        <!-- File preview -->
-                        <div class="bu-file-preview" id="docFilePreview" style="display:none;"></div>
-
-                        <!-- Progress bar -->
-                        <div class="bu-progress-wrap" id="docProgress" style="display:none;">
-                            <div class="bu-progress-label">Uploading…</div>
-                            <div class="bu-progress-bar-bg">
-                                <div class="bu-progress-bar bu-progress-doc" id="docProgressBar"></div>
-                            </div>
-                        </div>
-
-                        <div class="bu-actions">
-                            <button class="bu-upload-btn bu-upload-doc" onclick="uploadDocument()">
-                                &#x1F4E4; Upload Document
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Uploaded files list -->
-                    <div class="bu-list-card">
-                        <div class="bu-list-header">
-                            <span>&#x1F4C2; Uploaded Documents</span>
-                        </div>
-                        <div id="docList" class="bu-file-list">
-                            <div class="bu-list-empty">
-                                <span>&#x1F50D;</span>
-                                <p>Select a transformer to view its design documents</p>
-                            </div>
-                        </div>
-                    </div>
-
-                </section>
+                        </section>
                     </div><!-- /docPanel-design -->
 
                 </section><!-- /documentsSection -->
 
 
+
                 <!-- MANUFACTURING CHECKLIST -->
                 <section id="manufacturingChecklist" class="section">
                     <div class="card">
-
-                        <!-- Premium Hero -->
-                        <div class="clk-hero">
-                            <div class="clk-hero-left">
-                                <span class="clk-hero-icon">&#x2705;</span>
-                                <div>
-                                    <h1 class="clk-hero-title">Manufacturing Checklist</h1>
-                                    <p class="clk-hero-sub">Stage-by-stage inspection &amp; sign-off workflow</p>
-                                </div>
-                            </div>
-                            <div class="clk-hero-right">
-                                <div class="clk-hero-stat">
-                                    <span class="hs-num" id="heroCompleted">—</span>
-                                    <span class="hs-lbl">Done</span>
-                                </div>
-                                <div class="clk-hero-stat">
-                                    <span class="hs-num" id="heroPending">—</span>
-                                    <span class="hs-lbl">Pending</span>
-                                </div>
-                                <div class="clk-hero-stat">
-                                    <span class="hs-num" id="heroTotal">—</span>
-                                    <span class="hs-lbl">Total</span>
-                                </div>
-                            </div>
-                        </div>
+                        <h2>✅ Manufacturing Checklist</h2>
 
                         <div id="checklistEditNotice" style="display:none;" class="permission-notice">
-                            <strong>&#x1F440; View Only:</strong> You can view checklists but cannot edit them.
+                            <strong>👀 View Only:</strong> You can view checklists but cannot edit them.
                         </div>
 
                         <!-- W.O. Selection -->
-                        <div class="card clk-wo-card">
-                            <h3>&#x1F4CB; Select Transformer</h3>
+                        <div class="card"
+                            style="background: #e3f2fd; border-left: 4px solid var(--blue); margin-bottom: 20px;">
+                            <h3 style="color: var(--navy);">📋 Select Transformer</h3>
                             <label><strong>W.O. Number:</strong></label>
                             <select id="checklistWOSelect" class="ui-input" onchange="onWOChange()">
                                 <option value="">-- Select Transformer W.O. --</option>
                             </select>
-                            <div id="woDetails" class="clk-wo-details">
-                                <div class="clk-wo-grid">
+                            <div id="woDetails"
+                                style="display: none; margin-top: 15px; padding: 15px; background: white; border-radius: 5px;">
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                                     <div><strong>Customer:</strong> <span id="woCustomer">-</span></div>
                                     <div><strong>Rating:</strong> <span id="woRating">-</span> kVA</div>
                                     <div><strong>Voltage:</strong> <span id="woVoltage">-</span></div>
                                 </div>
                             </div>
 
-                            <!-- â•â• STAGE PROGRESS CARD â•â•
-                                 Unified: stage visual tiles + progress bar + stats
-                                 Both blocks share one card — same mental model -->
-                            <div class="stage-progress-card">
-
-                                <!-- Stage tile row (filled by updateStageUI()) -->
-                                <div id="stageStatusContainer" class="clk-stage-status"></div>
-
-                                <!-- Divider -->
-                                <div class="spc-divider"></div>
-
-                                <!-- Progress bar + counts -->
-                                <div id="progressBar" class="clk-progress-bar">
-                                    <div class="clk-progress-track">
-                                        <div class="clk-progress-fill" id="progressFill"></div>
-                                        <div class="clk-progress-label">
-                                            <span id="progressText">0% Complete</span>
-                                        </div>
-                                    </div>
-                                    <div class="clk-progress-stats">
-                                        <span>&#x2705; Submitted: <b id="completedCount" class="clk-stat-done">0</b></span>
-                                        <span>&#x23F3; Awaiting: <b id="pendingCount" class="clk-stat-pending">0</b></span>
-                                        <span>&#x1F4CA; Total: <b id="totalCount" class="clk-stat-total">0</b></span>
-                                    </div>
-                                    <div id="tierStats" class="clk-tier-stats"></div>
-                                    <div id="stageSummaryPills" class="stage-status-counts" style="padding:0 4px 6px;">
-                                    </div>
-                                </div>
-
-                            </div><!-- /stage-progress-card -->
-
-                            <!-- Checklist Content -->
-                            <div id="checklistMainContent" style="display: none;">
-                                <!-- Toolbar: Bulk Sign-Off + Export PDF -->
-                                <div class="clk-toolbar">
-                                    <div class="clk-toolbar-left">
-                                        <span class="clk-label-hint">&#x1F4CB; Inspection Workflow</span>
-                                        <!-- Bulk submission — only shown when rows are ready -->
-                                        <button id="bulkSignOffBtn" class="btn btn-success" style="display:none;"
-                                            onclick="bulkSupervisorSignOff()">
-                                            &#x270D; Bulk Submit for Review
-                                        </button>
-                                    </div>
-                                    <div class="clk-toolbar-right">
-                                        <button id="exportPDFBtn" class="btn btn-navy" onclick="exportChecklistPDF()">
-                                            &#x1F4C4; Export PDF
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="stage-nav" id="mainStageNav">
-                                    <button class="stage-btn active" data-stage="winding"
-                                        onclick="showMainStage('winding', this)">Winding</button>
-                                    <button class="stage-btn" data-stage="spa"
-                                        onclick="showMainStage('spa', this)">SPA</button>
-                                    <button class="stage-btn" data-stage="vpd"
-                                        onclick="showMainStage('vpd', this)">VPD</button>
-                                    <button class="stage-btn" data-stage="coreCoil"
-                                        onclick="showMainStage('coreCoil', this)">Core Coil</button>
-                                    <button class="stage-btn" data-stage="tanking"
-                                        onclick="showMainStage('tanking', this)">Repacking &amp; Tanking</button>
-                                    <button class="stage-btn" data-stage="tankFilling"
-                                        onclick="showMainStage('tankFilling', this)">Tank
-                                        Filling</button>
-                                    <button class="stage-btn" data-stage="coreBuilding"
-                                        onclick="showMainStage('coreBuilding', this)">Core Building</button>
-                                </div>
-
-                                <div class="stage-nav" id="windingSubNav" style="display: none;">
-                                    <button class="stage-btn active" onclick="switchStage('winding1', this)">Continuous
-                                        Disc</button>
-                                    <button class="stage-btn" onclick="switchStage('winding2', this)">Start
-                                        Details</button>
-                                    <button class="stage-btn" onclick="switchStage('winding3', this)">Finish
-                                        Coil</button>
-                                    <button class="stage-btn" onclick="switchStage('winding4', this)">Additional Inspections</button>
-                                    <button class="stage-btn" onclick="switchStage('winding5', this)">Final Clearance</button>
-                                </div>
-
-                                <div id="stageControlButtons" class="clk-stage-controls">
-                                    <button class="btn btn-success"
-                                        onclick="markStageComplete(window.currentWO, window.currentStage)">
-                                        &#x2705; Submit Stage for QA Review
-                                    </button>
-                                    <!-- Production-only: signal stage is ready for QA inspection -->
-                                    <button id="readyForQABtn" class="btn"
-                                        style="display:none; background:#2980b9; color:#fff; margin-left:8px;"
-                                        onclick="submitStageForQAReview()">
-                                        &#x1F4CB; Ready for QA
-                                    </button>
-                                    <button class="btn btn-info" id="adminUnlockBtn" style="display:none;"
-                                        onclick="showUnlockDialog(window.currentWO, window.currentStage)">
-                                        &#x1F511; Re-open Stage (Admin)
-                                    </button>
-                                </div>
-
-                                <!-- Stage Locked — awaiting QA approval -->
-                                <div id="stageLockMessage" class="clk-stage-locked">
-                                    <p>&#x1F50D; This stage has been submitted for QA review.</p>
-                                    <p id="stageLockSubMsg">Awaiting verification — contact your administrator to
-                                        re-open.
-                                    </p>
-                                    <!-- QA / Admin: Approve button shown when stage is completed (submitted) -->
-                                    <button id="approveStageBtn" class="btn btn-success"
-                                        style="display:none; margin-top:14px; font-size:15px; padding: 10px 28px;"
-                                        onclick="approveCurrentStage()">
-                                        &#x2714; Approve Stage
-                                    </button>
-                                    <button id="rejectStageBtn" class="btn btn-danger"
-                                        style="display:none; margin-top:14px; margin-left:10px; font-size:15px; padding: 10px 28px;"
-                                        onclick="showRejectStageModal()">
-                                        &#x274C; Reject Stage
-                                    </button>
-                                    <button id="adminUnlockBtnLocked" class="btn btn-warning"
-                                        style="display:none; margin-top:12px;"
-                                        onclick="showUnlockDialog(window.currentWO, window.currentStage)">
-                                        &#x1F511; Re-open This Stage (Admin)
-                                    </button>
-                                </div>
-
-                                <!-- Awaiting QA panel (production submitted — QA reviewing) -->
-                                <div id="stageAwaitingQAMessage"
-                                    style="display:none; border-left:4px solid #2980b9; background:linear-gradient(135deg,#eaf4fd,#d6eaf8); padding:16px 20px; border-radius:8px; margin-bottom:16px;">
-                                    <p style="color:#1a3a5c; font-weight:700; font-size:16px; margin:0 0 4px;">&#x1F4CB; Stage
-                                        Submitted for QA Review</p>
-                                    <p id="stageAwaitingSubMsg" style="color:#1a3a5c; font-size:13px; margin:0;">QA is
-                                        reviewing this stage. You will be notified when approved or returned for
-                                        corrections.</p>
-                                    <button id="adminUnlockBtnAwaiting" class="btn btn-warning"
-                                        style="display:none; margin-top:12px;"
-                                        onclick="showUnlockDialog(window.currentWO, window.currentStage)">
-                                        &#x1F511; Re-open This Stage (Admin)
-                                    </button>
-                                </div>
-
-                                <!-- Stage Approved panel (shown when status = approved) -->
-                                <div id="stageApprovedMessage" class="clk-stage-locked"
-                                    style="display:none; background: linear-gradient(135deg,#eafaf0,#d5f5e3); border-left: 4px solid #27ae60;">
-                                    <p style="color:#1a4d2e; font-weight:700; font-size:16px;">&#x2714; Stage Approved</p>
-                                    <p id="stageApprovedSubMsg" style="color:#1a4d2e;">This stage has been verified and
-                                        approved by QA.</p>
-                                    <button id="adminUnlockBtnApproved" class="btn btn-warning"
-                                        style="display:none; margin-top:12px;"
-                                        onclick="showUnlockDialog(window.currentWO, window.currentStage)">
-                                        &#x1F511; Re-open This Stage (Admin)
-                                    </button>
-                                </div>
-                                <!-- Stage Rejected panel (shown to production when status reverts to in-progress after QA rejection) -->
-                                <div id="stageRejectedMessage"
-                                    style="display:none; border-left:4px solid #e74c3c; background:linear-gradient(135deg,#fef9f9,#fde8e8); padding:16px 20px; border-radius:8px; margin-bottom:16px;">
-                                    <p style="color:#7b1c1c; font-weight:700; font-size:16px; margin:0 0 6px;">&#x26A0; Stage
-                                        Returned for Corrections</p>
-                                    <p id="stageRejectedByMsg" style="color:#7b1c1c; font-size:13px; margin:0 0 6px;">QA
-                                        found issues with this stage.</p>
-                                    <div id="stageRejectionReasonBox"
-                                        style="background:#fff0f0; border:1px solid #f1a1a1; border-radius:6px; padding:10px 14px; margin-top:8px;">
-                                        <span style="font-size:12px; font-weight:600; color:#c0392b;">&#x1F4DD; QA
-                                            Comment:</span>
-                                        <p id="stageRejectionReasonText"
-                                            style="margin:4px 0 0; color:#4a1212; font-size:13px; font-style:italic;">—
-                                        </p>
-                                    </div>
-                                    <p style="color:#7b1c1c; font-size:12px; margin:10px 0 0;">Correct the issues above
-                                        and
-                                        click <strong>&#x2705; Submit Stage for QA Review</strong> again.</p>
-                                </div>
-
-
-
-                                <div id="stageContent"></div>
-                            </div>
-
-                            <div id="noWOMessage" class="clk-empty-state">
-                                <h3>&#x1F4CB; Please Select a Transformer W.O. Number</h3>
+                            <!-- 🔹 NEW: STAGE STATUS CONTAINER -->
+                            <div id="stageStatusContainer"
+                                style="display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--blue);">
+                                <h4 style="margin-top: 0;">🏭 Manufacturing Stage Status</h4>
+                                <!-- Stage badges will be rendered here by JavaScript -->
                             </div>
                         </div>
+
+                        <!-- Progress Bar -->
+                        <div id="progressBar" style="margin: 20px 0; display: none;">
+                            <h4>📊 Stage Completion Progress</h4>
+                            <div
+                                style="background: #f0f0f0; border-radius: 10px; height: 35px; position: relative; overflow: hidden;">
+                                <div id="progressFill"
+                                    style="background: linear-gradient(90deg, #e74c3c, #c0392b); height: 100%; width: 0%; transition: width 0.5s;">
+                                </div>
+                                <div
+                                    style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold;">
+                                    <span id="progressText">0% Complete</span>
+                                </div>
+                            </div>
+                            <div
+                                style="margin-top: 10px; display: flex; justify-content: space-around; font-size: 13px;">
+                                <span>✅ Completed: <b id="completedCount" style="color: #27ae60;">0</b></span>
+                                <span>⏳ Pending: <b id="pendingCount" style="color: #e67e22;">0</b></span>
+                                <span>📊 Total: <b id="totalCount" style="color: #3498db;">0</b></span>
+                            </div>
+                        </div>
+
+                        <!-- Checklist Content -->
+                        <div id="checklistMainContent" style="display: none;">
+                            <div class="stage-nav" id="mainStageNav">
+                                <button class="stage-btn active"
+                                    onclick="showMainStage('winding', this)">Winding</button>
+                                <button class="stage-btn" onclick="showMainStage('spa', this)">SPA</button>
+                                <button class="stage-btn" onclick="showMainStage('coreCoil', this)">Core Coil</button>
+                                <button class="stage-btn" onclick="showMainStage('tanking', this)">Repacking &amp;
+                                    Tanking</button>
+                                <button class="stage-btn" onclick="showMainStage('coreBuilding', this)">Core
+                                    Building</button>
+                                <button class="stage-btn" onclick="showMainStage('vpd', this)">VPD</button>
+                                <button class="stage-btn"
+                                    onclick="showMainStage('dismantling', this)">Dismantling</button>
+                                <button class="stage-btn" onclick="showMainStage('dispatch', this)">Dispatch</button>
+                                <button class="stage-btn" onclick="showMainStage('shunt_reactor', this)">Shunt
+                                    Reactor</button>
+
+                                <span id="customStagesContainer" style="display:inline-flex; gap:10px;"></span>
+                                <button id="addStageBtn" class="stage-btn"
+                                    style="display: none; background: #2ecc71; color: white;" onclick="addNewStage()">➕
+                                    Add Stage</button>
+                            </div>
+
+                            <div class="stage-nav" id="windingSubNav" style="display: none;">
+                                <button class="stage-btn active" onclick="switchStage('winding1', this)">Continuous
+                                    Disc</button>
+                                <button class="stage-btn" onclick="switchStage('winding2', this)">Start Details</button>
+                                <button class="stage-btn" onclick="switchStage('winding3', this)">Finish Coil</button>
+                            </div>
+
+                            <!-- 🔹 NEW: Stage Control Buttons -->
+                            <div id="stageControlButtons"
+                                style="margin: 15px 0; padding: 15px; background: #fff3cd; border-radius: 8px; display: none;">
+                                <button class="btn-login"
+                                    style="width: auto; padding: 8px 16px; margin-right: 10px; background: #27ae60;"
+                                    onclick="markStageComplete(window.currentWO, window.currentStage)">
+                                    ✅ Complete Current Stage
+                                </button>
+                                <button class="btn-login"
+                                    style="width: auto; padding: 8px 16px; background: #3498db; display: none;"
+                                    id="adminUnlockBtn"
+                                    onclick="showUnlockDialog(window.currentWO, window.currentStage)">
+                                    🔓 Unlock Stage (Admin)
+                                </button>
+                            </div>
+
+                            <!-- 🔹 NEW: Stage Locked Message -->
+                            <div id="stageLockMessage"
+                                style="margin: 15px 0; padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; display: none; text-align: center;">
+                                <p style="margin: 0; color: #721c24; font-weight: bold;">⛔ This stage is locked and
+                                    cannot be edited.</p>
+                                <p style="margin: 5px 0 0 0; color: #721c24; font-size: 13px;">Contact your
+                                    administrator to unlock it.</p>
+                            </div>
+
+                            <div id="stageContent"></div>
+                        </div>
+
+                        <div id="noWOMessage" style="padding: 40px; text-align: center; color: #666;">
+                            <h3>📋 Please Select a Transformer W.O. Number</h3>
+                        </div>
+                    </div>
                 </section>
 
-                <!-- ROW-LEVEL UNLOCK DIALOG -->
-                <div id="rowUnlockModal" class="legacy-modal-backdrop" style="display:none;">
-                    <div class="legacy-modal-box">
-                        <h3>&#x1F511; Re-open Checklist Row</h3>
+                <!-- ROW-LEVEL UNLOCK DIALOG (ADMIN ONLY) -->
+                <div id="rowUnlockModal"
+                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
+                    <div
+                        style="background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                        <h3 style="margin-top: 0;">🔓 Unlock Checklist Row</h3>
 
-                        <div class="legacy-modal-field">
-                            <label><strong>Reason for Re-opening:</strong></label>
-                            <!-- Quick preset chips — one tap selects reason -->
-                            <div id="unlockReasonChips" style="display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;">
-                                <button type="button" class="reason-chip"
-                                    onclick="selectUnlockReason(this, 'Data entry error')">&#x1F4DD; Data entry error</button>
-                                <button type="button" class="reason-chip"
-                                    onclick="selectUnlockReason(this, 'Re-inspection required')">&#x1F50D;
-                                    Re-inspection</button>
-                                <button type="button" class="reason-chip"
-                                    onclick="selectUnlockReason(this, 'Design change')">&#x1F4C4; Design change</button>
-                                <button type="button" class="reason-chip"
-                                    onclick="selectUnlockReason(this, 'Measurement correction needed')">&#x1F4CA; Measurement
-                                    fix</button>
-                                <button type="button" class="reason-chip"
-                                    onclick="selectUnlockReason(this, 'Quality check required')">&#x2705; Quality
-                                    check</button>
-                                <button type="button" class="reason-chip" onclick="selectUnlockReason(this, 'OTHER')">&#x270F;
-                                    Other…</button>
-                            </div>
-                            <!-- Hidden input that stores the selected reason -->
-                            <input type="hidden" id="unlockReasonSelect" value="">
+                        <div style="margin: 20px 0;">
+                            <label><strong>Unlock Reason:</strong></label>
+                            <select id="unlockReasonSelect" class="ui-input" onchange="toggleCustomReason()">
+                                <option value="">-- Select a reason --</option>
+                                <option value="Measurement correction needed">Measurement correction needed</option>
+                                <option value="Quality check required">Quality check required</option>
+                                <option value="Data entry error">Data entry error</option>
+                                <option value="Process adjustment">Process adjustment</option>
+                                <option value="Re-inspection required">Re-inspection required</option>
+                                <option value="other">Other (please specify)</option>
+                            </select>
                         </div>
 
-                        <div id="customReasonContainer" style="display:none;" class="legacy-modal-field">
+                        <div id="customReasonContainer" style="display: none; margin: 20px 0;">
                             <label><strong>Specify Reason:</strong></label>
-                            <textarea id="customUnlockReason" class="ui-input"
-                                placeholder="Describe the reason for re-opening…" style="height:70px; resize:vertical;"
-                                oninput="document.getElementById('unlockReasonSelect').value = this.value"></textarea>
+                            <textarea id="customUnlockReason" class="ui-input" placeholder="Enter your reason here..."
+                                style="height: 80px; resize: vertical;"></textarea>
                         </div>
 
-                        <div class="legacy-modal-field">
-                            <p class="legacy-modal-info">
-                                <strong>â„¹ Note:</strong> This will re-open the row for corrections. The reason will be
-                                recorded in the audit trail.
+                        <div style="margin: 20px 0;">
+                            <p
+                                style="margin: 0; padding: 10px; background: #e8f4f8; border-left: 4px solid #3498db; color: #2c3e50; font-size: 13px;">
+                                <strong>ℹ️ Note:</strong> This action will unlock the row and allow re-editing. The
+                                unlock reason will be logged to the audit trail.
                             </p>
                         </div>
 
-                        <div class="legacy-modal-footer">
-                            <button class="btn btn-muted" onclick="closeRowUnlockModal()">Cancel</button>
-                            <button class="btn btn-success" onclick="confirmRowUnlock()">&#x1F511; Confirm Re-open</button>
+                        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px;">
+                            <button class="btn-login" style="width: auto; padding: 10px 20px; background: #95a5a6;"
+                                onclick="closeRowUnlockModal()">
+                                Cancel
+                            </button>
+                            <button class="btn-login" style="width: auto; padding: 10px 20px; background: #27ae60;"
+                                onclick="confirmRowUnlock()">
+                                🔓 Confirm Unlock
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- LOCK ROW DIALOG -->
+                <!-- LOCK ROW DIALOG (ADMIN ONLY) -->
                 <div id="rowLockModal"
-                    style="display: none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
+                    style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center;">
                     <div
-                        style="background:white; padding:28px; border-radius:10px; width:90%; max-width:500px; box-shadow:0 4px 20px rgba(0,0,0,0.3);">
-                        <h3 style="margin-top:0;">&#x2705; Submit Row for Review</h3>
+                        style="background: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                        <h3 style="margin-top: 0;">🔒 Lock Checklist Row</h3>
 
-                        <div style="margin:16px 0;">
-                            <label><strong>Why are you submitting?</strong></label>
-                            <!-- Quick preset chips -->
-                            <div id="lockReasonChips" style="display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;">
-                                <button type="button" class="reason-chip"
-                                    onclick="selectLockReason(this, 'Inspection complete')">&#x1F4CB; Inspection
-                                    complete</button>
-                                <button type="button" class="reason-chip"
-                                    onclick="selectLockReason(this, 'Measurement recorded')">&#x1F4CA; Measurement
-                                    recorded</button>
-                                <button type="button" class="reason-chip"
-                                    onclick="selectLockReason(this, 'Data finalized')">&#x2714; Data finalized</button>
-                                <button type="button" class="reason-chip"
-                                    onclick="selectLockReason(this, 'Ready for QA review')">&#x1F50D; Ready for QA</button>
-                                <button type="button" class="reason-chip" onclick="selectLockReason(this, 'OTHER')">&#x270F;
-                                    Other…</button>
-                            </div>
-                            <input type="hidden" id="lockReasonSelect" value="">
+                        <div style="margin: 20px 0;">
+                            <label><strong>Lock Reason:</strong></label>
+                            <select id="lockReasonSelect" class="ui-input" onchange="toggleCustomLockReason()">
+                                <option value="">-- Select a reason --</option>
+                                <option value="Correction completed">Correction completed</option>
+                                <option value="Quality approved">Quality approved</option>
+                                <option value="Data finalized">Data finalized</option>
+                                <option value="Process complete">Process complete</option>
+                                <option value="Awaiting approval">Awaiting approval</option>
+                                <option value="other">Other (please specify)</option>
+                            </select>
                         </div>
 
-                        <div id="customLockReasonContainer" style="display:none; margin:16px 0;">
+                        <div id="customLockReasonContainer" style="display: none; margin: 20px 0;">
                             <label><strong>Specify Reason:</strong></label>
-                            <textarea id="customLockReason" class="ui-input"
-                                placeholder="Describe reason for submission…" style="height:70px; resize:vertical;"
-                                oninput="document.getElementById('lockReasonSelect').value = this.value"></textarea>
+                            <textarea id="customLockReason" class="ui-input" placeholder="Enter your reason here..."
+                                style="height: 80px; resize: vertical;"></textarea>
                         </div>
 
-                        <div style="margin:16px 0;">
+                        <div style="margin: 20px 0;">
                             <p
-                                style="margin:0; padding:10px; background:#eafaf0; border-left:4px solid #27ae60; color:#1a4d2e; font-size:13px;">
-                                <strong>&#x2705; Note:</strong> This row will be submitted for supervisor and QA review. Only
-                                an admin can re-open it after submission.
+                                style="margin: 0; padding: 10px; background: #fff3cd; border-left: 4px solid #f39c12; color: #856404; font-size: 13px;">
+                                <strong>⚠️ Note:</strong> Once locked, only admin can unlock this row. This action will
+                                be logged to the audit trail.
                             </p>
                         </div>
 
@@ -1158,9 +1057,9 @@
                                 onclick="closeRowLockModal()">
                                 Cancel
                             </button>
-                            <button class="btn-login" style="width: auto; padding: 10px 20px; background: #27ae60;"
+                            <button class="btn-login" style="width: auto; padding: 10px 20px; background: #e74c3c;"
                                 onclick="confirmRowLock()">
-                                &#x2705; Submit for Review
+                                🔒 Confirm Lock
                             </button>
                         </div>
                     </div>
@@ -1275,26 +1174,24 @@
                         <div id="customerCalcList"></div>
                     </div>
 
-                    
+
                     <!-- IEC Calc Tab Navigation -->
-                    <div class="xmer-calc-tabs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;padding:0 4px;">
+                    <div class="xmer-calc-tabs"
+                        style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;padding:0 4px;">
                         <button class="xmer-calc-tab active" id="tab-winding"
                             onclick="showCalcView('calc-winding-view', this)"
                             style="flex:1;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;background:#1a3a5c;color:#fff;min-width:120px;">
                             &#128423; Winding Design
                         </button>
-                        <button class="xmer-calc-tab" id="tab-core"
-                            onclick="showCalcView('calc-core-view', this)"
+                        <button class="xmer-calc-tab" id="tab-core" onclick="showCalcView('calc-core-view', this)"
                             style="flex:1;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;background:#e9ecef;color:#495057;min-width:120px;">
                             &#128297; Core Design
                         </button>
-                        <button class="xmer-calc-tab" id="tab-tank"
-                            onclick="showCalcView('calc-tank-view', this)"
+                        <button class="xmer-calc-tab" id="tab-tank" onclick="showCalcView('calc-tank-view', this)"
                             style="flex:1;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;background:#e9ecef;color:#495057;min-width:120px;">
                             &#9924; Tanking &amp; Thermal
                         </button>
-                        <button class="xmer-calc-tab" id="tab-other"
-                            onclick="showCalcView('calc-other-view', this)"
+                        <button class="xmer-calc-tab" id="tab-other" onclick="showCalcView('calc-other-view', this)"
                             style="flex:1;padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;background:#e9ecef;color:#495057;min-width:120px;">
                             &#128209; Other &amp; Summary
                         </button>
@@ -1814,80 +1711,100 @@
 
                                 <!-- ATLANTA COOLING INPUTS (Image 2) -->
                                 <div style="background:#e8f4f8; border-radius:6px; padding:16px; margin-bottom:14px;">
-                                    <div style="font-weight:bold; color:#1a3a5c; margin-bottom:12px; font-size:13px;">🧊 A. ATLANTA COOLING CALCULATION (Image 2)</div>
+                                    <div style="font-weight:bold; color:#1a3a5c; margin-bottom:12px; font-size:13px;">🧊
+                                        A. ATLANTA COOLING CALCULATION (Image 2)</div>
                                     <div class="form-grid">
                                         <div class="form-group">
                                             <label>No-Load Loss NLL (W):</label>
-                                            <input type="number" id="tk_nll" class="ui-input" value="17500" step="1" placeholder="e.g. 17500">
+                                            <input type="number" id="tk_nll" class="ui-input" value="17500" step="1"
+                                                placeholder="e.g. 17500">
                                             <small style="color:#666;font-size:11px;">From Core Loss calculation</small>
                                         </div>
                                         <div class="form-group">
                                             <label>Load Loss at Full Load (W):</label>
-                                            <input type="number" id="tk_loadloss" class="ui-input" value="430000" step="1" placeholder="e.g. 430000">
-                                            <small style="color:#666;font-size:11px;">From Winding loss calculation</small>
+                                            <input type="number" id="tk_loadloss" class="ui-input" value="430000"
+                                                step="1" placeholder="e.g. 430000">
+                                            <small style="color:#666;font-size:11px;">From Winding loss
+                                                calculation</small>
                                         </div>
                                         <div class="form-group">
                                             <label>GTD Top Oil Rise (°C):</label>
-                                            <input type="number" id="tk_topoilrise" class="ui-input" value="50" step="1" placeholder="50">
+                                            <input type="number" id="tk_topoilrise" class="ui-input" value="50" step="1"
+                                                placeholder="50">
                                         </div>
                                         <div class="form-group">
                                             <label>GTD Winding Rise (°C):</label>
-                                            <input type="number" id="tk_wdgrise" class="ui-input" value="55" step="1" placeholder="55">
+                                            <input type="number" id="tk_wdgrise" class="ui-input" value="55" step="1"
+                                                placeholder="55">
                                         </div>
                                         <div class="form-group">
                                             <label>Gradient (°C):</label>
-                                            <input type="number" id="tk_gradient" class="ui-input" value="18" step="1" placeholder="18">
+                                            <input type="number" id="tk_gradient" class="ui-input" value="18" step="1"
+                                                placeholder="18">
                                         </div>
                                         <div class="form-group">
                                             <label>Tank Dimensions L×B×H (m):</label>
                                             <div style="display:flex;gap:6px;">
-                                                <input type="number" id="tk_L" class="ui-input" value="6.215" step="0.001" placeholder="L">
-                                                <input type="number" id="tk_B" class="ui-input" value="2.21" step="0.001" placeholder="B">
-                                                <input type="number" id="tk_Ht" class="ui-input" value="2.92" step="0.001" placeholder="H">
+                                                <input type="number" id="tk_L" class="ui-input" value="6.215"
+                                                    step="0.001" placeholder="L">
+                                                <input type="number" id="tk_B" class="ui-input" value="2.21"
+                                                    step="0.001" placeholder="B">
+                                                <input type="number" id="tk_Ht" class="ui-input" value="2.92"
+                                                    step="0.001" placeholder="H">
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             <label>Radiator: No. of Sections:</label>
-                                            <input type="number" id="tk_rad_nos" class="ui-input" value="20" step="1" placeholder="e.g. 20">
+                                            <input type="number" id="tk_rad_nos" class="ui-input" value="20" step="1"
+                                                placeholder="e.g. 20">
                                         </div>
                                         <div class="form-group">
                                             <label>Sections per Radiator:</label>
-                                            <input type="number" id="tk_rad_sections" class="ui-input" value="28" step="1" placeholder="e.g. 28">
+                                            <input type="number" id="tk_rad_sections" class="ui-input" value="28"
+                                                step="1" placeholder="e.g. 28">
                                         </div>
                                         <div class="form-group">
                                             <label>Cooling Surface per Section (m²):</label>
-                                            <input type="number" id="tk_rad_area_per_sec" class="ui-input" value="3.88" step="0.01" placeholder="e.g. 3.88">
+                                            <input type="number" id="tk_rad_area_per_sec" class="ui-input" value="3.88"
+                                                step="0.01" placeholder="e.g. 3.88">
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- HOT SPOT INPUTS (Image 3) -->
                                 <div style="background:#fff3e0; border-radius:6px; padding:16px; margin-bottom:14px;">
-                                    <div style="font-weight:bold; color:#b71c1c; margin-bottom:12px; font-size:13px;">🔥 B. HOT SPOT TEMPERATURE CALCULATION (IS-2026, Image 3)</div>
+                                    <div style="font-weight:bold; color:#b71c1c; margin-bottom:12px; font-size:13px;">🔥
+                                        B. HOT SPOT TEMPERATURE CALCULATION (IS-2026, Image 3)</div>
                                     <div class="form-grid">
                                         <div class="form-group">
                                             <label>Ambient Temperature θa (°C):</label>
-                                            <input type="number" id="hs_ambient" class="ui-input" value="32" step="1" placeholder="32">
+                                            <input type="number" id="hs_ambient" class="ui-input" value="32" step="1"
+                                                placeholder="32">
                                         </div>
                                         <div class="form-group">
                                             <label>Top Oil Rise at Rated Load Δθbor (°C):</label>
-                                            <input type="number" id="hs_topoilrated" class="ui-input" value="33" step="1" placeholder="33">
+                                            <input type="number" id="hs_topoilrated" class="ui-input" value="33"
+                                                step="1" placeholder="33">
                                         </div>
                                         <div class="form-group">
                                             <label>Over-Load Ratio K (e.g. 1.2 = 120% load):</label>
-                                            <input type="number" id="hs_k" class="ui-input" value="1.2" step="0.1" min="0.1" max="2.0" placeholder="1.2">
+                                            <input type="number" id="hs_k" class="ui-input" value="1.2" step="0.1"
+                                                min="0.1" max="2.0" placeholder="1.2">
                                         </div>
                                         <div class="form-group">
                                             <label>Duration of Overload t (min):</label>
-                                            <input type="number" id="hs_duration" class="ui-input" value="120" step="1" placeholder="120">
+                                            <input type="number" id="hs_duration" class="ui-input" value="120" step="1"
+                                                placeholder="120">
                                         </div>
                                         <div class="form-group">
                                             <label>Hot Spot Factor H (IS-2026 Annex E):</label>
-                                            <input type="number" id="hs_H" class="ui-input" value="1.3" step="0.1" placeholder="1.3">
+                                            <input type="number" id="hs_H" class="ui-input" value="1.3" step="0.1"
+                                                placeholder="1.3">
                                         </div>
                                         <div class="form-group">
                                             <label>Winding Gradient at Rated Load gr (°C):</label>
-                                            <input type="number" id="hs_gradient" class="ui-input" value="20" step="1" placeholder="20">
+                                            <input type="number" id="hs_gradient" class="ui-input" value="20" step="1"
+                                                placeholder="20">
                                         </div>
                                     </div>
                                 </div>
@@ -2079,19 +1996,15 @@
 
                         <!-- Inner Tab Nav -->
                         <div class="q-tab-bar">
-                            <button id="qtab-bank" class="btn-login q-tab-btn"
-                                onclick="switchQTab('bank')">📚 Question Bank</button>
-                            <button id="qtab-add" class="btn-login q-tab-btn"
-                                style="background:#27ae60;"
+                            <button id="qtab-bank" class="btn-login q-tab-btn" onclick="switchQTab('bank')">📚 Question
+                                Bank</button>
+                            <button id="qtab-add" class="btn-login q-tab-btn" style="background:#27ae60;"
                                 onclick="switchQTab('add')">➕ Add Question</button>
-                            <button id="qtab-sections" class="btn-login q-tab-btn"
-                                style="background:#0f766e;"
+                            <button id="qtab-sections" class="btn-login q-tab-btn" style="background:#0f766e;"
                                 onclick="switchQTab('sections')">🗂 Sections</button>
-                            <button id="qtab-links" class="btn-login q-tab-btn"
-                                style="background:#8e44ad;"
+                            <button id="qtab-links" class="btn-login q-tab-btn" style="background:#8e44ad;"
                                 onclick="switchQTab('links')">🔗 Exam Links</button>
-                            <button id="qtab-results" class="btn-login q-tab-btn"
-                                style="background:#e67e22;"
+                            <button id="qtab-results" class="btn-login q-tab-btn" style="background:#e67e22;"
                                 onclick="switchQTab('results')">📊 Results</button>
                         </div>
 
@@ -2190,8 +2103,7 @@
                         <div class="q-modal-content">
                             <div class="q-modal-header">
                                 <h3 style="margin:0;">📋 Answer Key</h3>
-                                <button class="btn-login q-modal-close"
-                                    onclick="closeAnswerKey()">✕ Close</button>
+                                <button class="btn-login q-modal-close" onclick="closeAnswerKey()">✕ Close</button>
                             </div>
                             <div id="answerKeyContent"></div>
                         </div>
@@ -2202,8 +2114,8 @@
                         <div class="q-modal-content">
                             <div class="q-modal-header">
                                 <h3 style="margin:0;">✏️ Edit Question</h3>
-                                <button class="btn-login q-modal-close"
-                                    onclick="closeEditQuestionModal()">✕ Close</button>
+                                <button class="btn-login q-modal-close" onclick="closeEditQuestionModal()">✕
+                                    Close</button>
                             </div>
                             <div style="display:grid; gap:14px;">
                                 <input type="hidden" id="editQId">
@@ -2219,8 +2131,8 @@
                                     <label
                                         style="font-weight:600; font-size:13px; display:block; margin-bottom:6px;">Question
                                         Text *</label>
-                                    <textarea id="editQText" class="ui-input" rows="3" placeholder="Enter the question..."
-                                        style="resize:vertical;"></textarea>
+                                    <textarea id="editQText" class="ui-input" rows="3"
+                                        placeholder="Enter the question..." style="resize:vertical;"></textarea>
                                 </div>
                                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                                     <div>
@@ -2849,7 +2761,8 @@
                             <div class="exam-admin-actions" id="examAdminActions">
                                 <button class="exam-action-btn exam-btn-admin" onclick="showExamAdmin()">&#x2699; Manage
                                     Question Bank</button>
-                                <button class="exam-action-btn exam-btn-results" onclick="showExamResults()">&#x1F4CA; View All
+                                <button class="exam-action-btn exam-btn-results" onclick="showExamResults()">&#x1F4CA;
+                                    View All
                                     Results</button>
                             </div>
                         </div>
@@ -2868,7 +2781,8 @@
                                 <input type="text" class="exam-inp" id="examNameInput"
                                     placeholder="Enter your full name..." maxlength="80">
                                 <div class="exam-name-err" id="examNameError"></div>
-                                <button class="exam-btn exam-btn-primary exam-btn-full" onclick="beginExam()">&#x1F680; Start
+                                <button class="exam-btn exam-btn-primary exam-btn-full" onclick="beginExam()">&#x1F680;
+                                    Start
                                     Exam</button>
                             </div>
 
@@ -2932,7 +2846,8 @@
                         <div id="examAdminView" class="exam-view">
                             <button class="exam-btn exam-btn-outline" style="margin-bottom:16px;"
                                 onclick="switchExamView('home'); loadExamTab();">â† Back</button>
-                            <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;">&#x2699; Question Bank Management
+                            <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;">&#x2699; Question Bank
+                                Management
                             </h3>
 
                             <div id="adminQList" style="margin-bottom:20px;"></div>
@@ -2991,7 +2906,8 @@
                         <div id="examResultsListView" class="exam-view">
                             <button class="exam-btn exam-btn-outline" style="margin-bottom:16px;"
                                 onclick="switchExamView('home'); loadExamTab();">â† Back</button>
-                            <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;">&#x1F4CA; All Exam Results</h3>
+                            <h3 style="font-size:18px;font-weight:700;margin-bottom:16px;">&#x1F4CA; All Exam Results
+                            </h3>
                             <div id="examResultsList"></div>
                         </div>
 
@@ -3003,10 +2919,13 @@
                     <div style="max-width:1100px; margin:0 auto; padding:24px 0;">
 
                         <!-- Header -->
-                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px;">
+                        <div
+                            style="display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; flex-wrap:wrap; gap:12px;">
                             <div>
-                                <h2 style="margin:0; font-size:26px; font-weight:800; color:#2c3e50;">&#x1F465; User Management</h2>
-                                <p style="margin:6px 0 0; color:#7f8c8d; font-size:14px;">Create, edit and manage system user accounts and roles.</p>
+                                <h2 style="margin:0; font-size:26px; font-weight:800; color:#2c3e50;">&#x1F465; User
+                                    Management</h2>
+                                <p style="margin:6px 0 0; color:#7f8c8d; font-size:14px;">Create, edit and manage system
+                                    user accounts and roles.</p>
                             </div>
                             <button onclick="openAddUserModal()"
                                 style="background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none;
@@ -3017,7 +2936,8 @@
                         </div>
 
                         <!-- Users Table -->
-                        <div style="background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.08); overflow:hidden; border:1px solid #e8ecf0;">
+                        <div
+                            style="background:#fff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.08); overflow:hidden; border:1px solid #e8ecf0;">
                             <div id="usersTableContainer">
                                 <div style="text-align:center; padding:48px; color:#999;">
                                     <div style="font-size:36px; margin-bottom:12px;">&#x1F465;</div>
@@ -3087,6 +3007,9 @@
     <!-- Checklist Logic (WO selection, save, load data, lock/unlock) -->
     <script defer src="/js/features/checklist.js?v=20260403"></script>
 
+    <!-- Block Layout Manager (Admin split/merge/lock system) -->
+    <script defer src="/js/features/checklist-block-layout.js?v=20260401"></script>
+
     <!-- MCQ Exam System -->
     <script defer src="/js/features/questions-module.js?v=20260403"></script>
     <script defer src="/js/features/exam.js?v=20260403"></script>
@@ -3118,13 +3041,11 @@
                 due to inactivity.
             </p>
             <div style="display:flex; gap:12px; justify-content:center;">
-                <button onclick="extendSession()"
-                    style="background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none;
+                <button onclick="extendSession()" style="background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border:none;
                     padding:12px 28px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
                     &#x2714; Stay Logged In
                 </button>
-                <button onclick="sessionLogout()"
-                    style="background:#f8f9fa; color:#666; border:1px solid #ddd;
+                <button onclick="sessionLogout()" style="background:#f8f9fa; color:#666; border:1px solid #ddd;
                     padding:12px 24px; border-radius:8px; font-size:14px; cursor:pointer;">
                     Log Out
                 </button>

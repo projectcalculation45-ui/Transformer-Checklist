@@ -24,5 +24,7 @@ router.use('/exam', require('./exam.routes'));           // MCQ Exam System (SPA
 router.use('/questions', require('./questions.routes')); // MCQ Questions API
 router.use('/users', require('./users.routes'));          // User Management (admin only)
 router.use('/assignments', require('./assignment.routes')); // WO Assignment System (admin only)
+router.use('/checklist-master', require('./checklist-master.routes')); // Checklist Master (Admin Edit)
+router.use('/block-layout', require('./block-layout.routes'));         // Block Layout (Admin Split/Merge)
 
 module.exports = router;

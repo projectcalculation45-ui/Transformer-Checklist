@@ -1,0 +1,686 @@
+{
+  "shunt_reactor__0": {
+    "stage": "shunt_reactor",
+    "sectionIndex": 0,
+    "locked": false,
+    "lockedBy": null,
+    "lockedAt": null,
+    "blocks": [
+      {
+        "id": "blk_root_shunt_reactor_0",
+        "type": "leaf",
+        "label": "Block 1",
+        "flexBasis": "100%",
+        "rowIds": []
+      }
+    ],
+    "resetBy": "Senior Engineer",
+    "resetAt": "2026-04-22T09:41:17.496Z",
+    "cells": {
+      "row_shunt_reactor_8_1_c1": {
+        "type": "split",
+        "direction": "vertical",
+        "resizerPosition": 39.8875,
+        "isRoot": true,
+        "children": [
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "<span contenteditable=\"true\" onblur=\"updateMasterData('shunt_reactor', 'point', 7, this.innerText, 0)\">\n                            <div style=\"text-align:center; font-weight:bold; border-bottom:1px solid #ddd; padding-bottom:5px; margin-bottom:5px;\">Disc Assembly</div>Disc Part-A\n                        </span>",
+            "items": []
+          },
+          {
+            "type": "split",
+            "direction": "horizontal",
+            "resizerPosition": 51.5,
+            "isRoot": false,
+            "children": [
+              {
+                "type": "block",
+                "isRoot": false,
+                "originalHtml": "",
+                "items": [
+                  {
+                    "type": "input",
+                    "html": "<input type=\"text\" id=\"val_blk_pd83gpk6u\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+                  }
+                ]
+              },
+              {
+                "type": "split",
+                "direction": "horizontal",
+                "resizerPosition": 45.8333,
+                "isRoot": false,
+                "children": [
+                  {
+                    "type": "block",
+                    "isRoot": false,
+                    "originalHtml": "",
+                    "items": [
+                      {
+                        "type": "input",
+                        "html": "<input type=\"text\" id=\"val_blk_7u9lcy0qz\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "block",
+                    "isRoot": false,
+                    "originalHtml": "",
+                    "items": [
+                      {
+                        "type": "input",
+                        "html": "<input type=\"text\" id=\"val_blk_wtecsiby2\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "row_shunt_reactor_11_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_yyoi05ygl\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_9_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_0oxnftv37\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_10_1_c1": {
+        "type": "split",
+        "direction": "horizontal",
+        "resizerPosition": "92.1336%",
+        "resizerThickness": "",
+        "resizerLength": "",
+        "isRoot": true,
+        "children": [
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "<span contenteditable=\"true\" onblur=\"updateMasterData('shunt_reactor', 'point', 9, this.innerText, 0)\">\n                            Disc Assembly - Part B<br>Specified Height at Location: 1<br>Actual Height at Locations: 1,2,3,4\n                        </span>",
+            "items": []
+          },
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "",
+            "items": []
+          }
+        ]
+      },
+      "row_shunt_reactor_62_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_f6315b9po\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_2_c4": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "<input type=\"text\" id=\"op1_row_shunt_reactor_2\" placeholder=\"Sign &amp; Date\" style=\"width:100%; border:none; padding:3px 5px; font-size:11px; background:transparent; box-sizing:border-box; outline:none;\">",
+        "items": []
+      },
+      "row_shunt_reactor_4_c3": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "<div style=\"padding: 4px;\">\n                        <input type=\"file\" id=\"actualValue_row_shunt_reactor_4\" style=\"font-size: 10px;\">\n                    </div>",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_8xlglrxex\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_19_c3": {
+        "type": "split",
+        "direction": "horizontal",
+        "resizerPosition": "65.895%",
+        "resizerThickness": "",
+        "resizerLength": "",
+        "isRoot": true,
+        "children": [
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "<div style=\"padding: 4px;\">\n                        <input type=\"file\" id=\"actualValue_row_shunt_reactor_19\" style=\"font-size: 10px;\">\n                    </div>",
+            "items": []
+          },
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "",
+            "items": [
+              {
+                "type": "input",
+                "html": "<input type=\"text\" id=\"val_blk_42m6n4pku\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+              }
+            ]
+          }
+        ]
+      },
+      "row_shunt_reactor_49_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_zr2hkknld\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_50_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_rjwqiwgdo\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_47_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_u0ig3rj35\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_51_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_wbs6stl5i\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_44_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_gz4p0x6u0\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_43_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_jtjhmchbz\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_39_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_70k23nk9c\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_34_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_csvy1ow79\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_33_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_b8y0y3raw\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_56_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_orf25y8qa\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_55_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_8wcxuquk2\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_57_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_m8kn7l54w\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_54_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_24bg9onaf\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_53_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_xuop34wyt\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_58_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_huscb1iz3\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_53_c3": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_4brrqmxjv\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_52_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_b4do5s0xv\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_59_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_0gz9qbvri\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_60_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_elredgk7f\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_61_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_5xlpd1rrf\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_64_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_2vfgxw50j\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_67_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_bzrstfxne\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_69_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_kmmks3o08\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_70_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_wurfyub4j\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_71_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_ld8tz66xw\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_45_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_8bc384fyj\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_22_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_z9qxcg90y\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_20_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_juugcgqqd\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      },
+      "row_shunt_reactor_13_c2": {
+        "type": "split",
+        "direction": "horizontal",
+        "resizerPosition": "75.4807%",
+        "resizerThickness": "",
+        "resizerLength": "",
+        "isRoot": true,
+        "children": [
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "",
+            "items": [
+              {
+                "type": "input",
+                "html": "<input type=\"text\" id=\"val_blk_3q0ym7h5n\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+              }
+            ]
+          },
+          {
+            "type": "split",
+            "direction": "horizontal",
+            "resizerPosition": "58.9939%",
+            "resizerThickness": "",
+            "resizerLength": "",
+            "isRoot": false,
+            "children": [
+              {
+                "type": "split",
+                "direction": "horizontal",
+                "resizerPosition": "58.9939%",
+                "resizerThickness": "",
+                "resizerLength": "",
+                "isRoot": false,
+                "children": [
+                  {
+                    "type": "block",
+                    "isRoot": false,
+                    "originalHtml": "",
+                    "items": [
+                      {
+                        "type": "dropdown",
+                        "html": "<select id=\"val_blk_f8vbm73d6\" class=\"vb-data-dropdown\"><option value=\"\">Select...</option><option value=\"ok\">ok</option><option value=\"not ok\">not ok</option></select><button class=\"vb-edit-item\" title=\"Edit Options\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "block",
+                    "isRoot": false,
+                    "originalHtml": "",
+                    "items": [
+                      {
+                        "type": "text",
+                        "html": "<input type=\"text\" value=\"Label...\" class=\"vb-text-input\"><button class=\"vb-edit-item\" title=\"Edit Label\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "type": "block",
+                "isRoot": false,
+                "originalHtml": "",
+                "items": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "savedBy": "Senior Engineer",
+    "savedAt": "2026-04-24T05:49:42.336Z"
+  },
+  "winding1__1": {
+    "stage": "winding1",
+    "sectionIndex": 1,
+    "locked": false,
+    "lockedBy": null,
+    "lockedAt": null,
+    "cells": {
+      "row_winding1_3_c2": {
+        "type": "split",
+        "direction": "horizontal",
+        "resizerPosition": "59.8333%",
+        "resizerThickness": "",
+        "resizerLength": "",
+        "isRoot": true,
+        "children": [
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "As per drawing",
+            "items": []
+          },
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "",
+            "items": [
+              {
+                "type": "text",
+                "html": "<input type=\"text\" value=\"Label...\" class=\"vb-text-input\"><button class=\"vb-edit-item\" title=\"Edit Label\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+              }
+            ]
+          }
+        ]
+      },
+      "row_winding1_1_c2": {
+        "type": "split",
+        "direction": "horizontal",
+        "resizerPosition": "74.5%",
+        "resizerThickness": "",
+        "resizerLength": "",
+        "isRoot": true,
+        "children": [
+          {
+            "type": "block",
+            "isRoot": false,
+            "originalHtml": "No Sharp surface, No damage, Cleanliness",
+            "items": []
+          },
+          {
+            "type": "split",
+            "direction": "horizontal",
+            "resizerPosition": "53.7829%",
+            "resizerThickness": "",
+            "resizerLength": "",
+            "isRoot": false,
+            "children": [
+              {
+                "type": "split",
+                "direction": "horizontal",
+                "resizerPosition": "52.9561%",
+                "resizerThickness": "",
+                "resizerLength": "",
+                "isRoot": false,
+                "children": [
+                  {
+                    "type": "block",
+                    "isRoot": false,
+                    "originalHtml": "",
+                    "items": [
+                      {
+                        "type": "text",
+                        "html": "<input type=\"text\" value=\"Label...\" class=\"vb-text-input\"><button class=\"vb-edit-item\" title=\"Edit Label\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+                      },
+                      {
+                        "type": "dropdown",
+                        "html": "<select id=\"val_blk_yxt82s9t9\" class=\"vb-data-dropdown\"><option value=\"\">Select...</option><option value=\"yea\">yea</option><option value=\"no\">no</option></select><button class=\"vb-edit-item\" title=\"Edit Options\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "block",
+                    "isRoot": false,
+                    "originalHtml": "",
+                    "items": []
+                  }
+                ]
+              },
+              {
+                "type": "block",
+                "isRoot": false,
+                "originalHtml": "",
+                "items": []
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "savedBy": "Senior Engineer",
+    "savedAt": "2026-04-27T07:02:50.869Z"
+  },
+  "tanking__1": {
+    "stage": "tanking",
+    "sectionIndex": 1,
+    "locked": false,
+    "lockedBy": null,
+    "lockedAt": null,
+    "cells": {
+      "row_tanking_1_c2": {
+        "type": "block",
+        "isRoot": true,
+        "originalHtml": "",
+        "items": [
+          {
+            "type": "text",
+            "html": "<input type=\"text\" value=\"Label...\" class=\"vb-text-input\"><button class=\"vb-edit-item\" title=\"Edit Label\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
+          }
+        ]
+      }
+    },
+    "savedBy": "Senior Engineer",
+    "savedAt": "2026-04-24T09:55:48.802Z"
+  }
+}

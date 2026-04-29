@@ -1,0 +1,336 @@
+/* ================================================
+   VISUAL CHECKLIST BUILDER — In-Cell Grid Builder
+   ================================================ */
+
+/* --- Toolbar --- */
+#vb-toolbar {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 200px;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#vb-toolbar.visible {
+    display: flex;
+}
+
+.vb-title {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+
+.vb-btn {
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    background: #334155;
+    color: #e2e8f0;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: 0.2s;
+}
+
+.vb-btn:hover {
+    background: #475569;
+}
+
+.vb-btn.active {
+    background: #3b82f6;
+    color: white;
+}
+
+.vb-palette-item {
+    padding: 8px;
+    background: #0f172a;
+    border: 1px dashed #64748b;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: grab;
+    color: #cbd5e1;
+}
+
+/* --- Block System --- */
+
+/* Root Block covers the whole td */
+.vb-root-block {
+    width: 100%;
+    height: 100%;
+    min-height: 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+.vb-split {
+    display: flex;
+    flex: 1;
+    min-height: 50px;
+    width: 100%;
+}
+
+.vb-split-horizontal {
+    flex-direction: column;
+}
+
+.vb-split-vertical {
+    flex-direction: row;
+}
+
+/* Blocks */
+.vb-block {
+    flex: 1;
+    position: relative;
+    padding: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    align-content: flex-start;
+    min-height: 30px;
+    min-width: 30px;
+    box-sizing: border-box;
+}
+
+body.vb-edit-mode .vb-block {
+    outline: 1px dashed #94a3b8;
+    outline-offset: -2px;
+}
+
+body.vb-edit-mode .vb-block:hover {
+    background: rgba(241, 245, 249, 0.8);
+}
+
+/* Resizers */
+.vb-resizer {
+    background: transparent;
+    z-index: 10;
+}
+
+body.vb-edit-mode .vb-resizer {
+    background: #3b82f6;
+}
+
+.vb-resizer-horizontal {
+    height: 4px;
+    cursor: row-resize;
+    width: 100%;
+}
+
+.vb-resizer-vertical {
+    width: 4px;
+    cursor: col-resize;
+    height: 100%;
+}
+
+/* Drawing Guides */
+.vb-guide {
+    position: absolute;
+    background: #ef4444;
+    display: none;
+    pointer-events: none;
+    z-index: 20;
+}
+
+.vb-guide.guide-v {
+    top: 0;
+    bottom: 0;
+    width: 2px;
+}
+
+.vb-guide.guide-h {
+    left: 0;
+    right: 0;
+    height: 2px;
+}
+
+body[data-draw-mode="split-v"] .vb-block {
+    cursor: crosshair;
+}
+
+body[data-draw-mode="split-h"] .vb-block {
+    cursor: crosshair;
+}
+
+body[data-draw-mode="merge"] .vb-block {
+    cursor: no-drop;
+}
+
+body.vb-edit-mode td {
+    padding: 0 !important;
+}
+
+/* Items inside block */
+.vb-item {
+    position: relative;
+    background: white;
+    border: 1px solid #e2e8f0;
+    padding: 4px;
+    border-radius: 4px;
+    display: inline-block;
+    min-width: 60px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.vb-text-input,
+.vb-data-input {
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    width: 100%;
+}
+
+.vb-data-input {
+    border-bottom: 1px dotted #94a3b8;
+}
+
+.vb-text-input {
+    font-weight: 600;
+    color: #334155;
+}
+
+.vb-sign-btn {
+    background: #e2e8f0;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 11px;
+}
+
+.vb-del-item {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #ef4444;
+    color: white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.vb-edit-item {
+    position: absolute;
+    top: -6px;
+    right: 12px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 50%;
+    width: 14px;
+    height: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+body:not(.vb-edit-mode) .vb-edit-item,
+body:not(.vb-edit-mode) .vb-del-item {
+    display: none !important;
+}
+
+.vb-data-dropdown {
+    border: none;
+    background: transparent;
+    font-size: 11px;
+    width: 100%;
+    border-bottom: 1px dotted #94a3b8;
+}
+
+.vb-panel-floating {
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 9999;
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 220px;
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vb-panel-floating.visible {
+    display: flex;
+}
+
+.vb-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.vb-form-group label {
+    font-size: 10px;
+    color: #94a3b8;
+    text-transform: uppercase;
+}
+
+.vb-input-group {
+    display: flex;
+    align-items: center;
+    background: #0f172a;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    overflow: hidden;
+}
+
+.vb-input-group input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    text-align: center;
+    font-size: 13px;
+    padding: 6px;
+    outline: none;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.vb-input-group input::-webkit-outer-spin-button,
+.vb-input-group input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.vb-btn-small {
+    background: #334155;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.vb-btn-small:hover {
+    background: #475569;
+}
+
+.vb-resizer-active {
+    box-shadow: 0 0 0 2px #3b82f6 inset;
+    background: #3b82f6 !important;
+}

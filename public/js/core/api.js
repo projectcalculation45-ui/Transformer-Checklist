@@ -18,7 +18,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     };
 
     if (body) {
-        options.body = JSON.stringify(body);
+        options.body = typeof body === 'string' ? body : JSON.stringify(body);
     }
 
     try {

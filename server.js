@@ -47,6 +47,7 @@ const { globalErrorHandler, notFoundHandler } = require('./middlewares/errorHand
 const { authenticate, requireRole } = require('./middlewares/auth');
 const { initAuditFile } = require('./utils/audit');
 const { initStageStatusFile } = require('./utils/stageControl');
+const { connectToDatabase } = require('./config/database');
 
 // Phase 2: New utilities
 const logger = require('./utils/logger');
@@ -207,6 +208,7 @@ process.on('uncaughtException', (error) => {
 // INITIALIZE & START
 // =====================
 (async () => {
+    await connectToDatabase(); // Connect to MongoDB Atlas
     await initUsersFile();
     await seedDefaultUsersIfNeeded();
 
