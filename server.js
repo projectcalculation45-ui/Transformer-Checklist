@@ -241,11 +241,12 @@ process.on('uncaughtException', (error) => {
     }, AUDIT_ROTATION_INTERVAL_MS);
 
 
-    const PORT = process.env.PORT || 3000;
-    server.listen(PORT, () => {
-        logger.info(`Server started on port ${PORT}`);
+    const PORT = Number(process.env.PORT) || 3000;
+    const HOST = '0.0.0.0';
+    server.listen(PORT, HOST, () => {
+        logger.info(`Server started on ${HOST}:${PORT}`);
         console.log(`\n${'='.repeat(60)}`);
-        console.log(`🚀 Server: http://localhost:${PORT}`);
+        console.log(`🚀 Server: http://${HOST}:${PORT}`);
         if (process.env.NODE_ENV !== 'production') {
             console.log('\n👤 Demo Accounts (dev only):');
             console.log('   Admin: admin / admin123');
