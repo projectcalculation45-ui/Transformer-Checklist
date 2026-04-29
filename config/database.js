@@ -30,11 +30,3 @@ module.exports = {
     getDatabase,
     client
 };
-            }
-        }
-    }
-
-    console.log('✅ Database schema initialized (production)');
-}
-
-module.exports = db;
