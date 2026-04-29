@@ -46,18 +46,18 @@ router.post('/login', [
         const user = await userService.findByUserIdWithPassword(loginKey);
 
         if (!user) {
-            logger.warn(`Login attempt for non-existent user: "${userId}"`);
+            logger.warn(`Login attempt for non-existent user: "${loginKey}"`);
             return res.status(401).json(errorResponse('Invalid credentials'));
         }
 
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (!passwordMatch) {
-            logger.warn(`Password mismatch for user: "${userId}"`);
+            logger.warn(`Password mismatch for user: "${loginKey}"`);
             return res.status(401).json(errorResponse('Invalid credentials'));
         }
 
-        logger.info(`Login successful for user: "${userId}"`);
+        logger.info(`Login successful for user: "${loginKey}"`);
 
         // Generate JWT token
         const token = jwt.sign(
