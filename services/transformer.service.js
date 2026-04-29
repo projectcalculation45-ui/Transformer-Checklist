@@ -59,18 +59,7 @@ class TransformerService {
         await this.collection.insertOne(doc);
         return this._parseTransformer(doc);
     }
-            transformerData.customerId,
-            transformerData.customer,
-            transformerData.rating,
-            transformerData.hv,
-            transformerData.lv,
-            transformerData.stage || 'design',
-            transformerData.designData ? JSON.stringify(transformerData.designData) : null,
-            transformerData.createdBy
-        );
 
-        return this.findByWO(transformerData.wo);
-    }
 
     /**
      * Update transformer
@@ -96,10 +85,7 @@ class TransformerService {
         await this.collection.updateOne({ wo }, { $set: updateDoc });
         return this.findByWO(wo);
     }
-        );
 
-        return this.findByWO(wo);
-    }
 
     /**
      * Delete transformer
