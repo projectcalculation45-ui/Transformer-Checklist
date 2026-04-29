@@ -133,39 +133,3 @@ class UserService {
 }
 
 module.exports = new UserService();
-        `);
-
-        stmt.run(
-            userData.name,
-            userData.email || null,
-            userData.role,
-            userData.department || null,
-            userData.customerId || null,
-            userData.customerName || null,
-            userData.permissions ? JSON.stringify(userData.permissions) : null,
-            userId
-        );
-
-        return this.findByUserId(userId);
-    }
-
-    /**
-     * Change a user's password
-     */
-    changePassword(userId, hashedPassword) {
-        const stmt = db.prepare('UPDATE users SET password = ? WHERE userId = ?');
-        const result = stmt.run(hashedPassword, userId);
-        return result.changes > 0;
-    }
-
-    /**
-     * Delete user
-     */
-    delete(userId) {
-        const stmt = db.prepare('DELETE FROM users WHERE userId = ?');
-        const result = stmt.run(userId);
-        return result.changes > 0;
-    }
-}
-
-module.exports = new UserService();

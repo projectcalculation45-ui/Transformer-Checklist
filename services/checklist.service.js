@@ -151,21 +151,28 @@ class ChecklistService {
     /**
      * Save or update a checklist row.
      */
-    saveChecklist(wo, stage, items, metadata = {}) {
-        const existing = this.getChecklist(wo, stage);
+    async saveChecklist(wo, stage, items, metadata = {}) {
+        const collection = this._getCollection();
+        const existing = await this.getChecklist(wo, stage);
+
+        const updateData = {
+            items,
+            completedBy: metadata.completedBy || null,
+            lastUpdated: new Date()
+        };
+
         if (existing) {
-            db.prepare(`
-                UPDATE checklists
-                SET items = ?, completedBy = ?, lastUpdated = datetime('now')
-                WHERE wo = ? AND stage = ?
-            `).run(JSON.stringify(items), metadata.completedBy || null, wo, stage);
+            await collection.updateOne({ wo, stage }, { $set: updateData });
         } else {
-            db.prepare(`
-                INSERT INTO checklists (wo, stage, items, completedBy)
-                VALUES (?, ?, ?, ?)
-            `).run(wo, stage, JSON.stringify(items), metadata.completedBy || null);
+            await collection.insertOne({
+                wo,
+                stage,
+                items,
+                completedBy: metadata.completedBy || null,
+                lastUpdated: new Date()
+            });
         }
-        return this.getChecklist(wo, stage);
+        return await this.getChecklist(wo, stage);
     }
 
     /**
@@ -176,8 +183,8 @@ class ChecklistService {
      * qaApproved / locked flags, preventing a blank checklist from being
      * rubber-stamped as approved.
      */
-    lockChecklist(wo, stage, _userId) {
-        const checklist = this.getChecklist(wo, stage);
+    async lockChecklist(wo, stage, _userId) {
+        const checklist = await this.getChecklist(wo, stage);
         if (!checklist) {
             throw new Error('Checklist not found');
         }
@@ -195,58 +202,74 @@ class ChecklistService {
             );
         }
 
-        const result = db.prepare(`
-            UPDATE checklists
-            SET locked = 1, qaApproved = 1, lastUpdated = datetime('now')
-            WHERE wo = ? AND stage = ?
-        `).run(wo, stage);
+        const collection = this._getCollection();
+        const result = await collection.updateOne(
+            { wo, stage },
+            {
+                $set: {
+                    locked: true,
+                    qaApproved: true,
+                    lastUpdated: new Date()
+                }
+            }
+        );
 
-        if (result.changes === 0) {
+        if (result.modifiedCount === 0) {
             throw new Error('Checklist not found');
         }
-        return this.getChecklist(wo, stage);
+        return await this.getChecklist(wo, stage);
     }
 
     /**
      * Mark checklist-level supervisor approval.
      */
-    markSupervisorApproved(wo, stage, supervisorUsername) {
-        const result = db.prepare(`
-            UPDATE checklists
-            SET supervisorApproved = 1,
-                supervisorApprovedBy = ?,
-                supervisorApprovedAt = datetime('now'),
-                lastUpdated = datetime('now')
-            WHERE wo = ? AND stage = ?
-        `).run(supervisorUsername, wo, stage);
+    async markSupervisorApproved(wo, stage, supervisorUsername) {
+        const collection = this._getCollection();
+        const result = await collection.updateOne(
+            { wo, stage },
+            {
+                $set: {
+                    supervisorApproved: true,
+                    supervisorApprovedBy: supervisorUsername,
+                    supervisorApprovedAt: new Date(),
+                    lastUpdated: new Date()
+                }
+            }
+        );
 
-        if (result.changes === 0) {
+        if (result.modifiedCount === 0) {
             throw new Error('Checklist not found');
         }
-        return this.getChecklist(wo, stage);
+        return await this.getChecklist(wo, stage);
     }
 
     /**
      * Reject checklist (clears qaApproved, records reason).
      */
-    rejectChecklist(wo, stage, reason) {
-        const result = db.prepare(`
-            UPDATE checklists
-            SET qaApproved = 0, rejectionReason = ?, lastUpdated = datetime('now')
-            WHERE wo = ? AND stage = ?
-        `).run(reason, wo, stage);
+    async rejectChecklist(wo, stage, reason) {
+        const collection = this._getCollection();
+        const result = await collection.updateOne(
+            { wo, stage },
+            {
+                $set: {
+                    qaApproved: false,
+                    rejectionReason: reason,
+                    lastUpdated: new Date()
+                }
+            }
+        );
 
-        if (result.changes === 0) {
+        if (result.modifiedCount === 0) {
             throw new Error('Checklist not found');
         }
-        return this.getChecklist(wo, stage);
+        return await this.getChecklist(wo, stage);
     }
 
     /**
      * Items awaiting supervisor sign-off (tech done, supervisor not done).
      */
-    getSupervisorPendingItems(wo, stage) {
-        const checklist = this.getChecklist(wo, stage);
+    async getSupervisorPendingItems(wo, stage) {
+        const checklist = await this.getChecklist(wo, stage);
         if (!checklist) {
             return [];
         }
@@ -256,8 +279,8 @@ class ChecklistService {
     /**
      * Items awaiting QA sign-off (supervisor done, QA not done).
      */
-    getQAPendingItems(wo, stage) {
-        const checklist = this.getChecklist(wo, stage);
+    async getQAPendingItems(wo, stage) {
+        const checklist = await this.getChecklist(wo, stage);
         if (!checklist) {
             return [];
         }
@@ -267,8 +290,8 @@ class ChecklistService {
     /**
      * Tier completion summary for a checklist.
      */
-    getChecklistSummary(wo, stage) {
-        const checklist = this.getChecklist(wo, stage);
+    async getChecklistSummary(wo, stage) {
+        const checklist = await this.getChecklist(wo, stage);
         if (!checklist) {
             return { total: 0, techDone: 0, supervisorDone: 0, qaDone: 0 };
         }
@@ -284,8 +307,10 @@ class ChecklistService {
     /**
      * Clear checklist (admin only).
      */
-    clearChecklist(wo, stage) {
-        return db.prepare('DELETE FROM checklists WHERE wo = ? AND stage = ?').run(wo, stage).changes > 0;
+    async clearChecklist(wo, stage) {
+        const collection = this._getCollection();
+        const result = await collection.deleteOne({ wo, stage });
+        return result.deletedCount > 0;
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -296,20 +321,20 @@ class ChecklistService {
      * dependency that would arise from a top-level require.
      * ═══════════════════════════════════════════════════════════════════ */
 
-    saveRevision(wo, stage, items, changeReason = null, createdBy = 'system') {
-        return revSvc().saveRevision(wo, stage, items, changeReason, createdBy);
+    async saveRevision(wo, stage, items, changeReason = null, createdBy = 'system') {
+        return await revSvc().saveRevision(wo, stage, items, changeReason, createdBy);
     }
 
-    getRevisions(wo, stage) {
-        return revSvc().getRevisions(wo, stage);
+    async getRevisions(wo, stage) {
+        return await revSvc().getRevisions(wo, stage);
     }
 
-    getRevision(wo, stage, revision) {
-        return revSvc().getRevision(wo, stage, revision);
+    async getRevision(wo, stage, revision) {
+        return await revSvc().getRevision(wo, stage, revision);
     }
 
-    restoreRevision(wo, stage, revision, restoredBy) {
-        return revSvc().restoreRevision(wo, stage, revision, restoredBy, this);
+    async restoreRevision(wo, stage, revision, restoredBy) {
+        return await revSvc().restoreRevision(wo, stage, revision, restoredBy, this);
     }
 
     compareVersions(itemsA, itemsB) {
