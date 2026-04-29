@@ -2,8 +2,16 @@ const { getDatabase } = require('../config/database');
 
 class TransformerService {
     constructor() {
-        this.db = getDatabase();
-        this.collection = this.db.collection('transformers');
+        this.db = null;
+        this.collection = null;
+    }
+
+    _getCollection() {
+        if (!this.collection) {
+            this.db = getDatabase();
+            this.collection = this.db.collection('transformers');
+        }
+        return this.collection;
     }
 
     /**
@@ -20,7 +28,8 @@ class TransformerService {
             query.stage = filters.stage;
         }
 
-        const transformers = await this.collection.find(query).sort({ createdAt: -1 }).toArray();
+        const collection = this._getCollection();
+        const transformers = await collection.find(query).sort({ createdAt: -1 }).toArray();
 
         return transformers.map(t => this._parseTransformer(t));
     }
@@ -29,7 +38,8 @@ class TransformerService {
      * Find transformer by work order
      */
     async findByWO(wo) {
-        const transformer = await this.collection.findOne({ wo });
+        const collection = this._getCollection();
+        const transformer = await collection.findOne({ wo });
         if (!transformer) {
             return null;
         }
@@ -41,6 +51,7 @@ class TransformerService {
      * Create new transformer
      */
     async create(transformerData) {
+        const collection = this._getCollection();
         const now = new Date();
         const doc = {
             wo: transformerData.wo,
@@ -56,7 +67,7 @@ class TransformerService {
             updatedAt: now
         };
 
-        await this.collection.insertOne(doc);
+        await collection.insertOne(doc);
         return this._parseTransformer(doc);
     }
 
@@ -82,7 +93,8 @@ class TransformerService {
         if (transformerData.stageHistory !== undefined) updateDoc.stageHistory = transformerData.stageHistory;
         if (transformerData.actuals !== undefined) updateDoc.actuals = transformerData.actuals;
 
-        await this.collection.updateOne({ wo }, { $set: updateDoc });
+        const collection = this._getCollection();
+        await collection.updateOne({ wo }, { $set: updateDoc });
         return this.findByWO(wo);
     }
 
@@ -91,7 +103,8 @@ class TransformerService {
      * Delete transformer
      */
     async delete(wo) {
-        const result = await this.collection.deleteOne({ wo });
+        const collection = this._getCollection();
+        const result = await collection.deleteOne({ wo });
         return result.deletedCount > 0;
     }
 
@@ -106,7 +119,8 @@ class TransformerService {
             customerVisibleUpdatedAt: new Date()
         };
 
-        await this.collection.updateOne({ wo }, { $set: updateDoc });
+        const collection = this._getCollection();
+        await collection.updateOne({ wo }, { $set: updateDoc });
         return this.findByWO(wo);
     }
 
