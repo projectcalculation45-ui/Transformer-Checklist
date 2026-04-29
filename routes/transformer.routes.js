@@ -68,12 +68,12 @@ router.put('/:wo/customer-visibility',
     requireRole(['admin', 'quality']),
     [body('visible').isBoolean().withMessage('visible must be true or false')],
     handleValidationErrors,
-    (req, res) => {
+    async (req, res) => {
         try {
             const { wo } = req.params;
             const visible = req.body.visible === true || req.body.visible === 'true';
 
-            const transformer = transformerService.setCustomerVisible(wo, visible, req.user.username);
+            const transformer = await transformerService.setCustomerVisible(wo, visible, req.user.username);
             if (!transformer) {
                 return res.status(404).json({ success: false, error: 'Transformer not found' });
             }

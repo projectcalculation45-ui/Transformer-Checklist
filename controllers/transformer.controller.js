@@ -127,9 +127,9 @@ exports.updateTransformer = async (req, res) => {
     }
 };
 
-exports.deleteTransformer = (req, res) => {
+exports.deleteTransformer = async (req, res) => {
     try {
-        const transformerToDelete = transformerService.findByWO(req.params.id);
+        const transformerToDelete = await transformerService.findByWO(req.params.id);
         if (!transformerToDelete) {
             return res.json(successResponse(null, 'Transformer already deleted or not found'));
         }
@@ -141,7 +141,7 @@ exports.deleteTransformer = (req, res) => {
             }
         }
 
-        transformerService.delete(req.params.id);
+        await transformerService.delete(req.params.id);
 
         logAudit(
             req.user.id,
@@ -159,9 +159,9 @@ exports.deleteTransformer = (req, res) => {
     }
 };
 
-exports.getCustomers = (req, res) => {
+exports.getCustomers = async (req, res) => {
     try {
-        const transformers = transformerService.findAll();
+        const transformers = await transformerService.findAll();
         const customersMap = new Map();
         transformers.forEach(t => {
             if (t.customerId && t.customer) {
@@ -179,9 +179,9 @@ exports.getCustomers = (req, res) => {
 /**
  * Get transformers that are behind schedule
  */
-exports.getDelayedTransformers = (req, res) => {
+exports.getDelayedTransformers = async (req, res) => {
     try {
-        const transformers = transformerService.findAll();
+        const transformers = await transformerService.findAll();
         const now = new Date();
         const DELAY_THRESHOLD_DAYS = 14;
 
@@ -212,12 +212,12 @@ exports.getDelayedTransformers = (req, res) => {
  * Update transformer stage with history tracking
  * POST /transformers/:id/stage
  */
-exports.updateTransformerStage = (req, res) => {
+exports.updateTransformerStage = async (req, res) => {
     try {
         const { id } = req.params;
         const { newStage, notes } = req.body;
 
-        const transformer = transformerService.findByWO(id);
+        const transformer = await transformerService.findByWO(id);
         if (!transformer) {
             return res.status(404).json(errorResponse('Transformer not found'));
         }
@@ -277,7 +277,7 @@ exports.updateTransformerStage = (req, res) => {
         });
 
         // Save updated transformer
-        const updatedTransformer = transformerService.update(id, {
+        const updatedTransformer = await transformerService.update(id, {
             ...transformer,
             stage: newStage,
             currentStage: newStage,

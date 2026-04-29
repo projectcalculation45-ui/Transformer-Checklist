@@ -1,4 +1,4 @@
-const { getDatabase } = require('../config/database');
+const db = require('../config/database');
 
 // Lazy reference avoids circular dependency (checklist ↔ revision) while keeping
 // the dependency explicit and mockable from tests.
@@ -11,38 +11,25 @@ const revSvc = () => {
 };
 
 class ChecklistService {
-    constructor() {
-        this.db = null;
-        this.collection = null;
-    }
-
-    _getCollection() {
-        if (!this.collection) {
-            this.db = getDatabase();
-            this.collection = this.db.collection('checklists');
-        }
-        return this.collection;
-    }
-
     /**
      * Get checklist for a work order and stage (returns full row + parsed items).
      */
-    async getChecklist(wo, stage) {
-        const collection = this._getCollection();
-        const checklist = await collection.findOne({ wo, stage });
+    getChecklist(wo, stage) {
+        const checklist = db.prepare(
+            'SELECT * FROM checklists WHERE wo = ? AND stage = ?'
+        ).get(wo, stage);
         if (!checklist) {
             return null;
         }
-        return { ...checklist, items: checklist.items ? checklist.items : [] };
+        return { ...checklist, items: checklist.items ? JSON.parse(checklist.items) : [] };
     }
 
     /**
      * Get all checklists for a work order.
      */
-    async getChecklistsByWO(wo) {
-        const collection = this._getCollection();
-        const checklists = await collection.find({ wo }).toArray();
-        return checklists.map(c => ({ ...c, items: c.items ? c.items : [] }));
+    getChecklistsByWO(wo) {
+        return db.prepare('SELECT * FROM checklists WHERE wo = ?').all(wo)
+            .map(c => ({ ...c, items: c.items ? JSON.parse(c.items) : [] }));
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -52,96 +39,84 @@ class ChecklistService {
     /**
      * Get the flat items array for a wo + stage. Returns [] when no record exists.
      */
-    async getItems(wo, stage) {
-        const checklist = await this.getChecklist(wo, stage);
-        if (!checklist) {
+    getItems(wo, stage) {
+        const row = db.prepare('SELECT items FROM checklists WHERE wo = ? AND stage = ?').get(wo, stage);
+        if (!row) {
             return [];
         }
-        return checklist.items || [];
+        try {
+            return JSON.parse(row.items) || [];
+        } catch {
+            return [];
+        }
     }
 
     /**
      * Persist the items array for a wo + stage (upsert).
      * For concurrent-safe updates, use withTransaction() instead.
      */
-    async setItems(wo, stage, items, completedBy = null) {
-        const collection = this._getCollection();
-        const existing = await collection.findOne({ wo, stage });
-
-        const updateData = {
-            items,
-            completedBy,
-            lastUpdated: new Date()
-        };
-
+    setItems(wo, stage, items, completedBy = null) {
+        const existing = db.prepare('SELECT id FROM checklists WHERE wo = ? AND stage = ?').get(wo, stage);
         if (existing) {
-            await collection.updateOne({ wo, stage }, { $set: updateData });
+            db.prepare(`
+                UPDATE checklists
+                SET items = ?, completedBy = ?, lastUpdated = datetime('now')
+                WHERE wo = ? AND stage = ?
+            `).run(JSON.stringify(items), completedBy, wo, stage);
         } else {
-            await collection.insertOne({
-                wo,
-                stage,
-                items,
-                completedBy,
-                lastUpdated: new Date()
-            });
+            db.prepare(`
+                INSERT INTO checklists (wo, stage, items, completedBy)
+                VALUES (?, ?, ?, ?)
+            `).run(wo, stage, JSON.stringify(items), completedBy);
         }
     }
 
     /**
-     * Execute a MongoDB transaction for atomic read-modify-write operations.
+     * Execute a SQLite transaction for atomic read-modify-write operations.
+     *
+     * Issue 5 fix: the internal helpers now delegate to this.getItems() /
+     * this.setItems() instead of duplicating the SQL.  In better-sqlite3,
+     * all db.prepare().run() calls issued inside db.transaction() share the
+     * same implicit transaction, so no extra wiring is needed.
+     *
+     * The callback MUST return its result — the wrapper forwards it to the
+     * caller so res.json() can be invoked after the commit is confirmed.
      */
-    async withTransaction(fn) {
-        const collection = this._getCollection();
-        const session = this.db.startSession();
-
-        try {
-            return await session.withTransaction(async () => {
-                return await fn({
-                    getItems: async (wo, stage) => await this.getItems(wo, stage),
-                    setItems: async (wo, stage, items, by) => await this.setItems(wo, stage, items, by)
-                });
-            });
-        } finally {
-            await session.endSession();
-        }
+    withTransaction(fn) {
+        return db.transaction(() => fn({
+            getItems: (wo, stage)            => this.getItems(wo, stage),
+            setItems: (wo, stage, items, by) => this.setItems(wo, stage, items, by)
+        }))();
     }
 
     /**
      * Verify a Work Order exists in the transformers table.
      * Used by routes for object-level access control before modifying checklist data.
      */
-    async findTransformer(wo) {
-        const transformerCollection = this.db.collection('transformers');
-        return await transformerCollection.findOne({ wo }, { projection: { wo: 1, customerId: 1, stage: 1, customerVisible: 1 } });
+    findTransformer(wo) {
+        return db.prepare(
+            'SELECT wo, customerId, stage, customerVisible FROM transformers WHERE wo = ?'
+        ).get(wo);
     }
 
     /* ═══════════════════════════════════════════════════════════════════
      * ADMIN / ANALYTICS QUERIES
      * ═══════════════════════════════════════════════════════════════════ */
 
-    async getAllChecklists() {
-        const collection = this._getCollection();
-        return await collection.find({}).sort({ lastUpdated: -1 }).toArray();
+    getAllChecklists() {
+        return db.prepare('SELECT * FROM checklists ORDER BY lastUpdated DESC').all();
     }
 
-    async getPendingQA() {
-        const collection = this._getCollection();
-        return await collection.find({
-            $or: [
-                { qaApproved: { $ne: true } },
-                { qaApproved: { $exists: false } }
-            ]
-        }).sort({ lastUpdated: -1 }).toArray();
+    getPendingQA() {
+        return db.prepare(
+            'SELECT * FROM checklists WHERE qaApproved = 0 OR qaApproved IS NULL ORDER BY lastUpdated DESC'
+        ).all();
     }
 
-    async getPendingSupervisor() {
-        const collection = this._getCollection();
-        return await collection.find({
-            $or: [
-                { supervisorApproved: { $ne: true } },
-                { supervisorApproved: { $exists: false } }
-            ]
-        }).sort({ lastUpdated: -1 }).toArray();
+    getPendingSupervisor() {
+        return db.prepare(
+            'SELECT * FROM checklists WHERE supervisorApproved = 0 OR supervisorApproved IS NULL ORDER BY lastUpdated DESC'
+        ).all();
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -151,28 +126,21 @@ class ChecklistService {
     /**
      * Save or update a checklist row.
      */
-    async saveChecklist(wo, stage, items, metadata = {}) {
-        const collection = this._getCollection();
-        const existing = await this.getChecklist(wo, stage);
-
-        const updateData = {
-            items,
-            completedBy: metadata.completedBy || null,
-            lastUpdated: new Date()
-        };
-
+    saveChecklist(wo, stage, items, metadata = {}) {
+        const existing = this.getChecklist(wo, stage);
         if (existing) {
-            await collection.updateOne({ wo, stage }, { $set: updateData });
+            db.prepare(`
+                UPDATE checklists
+                SET items = ?, completedBy = ?, lastUpdated = datetime('now')
+                WHERE wo = ? AND stage = ?
+            `).run(JSON.stringify(items), metadata.completedBy || null, wo, stage);
         } else {
-            await collection.insertOne({
-                wo,
-                stage,
-                items,
-                completedBy: metadata.completedBy || null,
-                lastUpdated: new Date()
-            });
+            db.prepare(`
+                INSERT INTO checklists (wo, stage, items, completedBy)
+                VALUES (?, ?, ?, ?)
+            `).run(wo, stage, JSON.stringify(items), metadata.completedBy || null);
         }
-        return await this.getChecklist(wo, stage);
+        return this.getChecklist(wo, stage);
     }
 
     /**
@@ -183,8 +151,8 @@ class ChecklistService {
      * qaApproved / locked flags, preventing a blank checklist from being
      * rubber-stamped as approved.
      */
-    async lockChecklist(wo, stage, _userId) {
-        const checklist = await this.getChecklist(wo, stage);
+    lockChecklist(wo, stage, _userId) {
+        const checklist = this.getChecklist(wo, stage);
         if (!checklist) {
             throw new Error('Checklist not found');
         }
@@ -202,74 +170,58 @@ class ChecklistService {
             );
         }
 
-        const collection = this._getCollection();
-        const result = await collection.updateOne(
-            { wo, stage },
-            {
-                $set: {
-                    locked: true,
-                    qaApproved: true,
-                    lastUpdated: new Date()
-                }
-            }
-        );
+        const result = db.prepare(`
+            UPDATE checklists
+            SET locked = 1, qaApproved = 1, lastUpdated = datetime('now')
+            WHERE wo = ? AND stage = ?
+        `).run(wo, stage);
 
-        if (result.modifiedCount === 0) {
+        if (result.changes === 0) {
             throw new Error('Checklist not found');
         }
-        return await this.getChecklist(wo, stage);
+        return this.getChecklist(wo, stage);
     }
 
     /**
      * Mark checklist-level supervisor approval.
      */
-    async markSupervisorApproved(wo, stage, supervisorUsername) {
-        const collection = this._getCollection();
-        const result = await collection.updateOne(
-            { wo, stage },
-            {
-                $set: {
-                    supervisorApproved: true,
-                    supervisorApprovedBy: supervisorUsername,
-                    supervisorApprovedAt: new Date(),
-                    lastUpdated: new Date()
-                }
-            }
-        );
+    markSupervisorApproved(wo, stage, supervisorUsername) {
+        const result = db.prepare(`
+            UPDATE checklists
+            SET supervisorApproved = 1,
+                supervisorApprovedBy = ?,
+                supervisorApprovedAt = datetime('now'),
+                lastUpdated = datetime('now')
+            WHERE wo = ? AND stage = ?
+        `).run(supervisorUsername, wo, stage);
 
-        if (result.modifiedCount === 0) {
+        if (result.changes === 0) {
             throw new Error('Checklist not found');
         }
-        return await this.getChecklist(wo, stage);
+        return this.getChecklist(wo, stage);
     }
 
     /**
      * Reject checklist (clears qaApproved, records reason).
      */
-    async rejectChecklist(wo, stage, reason) {
-        const collection = this._getCollection();
-        const result = await collection.updateOne(
-            { wo, stage },
-            {
-                $set: {
-                    qaApproved: false,
-                    rejectionReason: reason,
-                    lastUpdated: new Date()
-                }
-            }
-        );
+    rejectChecklist(wo, stage, reason) {
+        const result = db.prepare(`
+            UPDATE checklists
+            SET qaApproved = 0, rejectionReason = ?, lastUpdated = datetime('now')
+            WHERE wo = ? AND stage = ?
+        `).run(reason, wo, stage);
 
-        if (result.modifiedCount === 0) {
+        if (result.changes === 0) {
             throw new Error('Checklist not found');
         }
-        return await this.getChecklist(wo, stage);
+        return this.getChecklist(wo, stage);
     }
 
     /**
      * Items awaiting supervisor sign-off (tech done, supervisor not done).
      */
-    async getSupervisorPendingItems(wo, stage) {
-        const checklist = await this.getChecklist(wo, stage);
+    getSupervisorPendingItems(wo, stage) {
+        const checklist = this.getChecklist(wo, stage);
         if (!checklist) {
             return [];
         }
@@ -279,8 +231,8 @@ class ChecklistService {
     /**
      * Items awaiting QA sign-off (supervisor done, QA not done).
      */
-    async getQAPendingItems(wo, stage) {
-        const checklist = await this.getChecklist(wo, stage);
+    getQAPendingItems(wo, stage) {
+        const checklist = this.getChecklist(wo, stage);
         if (!checklist) {
             return [];
         }
@@ -290,8 +242,8 @@ class ChecklistService {
     /**
      * Tier completion summary for a checklist.
      */
-    async getChecklistSummary(wo, stage) {
-        const checklist = await this.getChecklist(wo, stage);
+    getChecklistSummary(wo, stage) {
+        const checklist = this.getChecklist(wo, stage);
         if (!checklist) {
             return { total: 0, techDone: 0, supervisorDone: 0, qaDone: 0 };
         }
@@ -307,10 +259,8 @@ class ChecklistService {
     /**
      * Clear checklist (admin only).
      */
-    async clearChecklist(wo, stage) {
-        const collection = this._getCollection();
-        const result = await collection.deleteOne({ wo, stage });
-        return result.deletedCount > 0;
+    clearChecklist(wo, stage) {
+        return db.prepare('DELETE FROM checklists WHERE wo = ? AND stage = ?').run(wo, stage).changes > 0;
     }
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -321,20 +271,20 @@ class ChecklistService {
      * dependency that would arise from a top-level require.
      * ═══════════════════════════════════════════════════════════════════ */
 
-    async saveRevision(wo, stage, items, changeReason = null, createdBy = 'system') {
-        return await revSvc().saveRevision(wo, stage, items, changeReason, createdBy);
+    saveRevision(wo, stage, items, changeReason = null, createdBy = 'system') {
+        return revSvc().saveRevision(wo, stage, items, changeReason, createdBy);
     }
 
-    async getRevisions(wo, stage) {
-        return await revSvc().getRevisions(wo, stage);
+    getRevisions(wo, stage) {
+        return revSvc().getRevisions(wo, stage);
     }
 
-    async getRevision(wo, stage, revision) {
-        return await revSvc().getRevision(wo, stage, revision);
+    getRevision(wo, stage, revision) {
+        return revSvc().getRevision(wo, stage, revision);
     }
 
-    async restoreRevision(wo, stage, revision, restoredBy) {
-        return await revSvc().restoreRevision(wo, stage, revision, restoredBy, this);
+    restoreRevision(wo, stage, revision, restoredBy) {
+        return revSvc().restoreRevision(wo, stage, revision, restoredBy, this);
     }
 
     compareVersions(itemsA, itemsB) {

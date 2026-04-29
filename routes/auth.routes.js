@@ -26,17 +26,24 @@ const COOKIE_OPTIONS = {
  * Authenticate user credentials, set HttpOnly JWT cookie
  */
 router.post('/login', [
-    body('userId').trim().notEmpty().withMessage('User ID is required'),
+    body('userId').optional().trim(),
+    body('username').optional().trim(),
     body('password').trim().notEmpty().withMessage('Password is required')
 ], handleValidationErrors, async (req, res) => {
-    const { userId, password } = req.body;
+    const loginKey = (req.body.userId || req.body.username || '').trim();
+    const password = req.body.password;
+
+    if (!loginKey) {
+        return res.status(400).json(errorResponse('User ID is required'));
+    }
 
     try {
         if (process.env.NODE_ENV !== 'production') {
-            console.log(`🔐 [AUTH] Login attempt for user: "${userId}"`);
+            console.log(`🔐 [AUTH] Login attempt for user: "${loginKey}"`);
+            console.log('🔐 [AUTH] Request body:', { loginKey, password: password ? '*****' : null });
         }
 
-        const user = await userService.findByUserIdWithPassword(userId);
+        const user = await userService.findByUserIdWithPassword(loginKey);
 
         if (!user) {
             logger.warn(`Login attempt for non-existent user: "${userId}"`);

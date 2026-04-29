@@ -23,7 +23,7 @@ router.use(authenticate);
  * Get stage status for a specific work order
  * Accessible to all authenticated users
  */
-router.get('/:wo', (req, res) => {
+router.get('/:wo', async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({ success: false, error: 'Please log in' });
@@ -35,7 +35,7 @@ router.get('/:wo', (req, res) => {
         // Enforce customer data isolation: verify the WO belongs to this customer
         if (req.user.role === 'customer') {
             const transformerService = require('../services/transformer.service');
-            const transformer = transformerService.findByWO(wo);
+            const transformer = await transformerService.findByWO(wo);
             if (!transformer) {
                 return res.status(404).json({ success: false, error: 'Work order not found' });
             }
