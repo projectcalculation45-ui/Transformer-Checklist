@@ -792,7 +792,7 @@ async function saveNewChecklistItem(stage, itemNumber, rowId) {
 
     // Extract all relevant data fields using the adapter
     const extractedData = extractChecklistRowData(rowId, initialRowType);
-    let { actualValue, rowType, technician, shopSupervisor, qaSupervisor, remark } = extractedData;
+    let { actualValue, specifiedValue, rowType, technician, shopSupervisor, qaSupervisor, remark } = extractedData;
 
     // ── Row-type-aware validation ────────────────────────────────────────────
     // Types that NEVER expose a single `actualValue_${rowId}` input — either they
