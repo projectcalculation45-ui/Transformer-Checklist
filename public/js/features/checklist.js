@@ -894,6 +894,7 @@ async function saveNewChecklistItem(stage, itemNumber, rowId) {
         itemNumber: Number(itemNumber),
         rowId: String(rowId || ''),
         actualValue: String(actualValue || ''),
+        specifiedValue: typeof specifiedValue !== 'undefined' ? String(specifiedValue) : '',
         technician: String(technician || ''),
         shopSupervisor: String(shopSupervisor || ''),
         qaSupervisor: String(qaSupervisor || ''),
