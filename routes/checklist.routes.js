@@ -250,10 +250,16 @@ router.post('/save',
                 return res.status(400).json({ success: false, error: 'Missing required fields' });
             }
 
-            // Issue 2: verify the WO exists before allowing any modification
-            const transformer = checklistService.findTransformer(wo);
+            // Auto-create a minimal transformer stub if the WO doesn't exist yet.
+            // This lets admins enter a new WO directly in the checklist form without
+            // first registering it in the transformer registry.
+            const transformer = checklistService.findOrCreateTransformer(wo, {
+                customerId: customerId || null,
+                customer:   customer   || null,
+                createdBy:  req.user?.username || 'system'
+            });
             if (!transformer) {
-                return res.status(404).json({ success: false, error: `Work Order '${wo}' not found` });
+                return res.status(500).json({ success: false, error: `Failed to initialise Work Order '${wo}'` });
             }
 
             // Transaction returns { actionType, rowId }; res.json() fires AFTER commit is guaranteed
@@ -347,10 +353,14 @@ router.post('/production/save', checkPermission('production'), requireWOAccess, 
             return res.status(400).json({ success: false, error: 'Missing required fields' });
         }
 
-        // Issue 2: verify the WO exists before allowing any modification
-        const transformer = checklistService.findTransformer(wo);
+        // Auto-create stub so production notes can be saved for new WOs too
+        const transformer = checklistService.findOrCreateTransformer(wo, {
+            customerId: customerId || null,
+            customer:   customer   || null,
+            createdBy:  req.user?.username || 'system'
+        });
         if (!transformer) {
-            return res.status(404).json({ success: false, error: `Work Order '${wo}' not found` });
+            return res.status(500).json({ success: false, error: `Failed to initialise Work Order '${wo}'` });
         }
 
         const items = getItems(wo, stage);

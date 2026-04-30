@@ -99,6 +99,34 @@ class ChecklistService {
         ).get(wo);
     }
 
+    /**
+     * Find a transformer by WO or create a minimal stub if it doesn't exist.
+     * This allows admins to save checklist data for a new WO entered directly
+     * in the checklist form without first creating the job in the transformer registry.
+     *
+     * @param {string} wo - Work Order number
+     * @param {object} [meta] - Optional extra fields: customerId, customer, createdBy
+     * @returns {object} The transformer row (existing or newly created)
+     */
+    findOrCreateTransformer(wo, meta = {}) {
+        const existing = this.findTransformer(wo);
+        if (existing) return existing;
+
+        // Insert a minimal stub — all optional fields default to sensible values
+        db.prepare(`
+            INSERT OR IGNORE INTO transformers
+                (wo, customerId, customer, stage, customerVisible, createdBy, createdAt, updatedAt)
+            VALUES (?, ?, ?, 'winding', 0, ?, datetime('now'), datetime('now'))
+        `).run(
+            wo,
+            meta.customerId || null,
+            meta.customer   || null,
+            meta.createdBy  || 'system'
+        );
+
+        return this.findTransformer(wo);
+    }
+
     /* ═══════════════════════════════════════════════════════════════════
      * ADMIN / ANALYTICS QUERIES
      * ═══════════════════════════════════════════════════════════════════ */

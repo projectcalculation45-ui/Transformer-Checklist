@@ -595,71 +595,19 @@
         ]
       },
       "row_winding1_1_c2": {
-        "type": "split",
-        "direction": "horizontal",
-        "resizerPosition": "74.5%",
-        "resizerThickness": "",
-        "resizerLength": "",
+        "type": "block",
         "isRoot": true,
-        "children": [
+        "originalHtml": "",
+        "items": [
           {
-            "type": "block",
-            "isRoot": false,
-            "originalHtml": "No Sharp surface, No damage, Cleanliness",
-            "items": []
-          },
-          {
-            "type": "split",
-            "direction": "horizontal",
-            "resizerPosition": "53.7829%",
-            "resizerThickness": "",
-            "resizerLength": "",
-            "isRoot": false,
-            "children": [
-              {
-                "type": "split",
-                "direction": "horizontal",
-                "resizerPosition": "52.9561%",
-                "resizerThickness": "",
-                "resizerLength": "",
-                "isRoot": false,
-                "children": [
-                  {
-                    "type": "block",
-                    "isRoot": false,
-                    "originalHtml": "",
-                    "items": [
-                      {
-                        "type": "text",
-                        "html": "<input type=\"text\" value=\"Label...\" class=\"vb-text-input\"><button class=\"vb-edit-item\" title=\"Edit Label\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
-                      },
-                      {
-                        "type": "dropdown",
-                        "html": "<select id=\"val_blk_yxt82s9t9\" class=\"vb-data-dropdown\"><option value=\"\">Select...</option><option value=\"yea\">yea</option><option value=\"no\">no</option></select><button class=\"vb-edit-item\" title=\"Edit Options\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "block",
-                    "isRoot": false,
-                    "originalHtml": "",
-                    "items": []
-                  }
-                ]
-              },
-              {
-                "type": "block",
-                "isRoot": false,
-                "originalHtml": "",
-                "items": []
-              }
-            ]
+            "type": "input",
+            "html": "<input type=\"text\" id=\"val_blk_1vbzk3wgo\" placeholder=\"Enter value...\" class=\"vb-data-input\"><button class=\"vb-edit-item\" title=\"Edit Placeholder\" style=\"display: none;\">⚙️</button><span class=\"vb-del-item\" style=\"display: none;\">x</span>"
           }
         ]
       }
     },
     "savedBy": "Senior Engineer",
-    "savedAt": "2026-04-27T07:02:50.869Z"
+    "savedAt": "2026-04-30T06:03:34.717Z"
   },
   "tanking__1": {
     "stage": "tanking",
