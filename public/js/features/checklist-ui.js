@@ -1456,22 +1456,8 @@ function loadStageContent(stage) {
             }
             let customRowHTML = null;
 
-            // By default, make ALL standard specified value fields editable by the user
-            const isStructural = item.type === 'section-header' || item.type === 'stop-stage';
-            const isDropdown = item.specifiedInputType === 'dropdown';
-            const hasHTML = item.specifiedValue && String(item.specifiedValue).includes('<');
-
-            if (!isStructural && !isDropdown && !hasHTML) {
-                specifiedValueCell = `
-                    <input type="text" 
-                           id="specifiedValue_${rowId}" 
-                           ${disabledAttr}
-                           value="${item.specifiedValue || ''}"
-                           placeholder="${item.specifiedValue || 'Enter value'}"
-                           style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
-                `;
-            } else if (item.editableSpecifiedValue || item.specifiedValueInput) {
-                // Fallback for explicitly marked ones that might have bypassed the above check
+            // Only make specified value editable for rows explicitly flagged as editable
+            if (item.editableSpecifiedValue || item.specifiedValueInput) {
                 specifiedValueCell = `
                     <input type="text" 
                            id="specifiedValue_${rowId}" 
