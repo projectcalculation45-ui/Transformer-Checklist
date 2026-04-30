@@ -42,8 +42,8 @@ const db = new Database(DB_PATH);
 // Enable WAL mode for better concurrency
 db.pragma('journal_mode = WAL');
 
-// Enable foreign key constraints
-db.pragma('foreign_keys = ON');
+// Disable foreign key constraints during MongoDB migration transition
+db.pragma('foreign_keys = OFF');
 
 // Set synchronous mode for data safety
 db.pragma('synchronous = FULL');
