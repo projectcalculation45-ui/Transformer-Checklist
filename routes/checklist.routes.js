@@ -238,7 +238,7 @@ router.post('/save',
         try {
             const {
                 wo, stage, customerId, customer, itemNumber, rowId,
-                actualValue, technician, shopSupervisor, qaSupervisor,
+                actualValue, specifiedValue, technician, shopSupervisor, qaSupervisor,
                 remark, timestamp, userId, userName, userRole, updatedAt, workflowState,
                 rowType
             } = req.body;
@@ -287,6 +287,7 @@ router.post('/save',
                         rowId: String(rowId),
                         itemNumber: Number(itemNumber),
                         actualValue: actualValue || '',
+                        ...(specifiedValue !== undefined && { specifiedValue }),
                         technician: technician || '',
                         shopSupervisor: shopSupervisor || '',
                         qaSupervisor: qaSupervisor || '',

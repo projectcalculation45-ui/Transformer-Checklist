@@ -619,7 +619,9 @@ function onWOChange() {
 ================================ */
 function extractChecklistRowData(rowId, defaultRowType) {
     let actualValue = '';
+    let specifiedValue = undefined;
     const allValues = {};
+    const allSpecifiedValues = {};
     const rowEl = document.getElementById(rowId);
     let rowType = defaultRowType;
 
@@ -643,7 +645,6 @@ function extractChecklistRowData(rowId, defaultRowType) {
                 id.startsWith('techTime_') ||
                 id.startsWith('shopSupTime_') ||
                 id.startsWith('qaSupTime_') ||
-                id.startsWith('specifiedValue_') ||
                 id.startsWith('final_qa_') ||
                 id.startsWith('cn_operator_') ||
                 id.startsWith('cn_shop_') ||
@@ -659,6 +660,17 @@ function extractChecklistRowData(rowId, defaultRowType) {
             if (input.type === 'checkbox' || input.type === 'radio') {
                 allValues[id] = input.checked ? 'Yes' : 'No';
             } else {
+                // Extract specifiedValue fields
+                if (id === `specifiedValue_${rowId}`) {
+                    specifiedValue = input.value || '';
+                    return;
+                } else if (id.startsWith(`specifiedValue_${rowId}_`)) {
+                    let key = id.replace(`specifiedValue_${rowId}_`, '');
+                    key = key.replace(/_/g, ' ');
+                    if (key) allSpecifiedValues[key] = input.value || '';
+                    return;
+                }
+
                 // Determine a clean key for the JSON object
                 let key = id;
                 if (id === `actualValue_${rowId}`) {
@@ -694,6 +706,11 @@ function extractChecklistRowData(rowId, defaultRowType) {
         }
 
         actualValue = JSON.stringify(allValues);
+    }
+
+    // Combine specified values if multiple were found
+    if (Object.keys(allSpecifiedValues).length > 0) {
+        specifiedValue = JSON.stringify(allSpecifiedValues);
     }
 
     // Extract Technician, Supervisors, and Remarks
@@ -744,6 +761,7 @@ function extractChecklistRowData(rowId, defaultRowType) {
 
     return {
         actualValue,
+        specifiedValue,
         rowType,
         technician,
         shopSupervisor,
@@ -1076,6 +1094,39 @@ async function loadChecklistData(stage) {
                         if (input) {
                             input.value = value;
                             // Disable if locked (admin always editable)
+                            if (window.currentUserRole !== 'admin' && item.locked) {
+                                input.disabled = true;
+                            }
+                        }
+                    });
+                } catch { /* not JSON or empty – nothing to restore */ }
+            }
+
+            // ── Load Specified Value ──────────────────────────────────────────
+            const specifiedValueInput = document.getElementById(`specifiedValue_${rowId}`);
+            if (specifiedValueInput) {
+                let displayVal = item.specifiedValue || '';
+                try {
+                    const parsed = JSON.parse(displayVal);
+                    if (typeof parsed === 'object' && parsed !== null) {
+                        displayVal = Object.entries(parsed).map(([k, v]) => `${k}: ${v}`).join(' | ');
+                    }
+                } catch { /* plain string – use as-is */ }
+                specifiedValueInput.value = displayVal;
+                if (window.currentUserRole !== 'admin' && item.locked) {
+                    specifiedValueInput.disabled = true;
+                }
+            } else {
+                try {
+                    const values = JSON.parse(item.specifiedValue || '{}');
+                    Object.entries(values).forEach(([key, value]) => {
+                        let input = document.getElementById(key);
+                        if (!input) {
+                            const cleanKey = key.replace(/\s+/g, '_');
+                            input = document.getElementById(`specifiedValue_${rowId}_${cleanKey}`);
+                        }
+                        if (input) {
+                            input.value = value;
                             if (window.currentUserRole !== 'admin' && item.locked) {
                                 input.disabled = true;
                             }
