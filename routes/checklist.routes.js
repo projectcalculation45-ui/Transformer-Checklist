@@ -12,6 +12,12 @@ const assignmentService = require('../services/assignment.service');
 /**
  * Middleware: enforce per-WO assignment for non-admin/non-quality roles.
  * Extracts `wo` from req.body or req.params and checks user_assignments.
+ *
+ * Special case: if the WO does not yet exist in the transformers table
+ * (i.e. it is a brand-new WO being typed directly into the checklist form),
+ * we allow the request through — there is no ownership record to protect yet.
+ * The WO stub + assignment will be created by findOrCreateTransformer in the
+ * route handler that follows.
  */
 function requireWOAccess(req, res, next) {
     const wo = req.body?.wo || req.params?.wo;
@@ -19,6 +25,12 @@ function requireWOAccess(req, res, next) {
         return next(); // let body validation handle missing wo
     }
     if (assignmentService.isAuthorised(req.user.id, req.user.role, wo)) {
+        return next();
+    }
+    // Allow through if this WO doesn't exist yet — it's a new job being
+    // created on the fly via the checklist form (findOrCreateTransformer).
+    const woExists = checklistService.findTransformer(wo);
+    if (!woExists) {
         return next();
     }
     return res.status(403).json({
@@ -251,12 +263,14 @@ router.post('/save',
             }
 
             // Auto-create a minimal transformer stub if the WO doesn't exist yet.
-            // This lets admins enter a new WO directly in the checklist form without
-            // first registering it in the transformer registry.
+            // This lets any authorised user enter a new WO directly in the checklist form
+            // without first registering it in the transformer registry.
+            // userId is passed so the user gets auto-assigned to the new WO.
             const transformer = checklistService.findOrCreateTransformer(wo, {
                 customerId: customerId || null,
                 customer:   customer   || null,
-                createdBy:  req.user?.username || 'system'
+                createdBy:  req.user?.username || 'system',
+                userId:     req.user?.id       || null
             });
             if (!transformer) {
                 return res.status(500).json({ success: false, error: `Failed to initialise Work Order '${wo}'` });

@@ -101,11 +101,14 @@ class ChecklistService {
 
     /**
      * Find a transformer by WO or create a minimal stub if it doesn't exist.
-     * This allows admins to save checklist data for a new WO entered directly
-     * in the checklist form without first creating the job in the transformer registry.
+     * This allows any authorised user to save checklist data for a new WO entered
+     * directly in the checklist form without first creating the job in the transformer registry.
      *
-     * @param {string} wo - Work Order number
-     * @param {object} [meta] - Optional extra fields: customerId, customer, createdBy
+     * When a new stub is created the requesting user (meta.userId) is automatically
+     * assigned to the WO so that all subsequent saves pass the requireWOAccess guard.
+     *
+     * @param {string} wo   - Work Order number
+     * @param {object} meta - Optional: { customerId, customer, createdBy, userId }
      * @returns {object} The transformer row (existing or newly created)
      */
     findOrCreateTransformer(wo, meta = {}) {
@@ -123,6 +126,18 @@ class ChecklistService {
             meta.customer   || null,
             meta.createdBy  || 'system'
         );
+
+        // Auto-assign the requesting user to this new WO so subsequent saves
+        // pass the requireWOAccess assignment check.
+        if (meta.userId) {
+            try {
+                const assignmentService = require('./assignment.service');
+                assignmentService.assign(meta.userId, wo, meta.createdBy || 'system');
+            } catch (assignErr) {
+                // Non-fatal — log and continue; admin can assign manually if needed
+                console.warn(`[findOrCreateTransformer] auto-assign warning for ${wo}:`, assignErr.message);
+            }
+        }
 
         return this.findTransformer(wo);
     }
