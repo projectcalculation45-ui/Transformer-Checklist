@@ -838,7 +838,7 @@ async function saveNewChecklistItem(stage, itemNumber, rowId) {
         if (typeof showToast === 'function') {
             showToast(msg, 'error');
         } else {
-            alert(msg);)
+            alert(msg);
         }
     }
 

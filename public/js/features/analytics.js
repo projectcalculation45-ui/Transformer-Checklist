@@ -21,15 +21,18 @@ async function refreshAnalytics() {
         showAnalyticsLoading(true);
 
         // allSettled — one failing endpoint won't block the rest
-        const results = await Promise.allSettled([
-            apiCall('/transformers'),
-            apiCall('/checklist/all'),
-            apiCall('/audit')
-        ]);
+        const hasFullAccess = window.currentUserRole === 'admin' || window.currentUserRole === 'quality';
+        const endpoints = [apiCall('/transformers')];
+        
+        if (hasFullAccess) {
+            endpoints.push(apiCall('/checklist/all'), apiCall('/audit'));
+        }
 
-        const transformers = results[0].status === 'fulfilled' ? results[0].value : [];
-        const checklists = results[1].status === 'fulfilled' ? results[1].value : [];
-        const auditLogs = results[2].status === 'fulfilled' ? results[2].value : [];
+        const results = await Promise.allSettled(endpoints);
+
+        const transformers = results[0]?.status === 'fulfilled' ? results[0].value : [];
+        const checklists = hasFullAccess && results[1]?.status === 'fulfilled' ? results[1].value : [];
+        const auditLogs = hasFullAccess && results[2]?.status === 'fulfilled' ? results[2].value : [];
 
         const data = processAnalyticsData(transformers, checklists, auditLogs);
         updateAnalyticsKPIs(data.summary);
