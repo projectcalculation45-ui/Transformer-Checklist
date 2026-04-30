@@ -227,9 +227,176 @@ document.addEventListener('DOMContentLoaded', function () {
         if (typeof _origShowTab === 'function') _origShowTab(tabId, el);
         if (tabId === 'usersSection') {
             loadUsers();
+            populateAssignmentDropdowns();
+            loadAssignments();
         }
     };
 });
 
 // Also expose loadUsers globally
 window.loadUsers = loadUsers;
+
+/* ══════════════════════════════════════════════════════
+   WO ASSIGNMENT PANEL
+══════════════════════════════════════════════════════ */
+
+/** Populate the user and WO dropdowns in the assignment panel */
+async function populateAssignmentDropdowns() {
+    try {
+        // Users dropdown — only show production & quality roles
+        const usersRes = await apiRequest('/api/users');
+        const users = (usersRes.data || []).filter(u => u.role === 'production' || u.role === 'quality');
+        const userSel = document.getElementById('assignUserSelect');
+        if (userSel) {
+            userSel.innerHTML = '<option value="">— Select User —</option>' +
+                users.map(u =>
+                    `<option value="${u.userId}">${u.name || u.userId} (${u.role})</option>`
+                ).join('');
+        }
+    } catch (e) {
+        console.warn('Assignment: failed to load users', e);
+    }
+
+    try {
+        // WOs dropdown from transformers list
+        const transRes = await apiRequest('/api/transformers');
+        const transformers = transRes.data || transRes || [];
+        const woSel = document.getElementById('assignWOSelect');
+        if (woSel) {
+            woSel.innerHTML = '<option value="">— Select Work Order —</option>' +
+                transformers.map(t =>
+                    `<option value="${t.wo}">${t.wo}${t.customer ? ' — ' + t.customer : ''}</option>`
+                ).join('');
+        }
+    } catch (e) {
+        console.warn('Assignment: failed to load WOs', e);
+    }
+}
+
+/** Assign selected user to selected WO */
+window.doAssignWorker = async function () {
+    const userId = document.getElementById('assignUserSelect')?.value;
+    const wo = document.getElementById('assignWOSelect')?.value;
+    const msgEl = document.getElementById('assignMsg');
+    const btn = document.getElementById('assignBtn');
+
+    if (!userId || !wo) {
+        showAssignMsg('&#x26A0; Please select both a user and a Work Order.', '#fff3cd', '#856404');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Assigning…';
+    try {
+        const res = await apiRequest('/api/assignments/assign', {
+            method: 'POST',
+            body: JSON.stringify({ userId, wo })
+        });
+        if (!res.success) throw new Error(res.error || 'Assignment failed');
+        showAssignMsg(`&#x2705; ${res.message || `${userId} assigned to WO ${wo}`}`, '#d4edda', '#155724');
+        loadAssignments();
+    } catch (err) {
+        showAssignMsg('&#x274C; ' + err.message, '#f8d7da', '#721c24');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '&#x2795; Assign';
+    }
+};
+
+function showAssignMsg(html, bg, color) {
+    const el = document.getElementById('assignMsg');
+    if (!el) return;
+    el.innerHTML = html;
+    el.style.background = bg;
+    el.style.color = color;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+
+/** Load and render all current assignments */
+window.loadAssignments = async function () {
+    const container = document.getElementById('assignmentsTableContainer');
+    if (!container) return;
+    container.innerHTML = '<div style="text-align:center;padding:32px;color:#999;">&#x23F3; Loading assignments…</div>';
+
+    try {
+        // Iterate all transformers and fetch per-WO assignments
+        const transRes = await apiRequest('/api/transformers');
+        const transformers = transRes.data || transRes || [];
+
+        const assignRows = [];
+        await Promise.all(transformers.map(async t => {
+            try {
+                const aRes = await apiRequest(`/api/assignments/wo/${encodeURIComponent(t.wo)}`);
+                const assignments = aRes.data || [];
+                assignments.forEach(a => {
+                    assignRows.push({ wo: t.wo, customer: t.customer || '', userId: a.userId, assignedBy: a.assignedBy, assignedAt: a.assignedAt });
+                });
+            } catch (_) { /* skip */ }
+        }));
+
+        if (assignRows.length === 0) {
+            container.innerHTML = `
+                <div style="text-align:center; padding:40px; color:#bbb;">
+                    <div style="font-size:32px; margin-bottom:10px;">&#x1F4CB;</div>
+                    <p style="font-size:14px;">No assignments found. Use the form above to assign workers.</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <table style="width:100%; border-collapse:collapse; font-size:14px;">
+                <thead>
+                    <tr style="background:#f8f9fa; border-bottom:2px solid #e8ecf0;">
+                        <th style="padding:12px 20px; text-align:left; font-weight:700; color:#2c3e50;">Work Order</th>
+                        <th style="padding:12px 20px; text-align:left; font-weight:700; color:#2c3e50;">Customer</th>
+                        <th style="padding:12px 20px; text-align:left; font-weight:700; color:#2c3e50;">Assigned User</th>
+                        <th style="padding:12px 20px; text-align:left; font-weight:700; color:#2c3e50;">Assigned By</th>
+                        <th style="padding:12px 20px; text-align:left; font-weight:700; color:#2c3e50;">Date</th>
+                        <th style="padding:12px 20px; text-align:left; font-weight:700; color:#2c3e50;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${assignRows.map(r => `
+                        <tr style="border-bottom:1px solid #f0f0f0;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background=''">
+                            <td style="padding:12px 20px; font-weight:700; color:#2c3e50; font-family:monospace;">${r.wo}</td>
+                            <td style="padding:12px 20px; color:#555;">${r.customer || '—'}</td>
+                            <td style="padding:12px 20px;">
+                                <span style="background:#d6eaf8; color:#1a5276; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700;">&#x1F464; ${r.userId}</span>
+                            </td>
+                            <td style="padding:12px 20px; color:#7f8c8d; font-size:13px;">${r.assignedBy || '—'}</td>
+                            <td style="padding:12px 20px; color:#7f8c8d; font-size:12px;">${r.assignedAt ? new Date(r.assignedAt).toLocaleString() : '—'}</td>
+                            <td style="padding:12px 20px;">
+                                <button onclick="doRevokeAssignment('${r.userId}', '${r.wo}')"
+                                    style="background:#e74c3c; color:#fff; border:none; padding:6px 14px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:600;"
+                                    onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+                                    &#x1F6AB; Revoke
+                                </button>
+                            </td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>`;
+    } catch (err) {
+        container.innerHTML = `<div style="padding:24px; color:#e74c3c;">&#x274C; Failed to load assignments: ${err.message}</div>`;
+    }
+};
+
+/** Revoke a user's assignment from a WO */
+window.doRevokeAssignment = async function (userId, wo) {
+    if (!confirm(`Remove ${userId} from Work Order ${wo}?`)) return;
+    try {
+        const res = await apiRequest('/api/assignments/revoke', {
+            method: 'DELETE',
+            body: JSON.stringify({ userId, wo })
+        });
+        if (!res.success) throw new Error(res.error || 'Revoke failed');
+        if (typeof Toast !== 'undefined') Toast.success(`Access revoked for ${userId} on WO ${wo}`);
+        loadAssignments();
+    } catch (err) {
+        if (typeof Toast !== 'undefined') Toast.error('Revoke failed: ' + err.message);
+        else alert('Revoke failed: ' + err.message);
+    }
+};
+
+window.populateAssignmentDropdowns = populateAssignmentDropdowns;
+

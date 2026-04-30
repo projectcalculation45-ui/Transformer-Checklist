@@ -17,6 +17,15 @@ class AssignmentService {
      * Called once at server startup.
      */
     ensureTable() {
+        // Migrate: drop old table if it still carries FOREIGN KEY constraints
+        // (users/transformers live in MongoDB — SQLite FKs to them always fail)
+        const existing = db.prepare(
+            `SELECT sql FROM sqlite_master WHERE type='table' AND name='user_assignments'`
+        ).get();
+        if (existing && existing.sql && existing.sql.includes('FOREIGN KEY')) {
+            db.exec('DROP TABLE IF EXISTS user_assignments');
+        }
+
         db.exec(`
             CREATE TABLE IF NOT EXISTS user_assignments (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,11 +33,9 @@ class AssignmentService {
                 wo         TEXT NOT NULL,
                 assignedBy TEXT NOT NULL,
                 assignedAt TEXT DEFAULT (datetime('now')),
-                expiresAt  TEXT,          -- NULL means no expiry
+                expiresAt  TEXT,
                 notes      TEXT,
-                UNIQUE(userId, wo),
-                FOREIGN KEY (userId) REFERENCES users(userId),
-                FOREIGN KEY (wo)     REFERENCES transformers(wo)
+                UNIQUE(userId, wo)
             );
             CREATE INDEX IF NOT EXISTS idx_assignments_user ON user_assignments(userId);
             CREATE INDEX IF NOT EXISTS idx_assignments_wo   ON user_assignments(wo);
