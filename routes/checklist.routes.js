@@ -24,13 +24,16 @@ function requireWOAccess(req, res, next) {
     if (!wo) {
         return next(); // let body validation handle missing wo
     }
+    // Admin and quality bypass per-WO assignment checks (handled inside isAuthorised)
     if (assignmentService.isAuthorised(req.user.id, req.user.role, wo)) {
         return next();
     }
-    // Allow through if this WO doesn't exist yet — it's a new job being
-    // created on the fly via the checklist form (findOrCreateTransformer).
-    const woExists = checklistService.findTransformer(wo);
-    if (!woExists) {
+    // Check if this WO exists in the local SQLite transformers table.
+    // If it does NOT exist in SQLite, it is stored in MongoDB — allow access for
+    // all authenticated production users since the WO was legitimately created.
+    const woExistsInSQLite = checklistService.findTransformer(wo);
+    if (!woExistsInSQLite) {
+        // MongoDB WO or brand-new WO — allow through and let findOrCreateTransformer handle it
         return next();
     }
     return res.status(403).json({

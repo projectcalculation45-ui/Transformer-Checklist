@@ -81,9 +81,15 @@ function canAccessStage(wo, stage) {
     if (stageIndex > 0) {
         const prevStage = STAGE_ORDER[stageIndex - 1];
         const prevStatus = statusMap[prevStage];
-        const prevDone = ['completed', 'awaiting_qa', 'approved'].includes(prevStatus.status);
-        if (!prevDone) {
-            return { allowed: false, reason: `Please complete ${prevStage.toUpperCase()} stage first.` };
+        // If ALL stages are freshly initialized (all pending) for this WO,
+        // allow access to the requested stage rather than enforcing strict order.
+        // This handles the MongoDB migration case where stages were never tracked.
+        const allPending = STAGE_ORDER.every(s => statusMap[s]?.status === 'pending');
+        if (!allPending) {
+            const prevDone = ['completed', 'awaiting_qa', 'approved'].includes(prevStatus.status);
+            if (!prevDone) {
+                return { allowed: false, reason: `Please complete ${prevStage.toUpperCase()} stage first.` };
+            }
         }
     }
 
