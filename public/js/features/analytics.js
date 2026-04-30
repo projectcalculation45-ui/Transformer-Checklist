@@ -49,15 +49,21 @@ async function refreshAnalytics() {
 function processAnalyticsData(transformers, _checklists, _auditLogs) {
     const rawTransformers = transformers.data || transformers || [];
     const throughput = calculateThroughputStats(rawTransformers);
-    const inProd = rawTransformers.filter(t => t.status !== 'completed').length;
-    const completed = rawTransformers.filter(t => t.status === 'completed').length;
+    const total = rawTransformers.length;
+    const completed = rawTransformers.filter(t => t.stage === 'completed').length;
+    const inProd = rawTransformers.filter(t => t.stage && t.stage !== 'completed' && t.stage !== 'design').length;
+
+    // Quality Score: percentage of transformers that are either in active production or completed
+    // out of all registered transformers. Reflects real manufacturing activity.
+    const activeCount = completed + inProd;
+    const qualityIndex = total > 0 ? Math.round((activeCount / total) * 100) : 0;
 
     return {
         summary: {
-            total: rawTransformers.length,
+            total,
             inProduction: inProd,
             completed,
-            qualityIndex: 98
+            qualityIndex
         },
         charts: {
             throughput,

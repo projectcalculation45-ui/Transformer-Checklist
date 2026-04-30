@@ -122,11 +122,12 @@ function updateSidebarNavigation({ isAdmin, isCustomer }) {
     isCustomer ? hide('nav-calculator') : show('nav-calculator');
     isAdmin ? show('questionsNav') : hide('questionsNav');
 
-    if (isCustomer) {
+    // MCQ Exam is admin-only — hide for quality, production, and customer
+    if (isAdmin) {
+        show('nav-exam');
+    } else {
         hide('nav-exam');
         hide('examSubmenu');
-    } else {
-        show('nav-exam');
     }
 
     isAdmin ? show('nav-users') : hide('nav-users');
