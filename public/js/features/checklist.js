@@ -628,7 +628,7 @@ function extractChecklistRowData(rowId, defaultRowType) {
     if (rowEl) {
         // Collect ALL inputs, selects, and textareas within this row
         const allInputs = rowEl.querySelectorAll('input, select, textarea');
-        
+
         allInputs.forEach(input => {
             // Skip hidden elements, buttons, and readonly structural fields
             if (input.type === 'hidden' || input.type === 'button' || input.type === 'submit') return;
@@ -637,10 +637,10 @@ function extractChecklistRowData(rowId, defaultRowType) {
             if (!id) return;
 
             // Skip standard sign-off/administrative/structural fields
-            if (id === `technician_${rowId}` || 
-                id === `shopSup_${rowId}` || 
-                id === `qaSup_${rowId}` || 
-                id === `remark_${rowId}` || 
+            if (id === `technician_${rowId}` ||
+                id === `shopSup_${rowId}` ||
+                id === `qaSup_${rowId}` ||
+                id === `remark_${rowId}` ||
                 id === `descInput_${rowId}` ||
                 id.startsWith('techTime_') ||
                 id.startsWith('shopSupTime_') ||
@@ -699,7 +699,7 @@ function extractChecklistRowData(rowId, defaultRowType) {
         if ('Value' in allValues) {
             delete allValues['Value'];
         }
-        
+
         // Force row type to 'multi-field' since we detected multiple or suffixed inputs
         if (!rowType) {
             rowType = 'multi-field';
@@ -838,7 +838,7 @@ async function saveNewChecklistItem(stage, itemNumber, rowId) {
         if (typeof showToast === 'function') {
             showToast(msg, 'error');
         } else {
-            alert(msg);
+            alert(msg);)
         }
     }
 
@@ -1784,7 +1784,7 @@ async function verifyChecklistRow(wo, stage, rowId, itemNumber, verifyRemark) {
     });
     const result = await response.json();
     if (!result.success) return result;
-    
+
     const items = result.data?.items || [];
     const savedItem = items.find(i => i.rowId === rowId);
     return { success: true, item: savedItem };

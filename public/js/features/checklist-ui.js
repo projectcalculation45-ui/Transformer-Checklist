@@ -1456,20 +1456,22 @@ function loadStageContent(stage) {
             }
             let customRowHTML = null;
 
-            // Check if specified value should be editable (for rows 10-12, 14-20 in winding checklist, or specifiedValueInput flag)
-            if (item.editableSpecifiedValue || item.specifiedValueInput) {
+            // By default, make ALL standard specified value fields editable by the user
+            const isStructural = item.type === 'section-header' || item.type === 'stop-stage';
+            const isDropdown = item.specifiedInputType === 'dropdown';
+            const hasHTML = item.specifiedValue && String(item.specifiedValue).includes('<');
+
+            if (!isStructural && !isDropdown && !hasHTML) {
                 specifiedValueCell = `
                     <input type="text" 
                            id="specifiedValue_${rowId}" 
                            ${disabledAttr}
-                           value="${item.specifiedValue}"
+                           value="${item.specifiedValue || ''}"
                            placeholder="${item.specifiedValue || 'Enter value'}"
                            style="width: 100%; padding: 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
                 `;
-            }
-
-            const dismantlingSpecifiedValueRows = new Set([1, 2, 4, 5, 7, 8, 10, 11, 14, 15, 17, 18]);
-            if (stage === 'dismantling' && dismantlingSpecifiedValueRows.has(itemCounter)) {
+            } else if (item.editableSpecifiedValue || item.specifiedValueInput) {
+                // Fallback for explicitly marked ones that might have bypassed the above check
                 specifiedValueCell = `
                     <input type="text" 
                            id="specifiedValue_${rowId}" 
